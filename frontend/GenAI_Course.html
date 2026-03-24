@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How LLMs Actually Work — From Training to Response</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --sidebar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border: #E8E5E0;
+    --border-light: #F0EDE8;
+    --text: #2D2B28;
+    --text-secondary: #6B6560;
+    --text-muted: #9C9690;
+    --accent: #1A6B4E;
+    --accent-light: #E8F5EE;
+    --accent-hover: #15573F;
+    --build-color: #B45309;
+    --build-bg: #FEF3C7;
+    --build-border: #FCD34D;
+    --work-color: #1A6B4E;
+    --work-bg: #E8F5EE;
+    --work-border: #6EE7B7;
+    --info-color: #1E6091;
+    --info-bg: #EFF6FF;
+    --info-border: #93C5FD;
+    --purple: #6D28D9;
+    --purple-bg: #F3F0FF;
+    --orange: #C2410C;
+    --orange-bg: #FFF7ED;
+    --red: #B91C1C;
+    --red-bg: #FEF2F2;
+    --demo-bg: #1A1D27;
+    --demo-border: #2E3240;
+    --demo-text: #E2E8F0;
+    --sidebar-w: 260px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.7; }
+  ::selection { background: #1A6B4E33; }
+  input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; background: #D1D5DB; border-radius: 3px; outline: none; width: 100%; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 3px solid white; }
+  pre { white-space: pre-wrap; word-wrap: break-word; }
+
+  /* Sidebar */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 1px solid var(--border); overflow-y: auto; z-index: 50; padding: 0.75rem 0; scrollbar-width: thin; scrollbar-color: #D1D5DB transparent; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
+  .sidebar-logo { padding: 0 1rem 0.85rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .sidebar-logo h2 { font-family: 'Libre Baskerville', serif; font-size: 0.92rem; color: var(--text); line-height: 1.35; }
+  .sidebar-logo p { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
+  .sidebar-section { padding: 0.25rem 0.75rem; margin-top: 0.25rem; }
+  .sidebar-section-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 0.35rem; padding-left: 0.45rem; }
+  .sidebar-section-label.build { color: var(--build-color); }
+  .sidebar-section-label.work { color: var(--work-color); }
+  .sidebar-item { display: block; padding: 5px 9px; border-radius: 7px; text-decoration: none; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.15s; cursor: pointer; margin-bottom: 1px; border: 1px solid transparent; }
+  .sidebar-item:hover { background: var(--bg); color: var(--text); }
+  .sidebar-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; border-color: #6EE7B733; }
+  .sidebar-item .item-num { display: inline-block; width: 20px; height: 20px; border-radius: 5px; text-align: center; line-height: 20px; font-size: 0.66rem; font-weight: 700; margin-right: 7px; flex-shrink: 0; }
+  .sidebar-item.build-item .item-num { background: var(--build-bg); color: var(--build-color); }
+  .sidebar-item.work-item .item-num { background: var(--work-bg); color: var(--work-color); }
+  .sidebar-item .item-title { font-size: 0.8rem; }
+  .sidebar-item .item-sub { font-size: 0.66rem; color: var(--text-muted); margin-top: 0; display: block; }
+  .sidebar-group-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: #fcfcfb;
+    color: var(--text);
+    border-radius: 7px;
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .sidebar-group-toggle .caret {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    transition: transform 0.15s;
+  }
+  .sidebar-group-toggle.expanded .caret { transform: rotate(90deg); }
+  .sidebar-nested { padding-left: 0.35rem; }
+
+  /* Main content */
+  .main { margin-left: var(--sidebar-w); min-height: 100vh; }
+  .content { max-width: 760px; margin: 0 auto; padding: 2rem 2.5rem 4rem; }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .content { padding: 1.5rem 1rem 3rem; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const CHAPTERS = [
+  { id: "intro", part: 0, num: "", title: "Overview", sub: "" },
+  { id: "ch1", part: 1, num: "1", title: "The Big Picture", sub: "Two training phases" },
+  { id: "ch2", part: 1, num: "2", title: "Training the Tokenizer", sub: "BPE algorithm" },
+  { id: "ch3", part: 1, num: "3", title: "Training the Model", sub: "Embeddings & weights" },
+  { id: "ch4", part: 2, num: "4", title: "Text to Tokens", sub: "Tokenizer in action" },
+  { id: "ch5", part: 2, num: "5", title: "Tokens to Meaning", sub: "Embedding lookup" },
+  { id: "ch6", part: 2, num: "6", title: "Understanding Context", sub: "Self-Attention" },
+  { id: "ch7", part: 2, num: "7", title: "Activating Knowledge", sub: "Feed-Forward" },
+  { id: "ch8", part: 2, num: "8", title: "Generating Response", sub: "Autoregressive loop" },
+  { id: "ch9", part: 2, num: "9", title: "Controlling Creativity", sub: "Temperature & sampling" },
+];
+
+// ============================================================
+// INTERACTIVE: BPE Demo
+// ============================================================
+function BPEDemo() {
+  const initialWords = "low low low low low lowest lowest newer newer newer wider wider wider".split(" ").map(w => w.split(""));
+  const [step, setStep] = useState(0);
+  const [tokens, setTokens] = useState(initialWords);
+  const [mergeLog, setMergeLog] = useState([]);
+  const [vocabSize, setVocabSize] = useState(11);
+
+  const getPairCounts = (tList) => {
+    const c = {};
+    tList.forEach(ts => { for (let i = 0; i < ts.length - 1; i++) { const k = ts[i]+"|"+ts[i+1]; c[k] = (c[k]||0)+1; }});
+    return c;
+  };
+  const doStep = () => {
+    const pairs = getPairCounts(tokens);
+    if (!Object.keys(pairs).length) return;
+    const best = Object.entries(pairs).sort((a,b) => b[1]-a[1])[0];
+    const [p1,p2] = best[0].split("|");
+    const merged = p1+p2;
+    const nt = tokens.map(ts => { const r=[]; let i=0; while(i<ts.length){ if(i<ts.length-1&&ts[i]===p1&&ts[i+1]===p2){r.push(merged);i+=2}else{r.push(ts[i]);i++}} return r; });
+    setTokens(nt); setStep(s=>s+1); setVocabSize(v=>v+1);
+    setMergeLog(l=>[...l,{p1,p2,merged,count:best[1],ruleNum:step+1}]);
+  };
+  const reset = () => { setTokens(initialWords); setStep(0); setMergeLog([]); setVocabSize(11); };
+  const tColors = ["#1A6B4E","#B45309","#1E6091","#6D28D9","#C2410C","#0E7490","#9333EA","#B91C1C"];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem",flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{color:"#F59E0B",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+          <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif"}}>BPE Tokenizer Training</div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={doStep} style={{padding:"7px 18px",background:"#F59E0B",color:"#111",border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:"0.85rem"}}>Next Merge →</button>
+          <button onClick={reset} style={{padding:"7px 14px",background:"transparent",color:"#94A3B8",border:"1px solid #404552",borderRadius:7,cursor:"pointer",fontSize:"0.8rem"}}>Reset</button>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:10,marginBottom:"1rem",flexWrap:"wrap"}}>
+        <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}><span style={{color:"#94A3B8"}}>Step </span><span style={{color:"#60A5FA",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{step}</span></div>
+        <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}><span style={{color:"#94A3B8"}}>Vocab </span><span style={{color:"#34D399",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{vocabSize}</span></div>
+      </div>
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",marginBottom:"0.75rem",border:"1px solid #2E3240"}}>
+        <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Current Tokens</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {tokens.map((word,wi) => (
+            <div key={wi} style={{display:"flex",gap:2,background:"#1E2130",borderRadius:5,padding:"3px 5px"}}>
+              {word.map((tok,ti) => (
+                <span key={ti} style={{background:tColors[tok.length%tColors.length]+"1A",color:tColors[tok.length%tColors.length],border:"1px solid "+tColors[tok.length%tColors.length]+"33",padding:"2px 7px",borderRadius:4,fontSize:"0.82rem",fontFamily:"'JetBrains Mono'",fontWeight:600}}>{tok}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      {mergeLog.length>0&&(
+        <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Merge Rules Learned</div>
+          {mergeLog.map((m,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:i<mergeLog.length-1?"1px solid #2E3240":"none",flexWrap:"wrap"}}>
+              <span style={{color:"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.72rem",width:48}}>#{m.ruleNum}</span>
+              <span style={{color:"#FBBF24",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem"}}>'{m.p1}'</span>
+              <span style={{color:"#6B7280"}}>+</span>
+              <span style={{color:"#FBBF24",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem"}}>'{m.p2}'</span>
+              <span style={{color:"#6B7280"}}>→</span>
+              <span style={{color:"#34D399",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700}}>'{m.merged}'</span>
+              <span style={{color:"#4B5563",fontSize:"0.72rem",marginLeft:"auto"}}>({m.count}×)</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Embedding Viz
+// ============================================================
+function EmbeddingViz() {
+  const words = [
+    {word:"king",x:280,y:70,color:"#2563EB"},{word:"queen",x:350,y:80,color:"#DB2777"},
+    {word:"prince",x:260,y:130,color:"#3B82F6"},{word:"princess",x:330,y:140,color:"#EC4899"},
+    {word:"man",x:120,y:200,color:"#3B82F6"},{word:"woman",x:200,y:210,color:"#EC4899"},
+    {word:"dog",x:80,y:340,color:"#059669"},{word:"puppy",x:130,y:370,color:"#10B981"},
+  ];
+  const [hovered,setHovered]=useState(null);
+  const [showMath,setShowMath]=useState(false);
+  const sims = {
+    "king":{"queen":0.969,"prince":0.963,"princess":0.937,"man":0.879,"woman":0.834,"dog":0.682,"puppy":0.408},
+    "queen":{"king":0.969,"princess":0.976,"prince":0.901,"woman":0.949,"man":0.834,"dog":0.582,"puppy":0.371},
+    "man":{"woman":0.949,"king":0.879,"queen":0.834,"prince":0.841,"princess":0.812,"dog":0.723,"puppy":0.510},
+    "woman":{"man":0.949,"queen":0.949,"princess":0.908,"king":0.834,"prince":0.812,"dog":0.612,"puppy":0.445},
+    "dog":{"puppy":0.955,"man":0.723,"king":0.682,"prince":0.650,"woman":0.612,"princess":0.598,"queen":0.582},
+    "puppy":{"dog":0.955,"man":0.510,"woman":0.445,"king":0.408,"prince":0.398,"queen":0.371,"princess":0.361},
+    "prince":{"princess":0.968,"king":0.963,"queen":0.901,"man":0.841,"woman":0.812,"dog":0.650,"puppy":0.398},
+    "princess":{"prince":0.968,"queen":0.976,"king":0.937,"woman":0.908,"man":0.812,"dog":0.598,"puppy":0.361},
+  };
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#60A5FA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Embedding Space</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Hover any word to see similarity scores. Closer = more similar.</div>
+      <div style={{display:"flex",gap:"1.25rem",flexWrap:"wrap"}}>
+        <div style={{position:"relative",width:440,height:410,background:"#12141C",borderRadius:10,border:"1px solid #2E3240",flexShrink:0}}>
+          <div style={{position:"absolute",left:200,top:25,width:210,height:170,borderRadius:"50%",border:"1px dashed #2563EB33",background:"#2563EB08"}}/>
+          <div style={{position:"absolute",left:60,top:160,width:195,height:105,borderRadius:"50%",border:"1px dashed #EC489933",background:"#EC489908"}}/>
+          <div style={{position:"absolute",left:40,top:295,width:155,height:125,borderRadius:"50%",border:"1px dashed #05966933",background:"#05966908"}}/>
+          {words.map(w=>(
+            <div key={w.word} onMouseEnter={()=>setHovered(w.word)} onMouseLeave={()=>setHovered(null)}
+              style={{position:"absolute",left:w.x,top:w.y,cursor:"pointer",transition:"transform 0.2s",transform:hovered===w.word?"scale(1.15)":"scale(1)",zIndex:hovered===w.word?10:1}}>
+              <div style={{width:9,height:9,borderRadius:"50%",background:w.color,boxShadow:hovered===w.word?"0 0 10px "+w.color:"none",margin:"0 auto 3px"}}/>
+              <div style={{color:w.color,fontSize:"0.78rem",fontWeight:700,textAlign:"center",whiteSpace:"nowrap"}}>{w.word}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{flex:1,minWidth:180}}>
+          {hovered&&sims[hovered]?(
+            <div>
+              <div style={{color:"#F0F4F8",fontWeight:700,marginBottom:10,fontSize:"0.95rem"}}>Similarity to "{hovered}"</div>
+              {Object.entries(sims[hovered]).sort((a,b)=>b[1]-a[1]).map(([w,s])=>(
+                <div key={w} style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                  <span style={{color:"#94A3B8",width:60,fontSize:"0.8rem",fontFamily:"'JetBrains Mono'"}}>{w}</span>
+                  <div style={{flex:1,height:7,background:"#252833",borderRadius:3,overflow:"hidden"}}>
+                    <div style={{width:s*100+"%",height:"100%",background:s>0.9?"#10B981":s>0.7?"#F59E0B":"#EF4444",borderRadius:3,transition:"width 0.3s"}}/>
+                  </div>
+                  <span style={{color:s>0.9?"#10B981":s>0.7?"#F59E0B":"#EF4444",fontFamily:"'JetBrains Mono'",fontSize:"0.75rem",fontWeight:700,width:40}}>{s.toFixed(3)}</span>
+                </div>
+              ))}
+            </div>
+          ):(<div style={{color:"#6B7280",fontSize:"0.85rem",padding:"1.5rem 0"}}>← Hover any word to see scores</div>)}
+          <button onClick={()=>setShowMath(!showMath)} style={{marginTop:14,padding:"7px 14px",background:showMath?"#F59E0B":"#252833",color:showMath?"#111":"#94A3B8",border:"1px solid #404552",borderRadius:7,cursor:"pointer",fontSize:"0.8rem",fontWeight:600}}>{showMath?"Hide":"Show"} Vector Arithmetic</button>
+          {showMath&&(
+            <div style={{marginTop:10,padding:"0.85rem",background:"#12141C",borderRadius:8,border:"1px solid #2E3240",textAlign:"center"}}>
+              <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.1rem",marginBottom:4}}>
+                <span style={{color:"#FBBF24",fontWeight:700}}>king</span><span style={{color:"#6B7280"}}> − </span><span style={{color:"#94A3B8"}}>man</span><span style={{color:"#6B7280"}}> + </span><span style={{color:"#EC4899"}}>woman</span><span style={{color:"#6B7280"}}> = </span><span style={{color:"#10B981",fontWeight:700}}>queen</span>
+              </div>
+              <div style={{color:"#6B7280",fontSize:"0.75rem"}}>The direction from man→king equals woman→queen</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Attention Demo
+// ============================================================
+function AttentionDemo() {
+  const sentence=["I","sat","by","the","river","bank"];
+  const [sel,setSel]=useState(5);
+  const attn={0:[.35,.15,.10,.10,.15,.15],1:[.10,.30,.08,.12,.20,.20],2:[.08,.15,.25,.20,.18,.14],3:[.05,.10,.15,.30,.22,.18],4:[.05,.12,.10,.18,.30,.25],5:[.02,.08,.05,.03,.62,.20]};
+  const w=attn[sel];
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#A78BFA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:3}}>Self-Attention Visualized</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click any word to see what it pays attention to.</div>
+      <div style={{display:"flex",justifyContent:"center",gap:5,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {sentence.map((word,i)=>(
+          <button key={i} onClick={()=>setSel(i)} style={{padding:"9px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.95rem",fontWeight:700,fontFamily:"'JetBrains Mono'",transition:"all 0.2s",background:sel===i?"#7C3AED":"#252833",color:sel===i?"#fff":"#94A3B8",boxShadow:sel===i?"0 0 16px #7C3AED44":"none"}}>{word}</button>
+        ))}
+      </div>
+      <div style={{color:"#94A3B8",textAlign:"center",marginBottom:"0.75rem",fontSize:"0.85rem"}}>When processing <strong style={{color:"#A78BFA"}}>"{sentence[sel]}"</strong>, it pays attention to:</div>
+      <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:10,height:190,padding:"0 0.75rem"}}>
+        {sentence.map((word,i)=>{
+          const h=w[i]*270;const isH=w[i]===Math.max(...w);
+          return(<div key={i} style={{textAlign:"center",flex:1}}>
+            <div style={{color:isH?"#10B981":"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.75rem",fontWeight:700,marginBottom:5}}>{(w[i]*100).toFixed(0)}%</div>
+            <div style={{height:h,background:isH?"linear-gradient(to top,#065F46,#10B981)":"linear-gradient(to top,#252833,"+(w[i]>0.15?"#3B3F4E":"#252833")+")",borderRadius:"5px 5px 0 0",transition:"height 0.4s",border:isH?"1px solid #10B981":"1px solid #2E3240"}}/>
+            <div style={{color:i===sel?"#A78BFA":"#94A3B8",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:i===sel?700:400,marginTop:7}}>{word}</div>
+          </div>);
+        })}
+      </div>
+      {sel===5&&(<div style={{marginTop:"1.25rem",padding:"0.85rem",background:"#12141C88",borderRadius:8,border:"1px solid #10B98133"}}><span style={{color:"#10B981"}}>💡</span><span style={{color:"#94A3B8",fontSize:"0.82rem",marginLeft:8}}>"bank" pays <strong style={{color:"#10B981"}}>62% attention</strong> to "river" — that's how the model knows it's "river bank" not "financial bank."</span></div>)}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Temperature Demo
+// ============================================================
+function TemperatureDemo() {
+  const [temp,setTemp]=useState(1.0);
+  const words=["distributed","popular","powerful","open","versatile","high-level","banana","purple"];
+  const logits=[5.2,4.1,3.9,3.5,2.8,2.3,0.3,-1.0];
+  const applyT=(l,t)=>{if(t<0.05)return l.map((_,i)=>i===0?1:0);const s=l.map(v=>v/t);const mx=Math.max(...s);const e=s.map(v=>Math.exp(v-mx));const sm=e.reduce((a,b)=>a+b,0);return e.map(v=>v/sm);};
+  const probs=applyT(logits,temp);const mx=Math.max(...probs);
+  const lbl=temp<=0.3?{t:"Deterministic — code, facts",c:"#2563EB"}:temp<=0.7?{t:"Balanced — conversation",c:"#059669"}:temp<=1.2?{t:"Creative — writing",c:"#D97706"}:{t:"Wild — risky",c:"#DC2626"};
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#F97316",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:3}}>Temperature Control</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Prompt: "Python is a ___" — drag the slider.</div>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:6}}>
+        <span style={{color:"#2563EB",fontSize:"0.75rem",fontWeight:600}}>0</span>
+        <input type="range" min="0" max="2" step="0.1" value={temp} onChange={e=>setTemp(parseFloat(e.target.value))}/>
+        <span style={{color:"#DC2626",fontSize:"0.75rem",fontWeight:600}}>2.0</span>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
+        <span style={{color:"#F0F4F8",fontFamily:"'JetBrains Mono'",fontSize:"1.4rem",fontWeight:700}}>{temp.toFixed(1)}</span>
+        <span style={{color:lbl.c,fontSize:"0.82rem",fontWeight:600}}>{lbl.t}</span>
+      </div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:7,height:170,padding:"0 0.4rem"}}>
+        {words.map((word,i)=>{const h=probs[i]/(mx||1)*155;const isT=probs[i]===mx;
+          return(<div key={i} style={{flex:1,textAlign:"center"}}>
+            <div style={{color:isT?"#60A5FA":"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.65rem",fontWeight:600,marginBottom:3}}>{probs[i]>0.005?(probs[i]*100).toFixed(1)+"%":"<1%"}</div>
+            <div style={{height:Math.max(h,2),background:isT?"linear-gradient(to top,#1E40AF,#3B82F6)":probs[i]>0.1?"#3B3F4E":"#252833",borderRadius:"4px 4px 0 0",transition:"height 0.3s",border:isT?"1px solid #60A5FA":"1px solid #2E3240"}}/>
+            <div style={{color:probs[i]>0.05?"#E5E7EB":"#4B5563",fontSize:"0.6rem",fontFamily:"'JetBrains Mono'",marginTop:5,transform:"rotate(-30deg)",transformOrigin:"top left",whiteSpace:"nowrap",marginLeft:7}}>{word}</div>
+          </div>);
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// HELPER COMPONENTS — Light theme
+// ============================================================
+function SectionDivider({part,title,sub,color}){return(
+  <div style={{padding:"3rem 0 1.5rem",borderTop:"2px solid "+color+"33",marginTop:"3rem"}}>
+    <div style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Part {part}</div>
+    <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h2>
+    <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>{sub}</div>
+  </div>
+);}
+function ChH({num,title,sub,color="var(--accent)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"ch"+num}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function A({children,color="var(--accent)"}){return <span style={{color,fontWeight:600}}>{children}</span>;}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function Sidebar({active,onNav}){
+  const [isCourseOpen,setIsCourseOpen]=useState(true);
+  const [isPart1Open,setIsPart1Open]=useState(true);
+  const [isPart2Open,setIsPart2Open]=useState(true);
+  return(
+  <div className="sidebar">
+    <div className="sidebar-logo">
+      <h2>GenAI Master Course For Professionals</h2>
+      <p>Compact navigation</p>
+    </div>
+    <div className="sidebar-section">
+      <button className={"sidebar-group-toggle"+(isCourseOpen?" expanded":"")} onClick={()=>setIsCourseOpen(v=>!v)}>
+        <span>How LLMs Actually Work</span>
+        <span className="caret">▶</span>
+      </button>
+      {isCourseOpen&&(
+        <div className="sidebar-nested">
+          <a className={"sidebar-item"+(active==="intro"?" active":"")} onClick={()=>onNav("intro")}>
+            <span className="item-title">Overview</span>
+          </a>
+
+          <button className={"sidebar-group-toggle"+(isPart1Open?" expanded":"")} onClick={()=>setIsPart1Open(v=>!v)}>
+            <span>Part 1 — How It Was Built</span>
+            <span className="caret">▶</span>
+          </button>
+          {isPart1Open&&CHAPTERS.filter(c=>c.part===1).map(c=>(
+            <a key={c.id} className={"sidebar-item build-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+              <span className="item-num">{c.num}</span>
+              <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+            </a>
+          ))}
+
+          <button className={"sidebar-group-toggle"+(isPart2Open?" expanded":"")} onClick={()=>setIsPart2Open(v=>!v)}>
+            <span>Part 2 — How It Works</span>
+            <span className="caret">▶</span>
+          </button>
+          {isPart2Open&&CHAPTERS.filter(c=>c.part===2).map(c=>(
+            <a key={c.id} className={"sidebar-item work-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+              <span className="item-num">{c.num}</span>
+              <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App(){
+  const [active,setActive]=useState("intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+
+  return(
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+        {/* INTRO */}
+        <section id="intro" style={{paddingTop:"1rem"}}>
+          <h1 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2.4rem",color:"var(--text)",fontWeight:700,lineHeight:1.3,marginBottom:8}}>How LLMs Actually Work</h1>
+          <div style={{color:"var(--accent)",fontSize:"1.1rem",fontStyle:"italic",marginBottom:"1.5rem"}}>The Complete Story — From Training to Response</div>
+          <P>This guide walks through the entire journey of a Large Language Model — from how it's trained on billions of documents to how it generates the response you see in ChatGPT or Claude.</P>
+          <Callout><S>The key insight:</S> Understanding how the model was <A color="var(--build-color)">built</A> (trained) makes understanding how it <A>works</A> (inference) much easier. So we tell the story in chronological order.</Callout>
+
+          <div style={{display:"flex",gap:14,marginTop:"1.5rem",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:260,background:"white",borderRadius:12,border:"1px solid var(--build-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--build-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.88rem"}}>🔨 Part 1: How It Was Built</div>
+              <div style={{padding:"0.85rem"}}>
+                {CHAPTERS.filter(c=>c.part===1).map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:26,height:26,borderRadius:7,background:"var(--build-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--build-color)",fontWeight:700,fontSize:"0.75rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.88rem"}}>{c.title}</div><div style={{color:"var(--text-muted)",fontSize:"0.73rem"}}>{c.sub}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:260,background:"white",borderRadius:12,border:"1px solid var(--work-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--work-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.88rem"}}>▶ Part 2: How It Works</div>
+              <div style={{padding:"0.85rem"}}>
+                {CHAPTERS.filter(c=>c.part===2).map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:10,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:6,background:"var(--work-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--work-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.83rem"}}>{c.title}</div><div style={{color:"var(--text-muted)",fontSize:"0.68rem"}}>{c.sub}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <SectionDivider part="1" title="How the Model Was Built" sub="The Training Story" color="var(--build-color)"/>
+
+        <section id="ch1"><ChH num="1" title="The Big Picture" sub="Two training phases that create an LLM" color="var(--build-color)"/>
+          <P>Before you can use an LLM, someone had to <S>build</S> it. This happens in two distinct phases.</P>
+          <div style={{display:"flex",flexDirection:"column",gap:14,margin:"1.25rem 0"}}>
+            <div style={{background:"white",borderRadius:12,border:"1px solid var(--build-border)",padding:"1.3rem",borderLeft:"4px solid var(--build-color)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:34,height:34,borderRadius:"50%",background:"var(--build-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"1rem"}}>1</div>
+                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.2rem",color:"var(--build-color)",fontWeight:700}}>Train the Tokenizer</span>
+                </div>
+                <span style={{color:"var(--text-muted)",fontSize:"0.82rem"}}>Hours • Cheap</span>
+              </div>
+              <P><S>Input:</S> Massive text dataset (internet, books, code)</P>
+              <P><S>Output:</S> Vocabulary table (~100K entries) + Merge rules</P>
+              <P><S>What it does:</S> Figures out how to split text into pieces (tokens)</P>
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.3rem"}}>↓</div>
+            <div style={{background:"white",borderRadius:12,border:"1px solid var(--info-border)",padding:"1.3rem",borderLeft:"4px solid var(--info-color)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:34,height:34,borderRadius:"50%",background:"var(--info-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"1rem"}}>2</div>
+                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.2rem",color:"var(--info-color)",fontWeight:700}}>Train the Model</span>
+                </div>
+                <span style={{color:"var(--text-muted)",fontSize:"0.82rem"}}>Months • Millions $$$</span>
+              </div>
+              <P><S>Input:</S> Same text, tokenized using Phase 1's tokenizer</P>
+              <P><S>Output:</S> Embedding table + Attention weights + Feed-forward weights</P>
+              <P><S>What it does:</S> Learns language — meaning, grammar, facts, reasoning</P>
+            </div>
+          </div>
+          <Callout color="var(--build-color)"><S>Why two phases?</S> The model needs NUMBERS, not text. Phase 1 creates the converter. Phase 2 uses it to learn language.</Callout>
+        </section>
+
+        <section id="ch2"><ChH num="2" title="Training the Tokenizer" sub="How BPE creates the vocabulary" color="var(--build-color)"/>
+          <P>The tokenizer is a <S>program</S> — not AI. The algorithm is called <S color="var(--build-color)">Byte Pair Encoding (BPE)</S>. It scans billions of sentences counting character pair frequencies.</P>
+          <Callout color="var(--build-color)" icon="🔑"><S>BPE doesn't know any language.</S> Common words become single tokens because their characters appeared billions of times together — not because BPE understands English.</Callout>
+          <BPEDemo/>
+          <P>After training, two things are stored and <S color="var(--build-color)">frozen forever</S>:</P>
+          <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:200,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Vocabulary Table</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>~100K entries: "hello" ↔ 15339</div>
+            </div>
+            <div style={{flex:1,minWidth:200,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Merge Rules</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>~100K ordered rules: t+h→th, ...</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="ch3"><ChH num="3" title="Training the Model" sub="Learning meaning, grammar, and facts" color="var(--build-color)"/>
+          <P>The core idea: <S color="var(--info-color)">predict the next token</S>, get it wrong, adjust weights. Repeat trillions of times.</P>
+          <CB>{`Input:  "The cat sat on the"  →  Target: "mat"
+Model predicts: "dog" ← WRONG → adjust weights
+... repeat TRILLIONS of times ...`}</CB>
+          <P>Over trillions of examples, the <S color="var(--info-color)">embedding table</S> positions similar words close together. <S color="var(--purple)">Attention weights</S> learn to connect related words. <S color="var(--accent)">Feed-forward weights</S> absorb facts.</P>
+          <EmbeddingViz/>
+          <Callout color="var(--info-color)">After training, everything is <S>frozen</S>. The model never learns again.</Callout>
+        </section>
+
+        <SectionDivider part="2" title="How the Model Works" sub="The Inference Story" color="var(--work-color)"/>
+
+        <section id="ch4"><ChH num="4" title="Text to Tokens" sub="The tokenizer converts your text into numbers" color="var(--work-color)"/>
+          <P>The <S>tokenizer</S> applies its pre-learned merge rules, then looks up each token in the vocabulary table.</P>
+          <CB>{`"Hello, how are you?"
+  → Tokenizer applies merge rules
+  → ["Hello", ",", " how", " are", " you", "?"]
+  → Vocabulary lookup
+  → [15339, 11, 1268, 527, 499, 30]`}</CB>
+        </section>
+
+        <section id="ch5"><ChH num="5" title="Tokens to Meaning" sub="Embedding lookup gives each token its meaning" color="var(--work-color)"/>
+          <P>Token IDs are just numbers. The <S>embedding table</S> maps each to a meaning vector — a simple fetch.</P>
+          <CB>{`15339 → [0.23, -0.45, 0.12, ...]  "Hello" general meaning
+11    → [0.01,  0.78, -0.33, ...]  "," general meaning
+1268  → [0.56,  0.12,  0.89, ...]  " how" general meaning`}</CB>
+          <Callout icon="⚠️">These are <S>general</S> meanings. "bank" gets the same vector whether about rivers or money. Context comes from self-attention.</Callout>
+        </section>
+
+        <section id="ch6"><ChH num="6" title="Understanding Context" sub="Self-attention connects words to build meaning" color="var(--work-color)"/>
+          <P>Every word looks at every other word: <S color="var(--purple)">"how relevant are you for understanding me?"</S></P>
+          <P>Each embedding is multiplied by three weight matrices to create <S>Query</S>, <S>Key</S>, and <S>Value</S> vectors.</P>
+          <AttentionDemo/>
+          <Callout color="var(--purple)">The output is <S>added</S> to the original embedding — not replaced. This "residual connection" preserves identity while adding context.</Callout>
+        </section>
+
+        <section id="ch7"><ChH num="7" title="Activating Knowledge" sub="Feed-forward applies stored facts" color="var(--work-color)"/>
+          <P>Self-attention gave context. Feed-forward activates <S>knowledge</S> stored in its weights.</P>
+          <CB>{`Self-Attention: "What does this word mean HERE?"
+Feed-Forward:   "What do I KNOW about this?"
+
+→ EXPAND to 6144 dims (activate knowledge)
+→ ReLU: turn OFF irrelevant knowledge
+→ COMPRESS to 1536 dims (keep relevant facts)`}</CB>
+          <P>One Transformer layer = self-attention + feed-forward. Repeat <S>32 to 120+ times</S>.</P>
+        </section>
+
+        <section id="ch8"><ChH num="8" title="Generating the Response" sub="One token at a time" color="var(--work-color)"/>
+          <P>LLMs generate text <S color="var(--red)">one token at a time</S>. Predict one, append it, run everything again.</P>
+          <CB>{`"What is Python?"
+  Iter 1: [What, is, Python, ?]         → "Python"
+  Iter 2: [What, is, Python, ?, Python] → " is"
+  Iter 3: [..., Python, is]             → " a"
+  ...
+  Iter 50: [...]                        → END
+  → "Python is a high-level programming language..."`}</CB>
+          <Callout color="var(--red)" icon="⚡">This is why <S>streaming</S> exists — tokens appear one by one. Longer responses cost more. The model can't go back and fix mistakes.</Callout>
+        </section>
+
+        <section id="ch9"><ChH num="9" title="Controlling Creativity" sub="Temperature, Top-P, and Top-K" color="var(--work-color)"/>
+          <P><S>Temperature</S> controls whether the model picks the safe word or takes creative risks.</P>
+          <TemperatureDemo/>
+          <div style={{marginTop:"1.25rem"}}>
+            <P><S color="var(--info-color)">Top-K:</S> Only consider the top K tokens. Fixed cutoff.</P>
+            <P><S color="var(--orange)">Top-P (nucleus):</S> Keep tokens until cumulative probability reaches P. Adapts to confidence. Generally preferred.</P>
+          </div>
+          <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:8,fontFamily:"'Libre Baskerville',serif",fontSize:"1rem"}}>Practical Defaults</div>
+            {[{use:"Code generation",temp:"0",topP:"1.0",c:"var(--info-color)"},{use:"Factual Q&A",temp:"0.3",topP:"0.9",c:"#0E7490"},{use:"General conversation",temp:"0.7",topP:"0.9",c:"var(--accent)"},{use:"Creative writing",temp:"1.0",topP:"0.95",c:"var(--build-color)"}].map((r,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:r.c,flexShrink:0}}/>
+                <span style={{flex:1,fontSize:"0.88rem"}}>{r.use}</span>
+                <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>temp={r.temp}</span>
+                <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>top_p={r.topP}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>You've completed this module</div>
+          <div style={{color:"var(--text-muted)",fontSize:"0.92rem"}}>You now understand the complete journey — from training data to the response you see in ChatGPT.</div>
+          <div style={{color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → Prompt Engineering Deep Dive</div>
+        </div>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
