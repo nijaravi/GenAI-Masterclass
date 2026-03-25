@@ -121,33 +121,128 @@ const CHAPTERS = [
   { id: "ch9", part: 2, num: "9", title: "Controlling Creativity", sub: "Temperature & sampling" },
 ];
 
+const MERGE_RULES = [
+  ["l", "o"],
+  ["lo", "w"],
+  ["e", "r"],
+  ["n", "e"],
+  ["ne", "w"],
+  ["new", "er"],
+  ["w", "i"],
+  ["wi", "d"],
+  ["wid", "er"],
+  ["low", "e"],
+  ["lowe", "s"],
+  ["lowes", "t"],
+];
+
+function encodeWord(word, rules) {
+  let tokens = word.split("");
+  const steps = [{ tokens: [...tokens], rule: null, ruleNum: 0, applied: false }];
+
+  for (let r = 0; r < rules.length; r++) {
+    const [p1, p2] = rules[r];
+    const merged = p1 + p2;
+    const newTokens = [];
+    let i = 0;
+    let applied = false;
+    while (i < tokens.length) {
+      if (i < tokens.length - 1 && tokens[i] === p1 && tokens[i + 1] === p2) {
+        newTokens.push(merged);
+        i += 2;
+        applied = true;
+      } else {
+        newTokens.push(tokens[i]);
+        i++;
+      }
+    }
+    steps.push({ tokens: [...newTokens], rule: rules[r], ruleNum: r + 1, applied });
+    if (applied) tokens = newTokens;
+  }
+
+  return steps;
+}
+
 // ============================================================
 // INTERACTIVE: BPE Demo
 // ============================================================
 function BPEDemo() {
   const initialWords = "low low low low low lowest lowest newer newer newer wider wider wider".split(" ").map(w => w.split(""));
+  const getPairCounts = (tList) => {
+    const c = {};
+    tList.forEach(ts => {
+      for (let i = 0; i < ts.length - 1; i++) {
+        const k = ts[i] + "|" + ts[i + 1];
+        c[k] = (c[k] || 0) + 1;
+      }
+    });
+    return c;
+  };
+
   const [step, setStep] = useState(0);
   const [tokens, setTokens] = useState(initialWords);
   const [mergeLog, setMergeLog] = useState([]);
   const [vocabSize, setVocabSize] = useState(11);
+  const [pairCounts, setPairCounts] = useState(() => getPairCounts(initialWords));
+  const [prevPairCounts, setPrevPairCounts] = useState({});
+  const [transitionPreview, setTransitionPreview] = useState(null);
 
-  const getPairCounts = (tList) => {
-    const c = {};
-    tList.forEach(ts => { for (let i = 0; i < ts.length - 1; i++) { const k = ts[i]+"|"+ts[i+1]; c[k] = (c[k]||0)+1; }});
-    return c;
-  };
+  const previewWords = (wordList) => wordList.map(w => `[${w.join(", ")}]`).join("  ");
+
   const doStep = () => {
     const pairs = getPairCounts(tokens);
     if (!Object.keys(pairs).length) return;
-    const best = Object.entries(pairs).sort((a,b) => b[1]-a[1])[0];
-    const [p1,p2] = best[0].split("|");
-    const merged = p1+p2;
-    const nt = tokens.map(ts => { const r=[]; let i=0; while(i<ts.length){ if(i<ts.length-1&&ts[i]===p1&&ts[i+1]===p2){r.push(merged);i+=2}else{r.push(ts[i]);i++}} return r; });
-    setTokens(nt); setStep(s=>s+1); setVocabSize(v=>v+1);
-    setMergeLog(l=>[...l,{p1,p2,merged,count:best[1],ruleNum:step+1}]);
+    const sortedPairs = Object.entries(pairs).sort((a, b) => b[1] - a[1]);
+    const best = sortedPairs[0];
+    const [p1, p2] = best[0].split("|");
+    const merged = p1 + p2;
+    const nt = tokens.map(ts => {
+      const r = [];
+      let i = 0;
+      while (i < ts.length) {
+        if (i < ts.length - 1 && ts[i] === p1 && ts[i + 1] === p2) {
+          r.push(merged);
+          i += 2;
+        } else {
+          r.push(ts[i]);
+          i++;
+        }
+      }
+      return r;
+    });
+    const nextPairs = getPairCounts(nt);
+    setPrevPairCounts(pairs);
+    setPairCounts(nextPairs);
+    setTokens(nt);
+    setStep(s => s + 1);
+    setVocabSize(v => v + 1);
+    setMergeLog(l => [...l, { p1, p2, merged, count: best[1], ruleNum: step + 1 }]);
+    setTransitionPreview({
+      before: previewWords(tokens),
+      after: previewWords(nt)
+    });
   };
-  const reset = () => { setTokens(initialWords); setStep(0); setMergeLog([]); setVocabSize(11); };
+  const reset = () => {
+    setTokens(initialWords);
+    setStep(0);
+    setMergeLog([]);
+    setVocabSize(11);
+    setPairCounts(getPairCounts(initialWords));
+    setPrevPairCounts({});
+    setTransitionPreview(null);
+  };
   const tColors = ["#1A6B4E","#B45309","#1E6091","#6D28D9","#C2410C","#0E7490","#9333EA","#B91C1C"];
+  const currentSorted = Object.entries(pairCounts).sort((a, b) => b[1] - a[1]);
+  const maxCount = currentSorted.length ? currentSorted[0][1] : 0;
+  const winnerKey = currentSorted.length ? currentSorted[0][0] : null;
+  const tieEntry = currentSorted.find((entry, idx) => idx > 0 && entry[1] === maxCount);
+  const droppedPairs = Object.entries(prevPairCounts)
+    .filter(([k, v]) => v > 0 && !pairCounts[k])
+    .sort((a, b) => b[1] - a[1]);
+  const displayPairs = [
+    ...currentSorted.map(([k, v]) => ({ key: k, count: v, dropped: false, prev: prevPairCounts[k] || 0 })),
+    ...droppedPairs.map(([k, v]) => ({ key: k, count: 0, dropped: true, prev: v }))
+  ];
 
   return (
     <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
@@ -165,6 +260,55 @@ function BPEDemo() {
         <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}><span style={{color:"#94A3B8"}}>Step </span><span style={{color:"#60A5FA",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{step}</span></div>
         <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}><span style={{color:"#94A3B8"}}>Vocab </span><span style={{color:"#34D399",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{vocabSize}</span></div>
       </div>
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",marginBottom:"0.75rem",border:"1px solid #2E3240"}}>
+        <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Adjacent Pair Counts</div>
+        {step === 0 && tieEntry && (
+          <div style={{fontSize:"0.72rem",color:"#94A3B8",marginBottom:8}}>
+            Tied with <span style={{fontFamily:"'JetBrains Mono'"}}>{tieEntry[0].split("|").join(" + ")}</span> — picks first encountered.
+          </div>
+        )}
+        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+          {displayPairs.map((pair, i) => {
+            const [a, b] = pair.key.split("|");
+            const isWinner = !pair.dropped && pair.key === winnerKey;
+            const rowBg = isWinner ? "#10B9811A" : pair.dropped ? "#EF44441A" : "transparent";
+            const rowBorder = isWinner ? "1px solid #10B98155" : pair.dropped ? "1px solid #EF444455" : "1px solid transparent";
+            return (
+              <div key={pair.key + i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 6px",background:rowBg,border:rowBorder,borderRadius:6,fontSize:"0.75rem"}}>
+                <span style={{fontFamily:"'JetBrains Mono'",minWidth:120,color:pair.dropped?"#FCA5A5":"#E2E8F0",textDecoration:pair.dropped?"line-through":"none"}}>
+                  {a} + {b}
+                </span>
+                <div style={{flex:1,height:7,background:"#252833",borderRadius:4,overflow:"hidden"}}>
+                  <div style={{width:(maxCount ? (pair.count / maxCount) * 100 : 0)+"%",height:"100%",background:isWinner?"#10B981":pair.dropped?"#EF4444":"#60A5FA",borderRadius:4}}/>
+                </div>
+                <span style={{fontFamily:"'JetBrains Mono'",color:isWinner?"#34D399":pair.dropped?"#FCA5A5":"#94A3B8",minWidth:60,textAlign:"right"}}>
+                  {pair.count}x
+                </span>
+                {isWinner && <span style={{fontSize:"0.65rem",fontWeight:700,color:"#10B981"}}>→ WINNER</span>}
+                {pair.dropped && <span style={{fontSize:"0.65rem",color:"#FCA5A5"}}>was {pair.prev}</span>}
+              </div>
+            );
+          })}
+        </div>
+        {droppedPairs.length > 0 && (
+          <div style={{marginTop:8,fontSize:"0.72rem",color:"#FCA5A5"}}>
+            {droppedPairs[0][0].split("|").join(" + ")} was {droppedPairs[0][1]} before — the first token got absorbed into a merged token, so this pair no longer exists.
+          </div>
+        )}
+      </div>
+      {transitionPreview && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",marginBottom:"0.75rem",border:"1px solid #2E3240"}}>
+          <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.73rem",lineHeight:1.6,wordBreak:"break-word"}}>
+            <div><span style={{color:"#FCA5A5"}}>BEFORE:</span> <span style={{color:"#94A3B8"}}>{transitionPreview.before}</span></div>
+            <div><span style={{color:"#34D399"}}>AFTER:</span> <span style={{color:"#E2E8F0"}}>{transitionPreview.after}</span></div>
+          </div>
+        </div>
+      )}
+      {step >= 1 && (
+        <div style={{marginBottom:"0.75rem",padding:"0.8rem 0.9rem",background:"#12141C88",borderRadius:8,border:"1px solid #10B98133",fontSize:"0.78rem",color:"#94A3B8"}}>
+          Notice how merging changes the landscape - "o + w" disappeared because "o" was absorbed into "lo". BPE always counts on the current state of the text, not the original.
+        </div>
+      )}
       <div style={{background:"#12141C",borderRadius:10,padding:"1rem",marginBottom:"0.75rem",border:"1px solid #2E3240"}}>
         <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Current Tokens</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
@@ -193,6 +337,90 @@ function BPEDemo() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Using Trained Tokenizer
+// ============================================================
+function TrainedTokenizerDemo() {
+  const [inputWord, setInputWord] = useState("slower");
+  const [showAllRules, setShowAllRules] = useState(true);
+  const normalizedWord = (inputWord || "").trim().toLowerCase();
+  const safeWord = normalizedWord || "slower";
+  const steps = encodeWord(safeWord, MERGE_RULES);
+  const ruleRows = steps.slice(1).filter(s => showAllRules || s.applied);
+  const finalTokens = steps[steps.length - 1].tokens;
+  const seenWords = new Set(["low", "lowest", "newer", "wider"]);
+  const isSeenDuringTraining = seenWords.has(safeWord);
+  const tokenColors = ["#34D399", "#60A5FA", "#FBBF24", "#A78BFA", "#FB7185", "#22D3EE"];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.25rem 0 1.5rem"}}>
+      <div style={{color:"#F59E0B",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:3}}>Using the Trained Tokenizer</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1rem"}}>Type any word — watch the merge rules apply step by step.</div>
+
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:"0.85rem"}}>
+        <input
+          value={inputWord}
+          placeholder="Type a word..."
+          onChange={(e)=>setInputWord(e.target.value)}
+          style={{flex:1,minWidth:200,padding:"8px 10px",borderRadius:8,border:"1px solid #404552",background:"#12141C",color:"#E2E8F0",fontSize:"0.86rem",outline:"none"}}
+        />
+        {["low","newer","slower"].map((word)=>(
+          <button key={word} onClick={()=>setInputWord(word)} style={{padding:"7px 10px",borderRadius:7,border:"1px solid #404552",background:"#252833",color:"#E2E8F0",fontSize:"0.78rem",cursor:"pointer"}}>
+            {word}
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem",flexWrap:"wrap",gap:8}}>
+        <div style={{color:"#CBD5E1",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>Encoding: "{safeWord}"</div>
+        <button onClick={()=>setShowAllRules(v=>!v)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid #404552",background:"transparent",color:"#94A3B8",fontSize:"0.74rem",cursor:"pointer"}}>
+          {showAllRules ? "Show applied only" : "Show all rules"}
+        </button>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.8rem 0.95rem",border:"1px solid #2E3240",marginBottom:"0.8rem"}}>
+        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8,fontFamily:"'JetBrains Mono'",fontSize:"0.76rem"}}>
+          <span style={{color:"#94A3B8",minWidth:54}}>Start:</span>
+          <span style={{color:"#E2E8F0"}}>{steps[0].tokens.map(t=>`[${t}]`).join(" ")}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:280,overflowY:"auto",paddingRight:2}}>
+          {ruleRows.map((row) => {
+            const [p1,p2] = row.rule;
+            const merged = p1 + p2;
+            return (
+              <div key={row.ruleNum} style={{display:"flex",gap:8,alignItems:"center",padding:"4px 6px",borderRadius:6,background:row.applied?"#10B9811A":"transparent",border:row.applied?"1px solid #10B98144":"1px solid #2E3240",fontFamily:"'JetBrains Mono'",fontSize:"0.73rem",flexWrap:"wrap"}}>
+                <span style={{color:"#6B7280",minWidth:50}}>Rule #{row.ruleNum}</span>
+                <span style={{color:"#FBBF24",minWidth:130}}>{p1}+{p2} → {merged}</span>
+                <span style={{color:row.applied?"#34D399":"#6B7280",minWidth:78}}>{row.applied ? "✓ Applied" : "✗ Skipped"}</span>
+                <span style={{color:row.applied?"#E2E8F0":"#6B7280"}}>{row.applied ? row.tokens.map(t=>`[${t}]`).join(" ") : "(no match)"}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 0.95rem",border:"1px solid #2E3240",marginBottom:"0.8rem"}}>
+        <div style={{color:"#94A3B8",fontSize:"0.75rem",marginBottom:6}}>Final tokens:</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+          {finalTokens.map((tok, idx)=>(
+            <span key={tok+idx} style={{padding:"3px 9px",borderRadius:999,border:"1px solid "+tokenColors[idx%tokenColors.length]+"66",background:tokenColors[idx%tokenColors.length]+"1A",color:tokenColors[idx%tokenColors.length],fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",fontWeight:700}}>
+              [{tok}]
+            </span>
+          ))}
+          <span style={{color:"#94A3B8",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",marginLeft:4}}>→ {finalTokens.length} tokens</span>
+        </div>
+      </div>
+
+      <div style={{padding:"0.75rem 0.9rem",background:isSeenDuringTraining?"#10B98114":"#60A5FA14",border:isSeenDuringTraining?"1px solid #10B98144":"1px solid #60A5FA44",borderRadius:8,color:"#CBD5E1",fontSize:"0.8rem",lineHeight:1.65}}>
+        {isSeenDuringTraining
+          ? "This word was in the training data - its character pairs were frequent enough to merge all the way into a single token."
+          : "This word was never in the training data, but the tokenizer handles it perfectly by breaking it into known pieces. This is the power of subword tokenization - it can handle any word, even ones it has never seen."}
+      </div>
     </div>
   );
 }
@@ -500,20 +728,97 @@ function App(){
         </section>
 
         <section id="ch2"><ChH num="2" title="Training the Tokenizer" sub="How BPE creates the vocabulary" color="var(--build-color)"/>
-          <P>The tokenizer is a <S>program</S> — not AI. The algorithm is called <S color="var(--build-color)">Byte Pair Encoding (BPE)</S>. It scans billions of sentences counting character pair frequencies.</P>
-          <Callout color="var(--build-color)" icon="🔑"><S>BPE doesn't know any language.</S> Common words become single tokens because their characters appeared billions of times together — not because BPE understands English.</Callout>
-          <BPEDemo/>
-          <P>After training, two things are stored and <S color="var(--build-color)">frozen forever</S>:</P>
-          <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
-            <div style={{flex:1,minWidth:200,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
-              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Vocabulary Table</div>
-              <div style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>~100K entries: "hello" ↔ 15339</div>
+          <P>We know machines don't understand English — they only understand numbers. So the very first step of any interaction with a machine is to convert human-readable text into machine-readable numbers.</P>
+          <P>If you think about programming languages — we write code using text, characters, and numbers. There's something called a compiler that converts that code into numbers the machine can understand. But programming languages are structured. They have strict syntax rules, defined keywords, and clear standards. The compiler's job is straightforward because the input follows a predictable pattern.</P>
+          <P>But here, we're talking to a machine (the LLM) in plain English. There's no fixed structure. Each person can ask the same question in completely different ways, using their own style of communication.</P>
+          <div style={{display:"flex",gap:14,margin:"1.1rem 0 0.85rem",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:280,background:"white",borderRadius:12,border:"1px solid #BFE6D8",borderLeft:"4px solid #0E9F6E",padding:"1rem",boxShadow:"0 1px 2px rgba(0,0,0,0.04)"}}>
+              <div style={{color:"#0F766E",fontWeight:700,fontSize:"0.92rem",marginBottom:8}}>Compiler (Structured Input)</div>
+              <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:8,padding:"0.75rem 0.9rem",margin:"0 0 0.65rem",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",lineHeight:1.6,color:"#E2E8F0"}}>{`def add(a, b):
+    return a + b`}</pre>
+              <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.05rem",marginBottom:"0.45rem"}}>↓</div>
+              <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:8,padding:"0.6rem 0.9rem",margin:"0 0 0.7rem",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.5,color:"#A7F3D0"}}>{`01001010 11010010 10110001...`}</pre>
+              <div style={{display:"flex",alignItems:"flex-start",gap:8,padding:"0.6rem 0.7rem",background:"#ECFDF5",border:"1px solid #BBF7D0",borderRadius:8}}>
+                <span style={{color:"#059669",fontSize:"0.95rem",lineHeight:1}}>✅</span>
+                <span style={{color:"#065F46",fontSize:"0.8rem",lineHeight:1.5}}>Structured input with strict rules → straightforward conversion</span>
+              </div>
             </div>
-            <div style={{flex:1,minWidth:200,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
-              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Merge Rules</div>
-              <div style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>~100K ordered rules: t+h→th, ...</div>
+            <div style={{flex:1,minWidth:280,background:"white",borderRadius:12,border:"1px solid #F6D3A6",borderLeft:"4px solid #D97706",padding:"1rem",boxShadow:"0 1px 2px rgba(0,0,0,0.04)"}}>
+              <div style={{color:"#B45309",fontWeight:700,fontSize:"0.92rem",marginBottom:8}}>Tokenizer (Unstructured Input)</div>
+              <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:8,padding:"0.75rem 0.9rem",margin:"0 0 0.5rem",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.65,color:"#FDE68A"}}>{`"What's the weather?"
+"Tell me if it's gonna rain today"
+"Is it hot outside right now?"`}</pre>
+              <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"0.72rem",fontWeight:600,letterSpacing:0.3,marginBottom:"0.45rem"}}>Same question, 3 different ways</div>
+              <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.05rem",marginBottom:"0.45rem"}}>↓</div>
+              <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:8,padding:"0.6rem 0.9rem",margin:"0 0 0.7rem",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.5,color:"#FDBA74"}}>{`[3923, 596, 9282, 30]`}</pre>
+              <div style={{display:"flex",alignItems:"flex-start",gap:8,padding:"0.6rem 0.7rem",background:"#FFFBEB",border:"1px solid #FCD34D",borderRadius:8}}>
+                <span style={{color:"#D97706",fontSize:"0.95rem",lineHeight:1}}>🧩</span>
+                <span style={{color:"#9A3412",fontSize:"0.8rem",lineHeight:1.5}}>No fixed structure, infinite variations → needs a smarter approach</span>
+              </div>
             </div>
           </div>
+          <P>So we need a smart technique to efficiently convert free-form text into numbers. That technique is called <S color="var(--build-color)">tokenization</S>, and the specific algorithm used by modern LLMs is <S color="var(--build-color)">Byte Pair Encoding (BPE)</S>.</P>
+          <P>The tokenizer is a <S>program</S> — not a neural network, not AI. It's a simple rule-based program that was trained once on billions of sentences to figure out the best way to split text into pieces.</P>
+          <Callout color="var(--build-color)" icon="🔑"><S>BPE doesn't know any language.</S> Common words become single tokens because their characters appeared billions of times together — not because BPE understands English.</Callout>
+          <P>Let's see BPE in action. Imagine we're training a tokenizer on a small text dataset. In reality, this runs on billions of sentences — we'll use a tiny example so you can see every step clearly.</P>
+          <P><S>Training text:</S> low low low low low lowest lowest newer newer newer wider wider wider</P>
+          <P>The algorithm starts by splitting every word into individual characters. That gives us 11 unique characters — this is our starting vocabulary.</P>
+          <CB>{`const vocab = ["l", "o", "w", "e", "s", "t", "n", "r", "i", "d", " "];`}</CB>
+          <P>Then it begins merging: it scans the entire text, counts every pair of adjacent characters, and merges the most frequent pair into a new token. This new token gets added to the vocabulary (nothing is ever removed). Then it scans again, counts again, merges again. Each merge grows the vocabulary by 1.</P>
+          <P><S>Click "Next Merge" to step through the process:</S></P>
+          <BPEDemo/>
+          <P><S>"But wait — if the vocabulary only grows, when does it stop?"</S></P>
+          <P>BPE doesn't run forever. The model creators set a vocabulary size limit before training begins — typically 100,000 tokens. The algorithm keeps merging until it hits that limit, then stops. Whatever didn't get merged stays as smaller pieces.</P>
+          <P>This is why common words like "the" or "hello" become single tokens — they appeared billions of times, so their characters merged early. But rare words like "Bartholomew" stay split into pieces:</P>
+          <CB>{`Step 1:        h + e → he          (appeared 900 million times)
+Step 2:        he + l → hel        (appeared 700 million times)
+...
+Step 87,241:   hel + lo → hello    (appeared 50 million times - full word!)
+...
+Step 99,998:   Barthol + omew      (appeared only 4,200 times)
+Step 99,999:   ...one more merge...
+Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
+          <P><S>Result:</S> "hello" = 1 token, "Bartholomew" = 3 tokens (Barth + ol + omew)</P>
+          <P>The vocabulary limit is a design choice. Bigger vocabulary = more single-token words = faster processing but more memory. Smaller vocabulary = more splitting = slower but lighter. Modern LLMs typically use 100K-128K tokens as the sweet spot.</P>
+          <P>After training, two things are stored and <S color="var(--build-color)">frozen forever</S>:</P>
+          <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:260,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Vocabulary Table</div>
+              <div style={{background:"#fff8e8",border:"1px solid #f2d9a7",borderRadius:8,padding:"0.5rem 0.6rem",maxHeight:300,overflowY:"auto",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",color:"#8B5E34",fontWeight:700,padding:"3px 4px",borderBottom:"1px solid #f2d9a7"}}>
+                  <span>Token</span><span>ID</span>
+                </div>
+                {[
+                  ["l",0],["o",1],["w",2],["e",3],["s",4],["t",5],["n",6],["r",7],["i",8],["d",9],
+                  ["lo",10],["low",11],["er",12],["ne",13],["new",14],["newer",15],["wi",16],["wid",17],["wider",18],["lowe",19],["lowes",20],["lowest",21]
+                ].map((row,idx)=>(
+                  <div key={row[0]} style={{display:"flex",justifyContent:"space-between",padding:"3px 4px",background:idx%2===0?"#fff3dc":"#ffefcf",color:"#6b4b2c"}}>
+                    <span style={{textAlign:"left"}}>{row[0]}</span>
+                    <span style={{textAlign:"right"}}>{row[1]}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{color:"var(--text-muted)",fontSize:"0.74rem",marginTop:7,lineHeight:1.55}}>Our tiny training text produced 22 tokens. In reality, GPT-4's tokenizer was trained on billions of sentences and has ~100,000 tokens in its vocabulary.</div>
+            </div>
+            <div style={{flex:1,minWidth:260,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,marginBottom:4}}>Merge Rules</div>
+              <div style={{background:"#fff8e8",border:"1px solid #f2d9a7",borderRadius:8,padding:"0.5rem 0.6rem",maxHeight:300,overflowY:"auto",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem"}}>
+                {[
+                  ["l","o","lo"],["lo","w","low"],["e","r","er"],["n","e","ne"],["ne","w","new"],["new","er","newer"],
+                  ["w","i","wi"],["wi","d","wid"],["wid","er","wider"],["low","e","lowe"],["lowe","s","lowes"],["lowes","t","lowest"]
+                ].map((r,idx)=>(
+                  <div key={idx} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 4px",background:idx%2===0?"#fff3dc":"#ffefcf",borderBottom:idx<11?"1px solid #f2d9a7":"none",flexWrap:"wrap"}}>
+                    <span style={{color:"#9C9690",minWidth:58}}>Rule #{idx+1}</span>
+                    <span style={{color:"#B45309"}}>{r[0]} + {r[1]} →</span>
+                    <span style={{color:"#1A6B4E",fontWeight:700}}>{r[2]}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{color:"var(--text-muted)",fontSize:"0.74rem",marginTop:7,lineHeight:1.55}}>Our training produced 12 merge rules. GPT-4's tokenizer has ~100,000 merge rules, learned from trillions of tokens.</div>
+            </div>
+          </div>
+          <P>Now that the tokenizer is trained, it's frozen forever. When you type a prompt to an LLM, the tokenizer doesn't count frequencies in your text — it simply applies its pre-learned merge rules one by one, in order. Let's see this in action.</P>
+          <TrainedTokenizerDemo/>
         </section>
 
         <section id="ch3"><ChH num="3" title="Training the Model" sub="Learning meaning, grammar, and facts" color="var(--build-color)"/>
