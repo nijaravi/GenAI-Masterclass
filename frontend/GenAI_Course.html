@@ -112,7 +112,7 @@ const CHAPTERS = [
   { id: "intro", part: 0, num: "", title: "Overview", sub: "" },
   { id: "ch1", part: 1, num: "1", title: "The Big Picture", sub: "Two training phases" },
   { id: "ch2", part: 1, num: "2", title: "Training the Tokenizer", sub: "BPE algorithm" },
-  { id: "ch3", part: 1, num: "3", title: "Training the Model", sub: "Embeddings & weights" },
+  { id: "ch3", part: 1, num: "3", title: "Training the Model", sub: "Weights, loss & learning" },
   { id: "ch4", part: 2, num: "4", title: "Text to Tokens", sub: "Tokenizer in action" },
   { id: "ch5", part: 2, num: "5", title: "Tokens to Meaning", sub: "Embedding lookup" },
   { id: "ch6", part: 2, num: "6", title: "Understanding Context", sub: "Self-Attention" },
@@ -809,6 +809,384 @@ function WeightsDemo() {
 }
 
 // ============================================================
+// INTERACTIVE: Cluster Demo
+// ============================================================
+function ClusterDemo() {
+  const [isTrained, setIsTrained] = useState(false);
+
+  const words = [
+    { word: "king", color: "#2563EB", rx: 80, ry: 60, tx: 320, ty: 55 },
+    { word: "queen", color: "#3B82F6", rx: 340, ry: 200, tx: 355, ty: 85 },
+    { word: "prince", color: "#2563EB", rx: 200, ry: 30, tx: 305, ty: 90 },
+    { word: "princess", color: "#3B82F6", rx: 50, ry: 180, tx: 350, ty: 55 },
+    { word: "dog", color: "#059669", rx: 310, ry: 50, tx: 75, ty: 195 },
+    { word: "cat", color: "#10B981", rx: 150, ry: 220, tx: 95, ty: 225 },
+    { word: "puppy", color: "#059669", rx: 380, ry: 160, tx: 60, ty: 225 },
+    { word: "kitten", color: "#10B981", rx: 30, ry: 120, tx: 105, ty: 195 },
+    { word: "pizza", color: "#F59E0B", rx: 270, ry: 120, tx: 175, ty: 130 },
+    { word: "pasta", color: "#D97706", rx: 120, ry: 160, tx: 200, ty: 155 },
+    { word: "sushi", color: "#F59E0B", rx: 360, ry: 240, tx: 160, ty: 155 },
+  ];
+
+  return (
+    <div style={{ background: "#12141C", borderRadius: 10, padding: "1.25rem", border: "1px solid #2E3240", marginTop: "1.25rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 600 }}>
+          {isTrained ? "After training: related words cluster together" : "Before training: words at random positions"}
+        </div>
+        <button
+          onClick={() => setIsTrained((v) => !v)}
+          style={{
+            padding: "7px 18px",
+            background: isTrained ? "#252833" : "#F59E0B",
+            color: isTrained ? "#94A3B8" : "#111",
+            border: isTrained ? "1px solid #404552" : "none",
+            borderRadius: 7,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontSize: "0.82rem",
+          }}
+        >
+          {isTrained ? "Reset" : "Train Model"}
+        </button>
+      </div>
+      <svg viewBox="0 0 420 270" width="100%" style={{ borderRadius: 8 }}>
+        {isTrained && (
+          <>
+            <circle cx={335} cy={72} r={55} fill="#2563EB08" stroke="#2563EB33" strokeDasharray="4,4" />
+            <text x={335} y={140} fill="#2563EB" fontSize={9} textAnchor="middle" fontFamily="DM Sans" opacity={0.6}>
+              Royalty
+            </text>
+            <circle cx={85} cy={210} r={50} fill="#05966908" stroke="#05966933" strokeDasharray="4,4" />
+            <text x={85} y={265} fill="#059669" fontSize={9} textAnchor="middle" fontFamily="DM Sans" opacity={0.6}>
+              Animals
+            </text>
+            <circle cx={180} cy={143} r={45} fill="#F59E0B08" stroke="#F59E0B33" strokeDasharray="4,4" />
+            <text x={180} y={200} fill="#F59E0B" fontSize={9} textAnchor="middle" fontFamily="DM Sans" opacity={0.6}>
+              Food
+            </text>
+          </>
+        )}
+        {words.map((w) => {
+          const cx = isTrained ? w.tx : w.rx;
+          const cy = isTrained ? w.ty : w.ry;
+          return (
+            <g key={w.word}>
+              <circle cx={cx} cy={cy} r={5} fill={w.color} style={{ transition: "cx 1.2s ease, cy 1.2s ease" }} />
+              <text
+                x={cx}
+                y={cy - 10}
+                fill={w.color}
+                fontSize={10}
+                fontWeight={600}
+                textAnchor="middle"
+                fontFamily="DM Sans"
+                style={{ transition: "x 1.2s ease, y 1.2s ease" }}
+              >
+                {w.word}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Loss Demo
+// ============================================================
+function LossDemo() {
+  const [scenario, setScenario] = useState("wrong");
+  const isWrong = scenario === "wrong";
+  const loss = isWrong ? 8.7 : 0.3;
+  const pred = isWrong ? "banana" : "mat";
+  const lossColor = isWrong ? "#EF4444" : "#10B981";
+  const barWidth = (loss / 10) * 100;
+
+  return (
+    <div style={{ background: "#1A1D27", borderRadius: 14, padding: "1.75rem", border: "1px solid #2E3240", margin: "1.5rem 0" }}>
+      <div style={{ color: "#EF4444", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>Visual</div>
+      <div style={{ color: "#F0F4F8", fontSize: "1.15rem", fontWeight: 700, fontFamily: "'Libre Baskerville',serif", marginBottom: 4 }}>Loss: "How Wrong Was I?"</div>
+      <div style={{ color: "#94A3B8", fontSize: "0.82rem", marginBottom: "1.25rem" }}>
+        Input: "The cat sat on the ___" — Correct answer: <span style={{ color: "#10B981", fontWeight: 700 }}>"mat"</span>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: "1.25rem", flexWrap: "wrap" }}>
+        <button
+          onClick={() => setScenario("wrong")}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 7,
+            border: "none",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            background: isWrong ? "#EF4444" : "#252833",
+            color: isWrong ? "#fff" : "#94A3B8",
+            transition: "all 0.2s",
+          }}
+        >
+          Model predicts "banana"
+        </button>
+        <button
+          onClick={() => setScenario("right")}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 7,
+            border: "none",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            background: !isWrong ? "#10B981" : "#252833",
+            color: !isWrong ? "#fff" : "#94A3B8",
+            transition: "all 0.2s",
+          }}
+        >
+          Model predicts "mat"
+        </button>
+      </div>
+      <div style={{ background: "#12141C", borderRadius: 10, padding: "1.25rem", border: "1px solid #2E3240" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ color: "#94A3B8", fontSize: "0.82rem" }}>
+            Prediction: <span style={{ color: lossColor, fontWeight: 700 }}>"{pred}"</span>
+          </span>
+          <span style={{ color: lossColor, fontFamily: "'JetBrains Mono'", fontSize: "1.3rem", fontWeight: 700 }}>Loss: {loss}</span>
+        </div>
+        <div style={{ height: 18, background: "#252833", borderRadius: 9, overflow: "hidden" }}>
+          <div
+            style={{
+              width: barWidth + "%",
+              height: "100%",
+              borderRadius: 9,
+              transition: "all 0.5s ease",
+              background: isWrong ? "linear-gradient(to right,#B91C1C,#EF4444)" : "linear-gradient(to right,#065F46,#10B981)",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+          <span style={{ color: "#10B981", fontSize: "0.7rem", fontFamily: "'JetBrains Mono'" }}>0 (perfect)</span>
+          <span style={{ color: "#EF4444", fontSize: "0.7rem", fontFamily: "'JetBrains Mono'" }}>10 (terrible)</span>
+        </div>
+      </div>
+      <div style={{ marginTop: "0.85rem", padding: "0.7rem 1rem", background: isWrong ? "#EF444411" : "#10B98111", borderRadius: 8, border: "1px solid " + lossColor + "22" }}>
+        <span style={{ color: lossColor, fontSize: "0.85rem" }}>
+          {isWrong ? "High loss = prediction is far off. The model needs to adjust its weights significantly." : "Low loss = prediction is close. Small or no weight adjustment needed."}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Backprop Demo
+// ============================================================
+function BackpropDemo() {
+  const [showBlame, setShowBlame] = useState(false);
+  const layers = [
+    { label: ["Embedding", "Table"], blame: 40, color: "#3B82F6", x: 30 },
+    { label: ["Attention", "Weights"], blame: 25, color: "#A78BFA", x: 170 },
+    { label: ["Feed-Forward", "Weights"], blame: 35, color: "#10B981", x: 310 },
+  ];
+
+  return (
+    <div style={{ background: "#1A1D27", borderRadius: 14, padding: "1.75rem", border: "1px solid #2E3240", margin: "1.5rem 0" }}>
+      <div style={{ color: "#A78BFA", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>Visual</div>
+      <div style={{ color: "#F0F4F8", fontSize: "1.15rem", fontWeight: 700, fontFamily: "'Libre Baskerville',serif", marginBottom: 4 }}>Backpropagation: "Who's to Blame?"</div>
+      <div style={{ color: "#94A3B8", fontSize: "0.82rem", marginBottom: "1rem" }}>The model predicted wrong. Backpropagation traces backward to find which weights caused the error.</div>
+      <button
+        onClick={() => setShowBlame((v) => !v)}
+        style={{
+          padding: "7px 18px",
+          background: showBlame ? "#252833" : "#F59E0B",
+          color: showBlame ? "#94A3B8" : "#111",
+          border: showBlame ? "1px solid #404552" : "none",
+          borderRadius: 7,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontSize: "0.82rem",
+          marginBottom: "1rem",
+        }}
+      >
+        {showBlame ? "Reset" : "Trace Blame Backward"}
+      </button>
+
+      <svg viewBox="0 0 460 160" width="100%" style={{ background: "#12141C", borderRadius: 10, border: "1px solid #2E3240" }}>
+        <rect x={410} y={45} width={40} height={60} rx={6} fill="#EF444420" stroke="#EF4444" strokeWidth={1} />
+        <text x={430} y={72} fill="#EF4444" fontSize={9} textAnchor="middle" fontFamily="DM Sans" fontWeight={700}>
+          Output
+        </text>
+        <text x={430} y={87} fill="#EF4444" fontSize={8} textAnchor="middle" fontFamily="JetBrains Mono">
+          "banana"
+        </text>
+        <text x={430} y={100} fill="#EF4444" fontSize={8} textAnchor="middle" fontFamily="DM Sans">
+          WRONG
+        </text>
+
+        {layers.map((l, i) => (
+          <g key={i}>
+            <rect
+              x={l.x}
+              y={40}
+              width={120}
+              height={70}
+              rx={8}
+              fill={l.color + (showBlame ? "25" : "10")}
+              stroke={l.color}
+              strokeWidth={showBlame ? 1.5 : 0.5}
+              style={{ transition: "all 0.6s ease" }}
+            />
+            {l.label.map((line, li) => (
+              <text key={li} x={l.x + 60} y={68 + li * 15} fill={l.color} fontSize={10} textAnchor="middle" fontFamily="DM Sans" fontWeight={600}>
+                {line}
+              </text>
+            ))}
+            {showBlame && (
+              <>
+                <rect x={l.x + 35} y={95} width={50} height={20} rx={4} fill={l.color} opacity={0.9} />
+                <text x={l.x + 60} y={109} fill="#fff" fontSize={10} textAnchor="middle" fontFamily="JetBrains Mono" fontWeight={700}>
+                  {l.blame}%
+                </text>
+              </>
+            )}
+            {i < layers.length - 1 && <line x1={l.x + 120} y1={75} x2={layers[i + 1].x} y2={75} stroke="#4B5563" strokeWidth={1} />}
+          </g>
+        ))}
+
+        <line
+          x1={430}
+          y1={75}
+          x2={410}
+          y2={75}
+          stroke={showBlame ? "#EF4444" : "#4B5563"}
+          strokeWidth={showBlame ? 2 : 1}
+          strokeDasharray={showBlame ? "6,3" : "none"}
+          style={{ transition: "all 0.4s" }}
+        />
+        {showBlame && (
+          <text x={230} y={28} fill="#EF4444" fontSize={10} textAnchor="middle" fontFamily="DM Sans" fontWeight={600}>
+            ← Blame flows backward ←
+          </text>
+        )}
+      </svg>
+
+      <div style={{ marginTop: "0.85rem", padding: "0.75rem 1rem", background: "#A78BFA11", borderRadius: 8, border: "1px solid #A78BFA22" }}>
+        <span style={{ color: "#C4B5FD", fontSize: "0.85rem" }}>
+          <strong>Analogy:</strong> A restaurant gets a bad review. The manager traces backward: Was it the waiter (presentation)? The chef (cooking)? The supplier (ingredients)? Each gets a
+          "blame score." Backpropagation does exactly this for every weight in the model.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Learning Rate Demo
+// ============================================================
+function LearningRateDemo() {
+  const [lr, setLr] = useState("right");
+  const config = {
+    high: { label: 'LR = 0.1 (too high)', color: "#EF4444", desc: "Bouncing over the valley — never converges" },
+    low: { label: "LR = 0.00001 (too low)", color: "#F59E0B", desc: "Barely moving — will take forever to reach the bottom" },
+    right: { label: "LR = 0.001 (just right)", color: "#10B981", desc: "Smooth descent into the valley — optimal training" },
+  };
+  const c = config[lr];
+  const pathD = "M 40,30 Q 100,30 140,100 Q 180,170 230,170 Q 280,170 320,100 Q 360,30 420,30";
+  const ballPositions = {
+    high: [
+      { x: 100, y: 45 },
+      { x: 320, y: 100 },
+      { x: 130, y: 80 },
+      { x: 280, y: 120 },
+      { x: 180, y: 140 },
+    ],
+    low: [
+      { x: 100, y: 45 },
+      { x: 115, y: 55 },
+      { x: 125, y: 65 },
+    ],
+    right: [
+      { x: 100, y: 45 },
+      { x: 145, y: 100 },
+      { x: 185, y: 150 },
+      { x: 215, y: 168 },
+      { x: 230, y: 170 },
+    ],
+  };
+
+  return (
+    <div style={{ background: "#1A1D27", borderRadius: 14, padding: "1.75rem", border: "1px solid #2E3240", margin: "1.5rem 0" }}>
+      <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>Visual</div>
+      <div style={{ color: "#F0F4F8", fontSize: "1.15rem", fontWeight: 700, fontFamily: "'Libre Baskerville',serif", marginBottom: 4 }}>Learning Rate: "How Big a Step?"</div>
+      <div style={{ color: "#94A3B8", fontSize: "0.82rem", marginBottom: "1rem" }}>How much should we adjust weights each time? The learning rate controls the step size.</div>
+      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" }}>
+        {Object.entries(config).map(([key, val]) => (
+          <button
+            key={key}
+            onClick={() => setLr(key)}
+            style={{
+              padding: "7px 16px",
+              borderRadius: 7,
+              border: lr === key ? "1px solid " + val.color : "1px solid #404552",
+              background: lr === key ? val.color + "1A" : "#252833",
+              color: lr === key ? val.color : "#94A3B8",
+              cursor: "pointer",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              transition: "all 0.2s",
+            }}
+          >
+            {val.label}
+          </button>
+        ))}
+      </div>
+      <svg viewBox="0 0 460 190" width="100%" style={{ background: "#12141C", borderRadius: 10, border: "1px solid #2E3240" }}>
+        <path d={pathD} fill="none" stroke="#4B5563" strokeWidth={2} />
+        <text x={230} y={188} fill="#6B7280" fontSize={9} textAnchor="middle" fontFamily="DM Sans">
+          Weights
+        </text>
+        <text x={15} y={100} fill="#6B7280" fontSize={9} textAnchor="middle" fontFamily="DM Sans" transform="rotate(-90,15,100)">
+          Loss
+        </text>
+        <text x={230} y={163} fill="#10B981" fontSize={8} textAnchor="middle" fontFamily="JetBrains Mono" opacity={0.5}>
+          optimal
+        </text>
+        {ballPositions[lr].map((pos, i) => (
+          <g key={i}>
+            {i > 0 && (
+              <line
+                x1={ballPositions[lr][i - 1].x}
+                y1={ballPositions[lr][i - 1].y}
+                x2={pos.x}
+                y2={pos.y}
+                stroke={c.color}
+                strokeWidth={1}
+                strokeDasharray="3,3"
+                opacity={0.4}
+              />
+            )}
+            <circle cx={pos.x} cy={pos.y} r={i === ballPositions[lr].length - 1 ? 7 : 4} fill={c.color} opacity={i === ballPositions[lr].length - 1 ? 1 : 0.3 + i * 0.15} />
+            {i === 0 && (
+              <text x={pos.x} y={pos.y - 12} fill="#94A3B8" fontSize={8} textAnchor="middle" fontFamily="DM Sans">
+                Start
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      <div style={{ marginTop: "0.85rem", padding: "0.7rem 1rem", background: c.color + "11", borderRadius: 8, border: "1px solid " + c.color + "22" }}>
+        <span style={{ color: c.color, fontSize: "0.85rem", fontWeight: 600 }}>{c.desc}</span>
+      </div>
+      <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "#F59E0B11", borderRadius: 8, border: "1px solid #F59E0B22" }}>
+        <span style={{ color: "#FCD34D", fontSize: "0.85rem" }}>
+          <strong>Analogy:</strong> Walking downhill in thick fog to find the lowest valley. Too big steps — you jump right over it. Too small — you will get there next year. Learning
+          rate is your step size.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // INTERACTIVE: Attention Demo
 // ============================================================
 function AttentionDemo() {
@@ -1138,53 +1516,124 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <P>The core idea: make the model <S color="var(--info-color)">predict the next token</S>. But how does a model "know" which token should come next?</P>
 
-          <P>Every token is mapped to a point in a multi-dimensional space — think of a giant map where every word has a location. The model's job during training is to <S color="var(--build-color)">move related tokens closer together</S> in this space. "Cat" should be near "kitten." "King" should be near "queen." "Banana" should be far from both.</P>
+          <P>Every token is mapped to a <S>point in a multi-dimensional space</S> — think of a giant map where every word has a location. The model's job during training is to <S color="var(--build-color)">move related tokens closer together</S> in this space. "Cat" should be near "kitten." "King" should be near "queen." "Banana" should be far from both.</P>
 
-          <P>But how do you move a point in space? Think of 2D coordinates. A token sits at <A color="var(--info-color)">[3, 4]</A>. To move it to <A color="var(--accent)">[6, 8]</A>, you multiply by 2: <code style={{fontFamily:"'JetBrains Mono', monospace",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#E2E8F0",fontSize:"0.88rem"}}>[3×2, 4×2] = [6, 8]</code>. That multiplier — <S color="var(--build-color)">2</S> — is a weight.</P>
+          <P>But how do you move a point in space? Think of 2D coordinates. A token sits at <span style={{fontFamily:"'JetBrains Mono',monospace",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#60A5FA",fontSize:"0.9rem"}}>[2, 3]</span>. To move it to <span style={{fontFamily:"'JetBrains Mono',monospace",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#10B981",fontSize:"0.9rem"}}>[6, 9]</span>, multiply each coordinate by 3: <span style={{fontFamily:"'JetBrains Mono',monospace",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#E2E8F0",fontSize:"0.9rem"}}>[2×3, 3×3] = [6, 9]</span>. That multiplier — <S color="var(--build-color)">3</S> — is a <S color="var(--build-color)">weight</S>.</P>
 
-          <Callout color="var(--build-color)" icon="🔑">
-            <S>Weights are just numbers that move tokens around in space.</S> The right weights pull related words together. The wrong weights push them apart. Training is the process of finding the right weights.
-          </Callout>
+          <Callout color="var(--build-color)" icon="🔑"><S>Weights are just numbers that move tokens around in space.</S> The right weights pull related words together. The wrong weights push them apart or overshoot. Training is the process of finding the right weights — billions of them.</Callout>
 
           <WeightsDemo/>
 
-          <P>In reality, the model uses <S>1,536 to 12,288 dimensions</S>, not 2. And instead of one weight, there are billions — but the principle is identical: multiply coordinates by weights to reposition tokens.</P>
+          <P>In reality, the model uses <S>1,536 to 12,288 dimensions</S>, not 2. And instead of one weight, there are <S>billions</S> — but the principle is identical: multiply coordinates by weights to reposition tokens.</P>
 
-          <P>The complete training loop:</P>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>The Training Loop</div>
 
-          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0 1.25rem"}}>
-            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
-              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>1</div>
-              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>All tokens start at <span style={{color:"#FBBF24",fontWeight:800}}>RANDOM</span> positions in space</div>
+          <P>Now that you know what weights are, here is how the model learns the <S>right</S> weights. It is a 5-step loop repeated trillions of times:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:0,margin:"1.25rem 0"}}>
+            {[
+              {num:"1", title:"Random Start", desc:"All tokens are placed at random positions in space. The model knows nothing — its weights are random numbers.", color:"#6B7280", icon:"🎲"},
+              {num:"2", title:"Make a Prediction", desc:"Feed the model a sentence like \"The cat sat on the\" and ask it: what comes next? With random weights, it guesses randomly — maybe \"banana.\"", color:"var(--info-color)", icon:"🤔"},
+              {num:"3", title:"Measure the Error (Loss)", desc:"How wrong was the prediction? Loss is a single number — like a golf score, lower is better. Predicting \"banana\" when the answer was \"mat\" = high loss.", color:"#EF4444", icon:"📏"},
+              {num:"4", title:"Trace the Blame (Backpropagation)", desc:"There are billions of weights. Which ones caused the bad prediction? Backpropagation traces backward from the error, assigning a \"blame score\" to each weight.", color:"#A78BFA", icon:"🔍"},
+              {num:"5", title:"Adjust Weights (Learning Rate)", desc:"Now adjust each weight based on its blame — but not too much and not too little. The learning rate controls the step size.", color:"#F59E0B", icon:"🔧"},
+            ].map((step, i) => (
+              <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+                  <div style={{width:36,height:36,borderRadius:"50%",background:step.color,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.95rem"}}>{step.num}</div>
+                  {i < 4 && <div style={{width:2,height:40,background:"var(--border)"}}/>}
+                </div>
+                <div style={{paddingBottom:i<4?16:0}}>
+                  <div style={{fontWeight:700,fontSize:"1rem",color:"var(--text)",marginBottom:2}}>{step.icon} {step.title}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.92rem",lineHeight:1.7}}>{step.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Callout icon="🔄">This entire loop — predict, measure loss, trace blame, adjust weights — happens <S color="var(--build-color)">trillions of times</S>. With each iteration, the model's predictions get slightly better.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>What Emerges from Training</div>
+
+          <P>After trillions of iterations, three sets of weights have been learned — each storing a different kind of knowledge:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:12,margin:"1rem 0"}}>
+            <div style={{padding:"1rem 1.25rem",background:"var(--info-bg)",border:"1px solid var(--info-border)",borderRadius:10,borderLeft:"4px solid var(--info-color)"}}>
+              <div style={{color:"var(--info-color)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Embedding Table</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Positions similar words close together in space. "King" near "queen." "Dog" near "puppy." This is the model's vocabulary of meaning.</div>
             </div>
-            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
-              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>2</div>
-              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Model tries to predict the next token</div>
+            <div style={{padding:"1rem 1.25rem",background:"var(--purple-bg)",border:"1px solid #C4B5FD",borderRadius:10,borderLeft:"4px solid var(--purple)"}}>
+              <div style={{color:"var(--purple)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Attention Weights</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Learn which words to connect across a sentence. "Bank" looks at "river" to know it means riverbank, not a financial institution.</div>
             </div>
-            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
-              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>3</div>
-              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Gets it wrong → measures <span style={{color:"#94A3B8"}}>"how wrong"</span> (loss)</div>
-            </div>
-            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
-              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>4</div>
-              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Adjusts weights to move tokens to better positions</div>
-            </div>
-            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
-              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>5</div>
-              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Repeat trillions of times</div>
+            <div style={{padding:"1rem 1.25rem",background:"var(--accent-light)",border:"1px solid var(--work-border)",borderRadius:10,borderLeft:"4px solid var(--accent)"}}>
+              <div style={{color:"var(--accent)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Feed-Forward Weights</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Absorb factual knowledge. "Paris is the capital of France" gets encoded in these weights through repeated exposure.</div>
             </div>
           </div>
 
-          <P>Over trillions of examples, three things emerge:</P>
-          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"0.6rem 0 1.1rem"}}>
-            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- The <S color="var(--info-color)">embedding table</S> positions similar words close together (shown in demo below)</div>
-            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- <S color="var(--purple)">Attention weights</S> learn to connect related words across a sentence</div>
-            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- <S color="var(--accent)">Feed-forward weights</S> absorb facts and knowledge</div>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>The Scale of Training</div>
+
+          <P>This process is not something you run on a laptop. Training a frontier LLM is one of the most computationally expensive tasks humans have ever attempted.</P>
+
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",margin:"1.25rem 0"}}>
+            {[
+              {icon:"📚", label:"Training Data", value:"~15T tokens", sub:"Books, web, code, Wikipedia, papers", color:"var(--info-color)", bg:"var(--info-bg)"},
+              {icon:"🖥️", label:"Hardware", value:"10,000+ GPUs", sub:"Running in parallel for months", color:"var(--purple)", bg:"var(--purple-bg)"},
+              {icon:"⏱️", label:"Duration", value:"3 – 6 months", sub:"Of continuous computation", color:"var(--build-color)", bg:"var(--build-bg)"},
+              {icon:"💰", label:"Cost", value:"$10M – $100M+", sub:"For a frontier model", color:"var(--red)", bg:"var(--red-bg)"},
+            ].map((s, i) => (
+              <div key={i} style={{flex:"1 1 140px",minWidth:140,padding:"1rem",background:s.bg,border:"1px solid "+s.color+"22",borderRadius:10,textAlign:"center"}}>
+                <div style={{fontSize:"1.5rem",marginBottom:4}}>{s.icon}</div>
+                <div style={{color:s.color,fontWeight:700,fontSize:"0.82rem",marginBottom:2}}>{s.label}</div>
+                <div style={{color:"var(--text)",fontWeight:700,fontSize:"1.05rem",fontFamily:"'JetBrains Mono',monospace"}}>{s.value}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.75rem",marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
           </div>
 
-          <EmbeddingViz/>
+          <Callout color="var(--build-color)" icon="⚠️">What goes in shapes what comes out. Trained mostly on English? The model is better at English. Trained on lots of code? It can write code. This is why <S>training data quality and bias</S> are critical concerns.</Callout>
 
-          <Callout color="var(--info-color)">After training, everything is <S>frozen</S>. The model never learns again — the weights that were learned are locked in place forever.</Callout>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>From Text Predictor to Helpful Assistant</div>
+
+          <P>Everything above is called <S color="var(--build-color)">pre-training</S> — the model learns to predict the next token. The result is a raw text completer. You type "The capital of France is" and it predicts "Paris." But it does not <S>follow instructions</S> or <S>have a conversation</S>.</P>
+
+          <P>So how does ChatGPT or Claude go from "autocomplete" to "helpful assistant"? Through two additional stages of training called <S color="var(--info-color)">fine-tuning</S>:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:0,margin:"1.25rem 0"}}>
+            <div style={{background:"white",borderRadius:12,border:"1px solid var(--build-border)",padding:"1.2rem",borderLeft:"4px solid var(--build-color)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:"1.3rem"}}>📚</span>
+                <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--build-color)",fontWeight:700}}>Stage 1: Pre-training</span>
+              </div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Learn language from trillions of tokens. Next-token prediction on the entire internet.</div>
+              <div style={{display:"inline-block",padding:"3px 10px",background:"var(--build-bg)",borderRadius:5,fontSize:"0.78rem",color:"var(--build-color)",fontWeight:600}}>Output: Raw text predictor</div>
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.2rem",padding:"4px 0"}}>↓</div>
+            <div style={{background:"white",borderRadius:12,border:"1px solid var(--info-border)",padding:"1.2rem",borderLeft:"4px solid var(--info-color)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:"1.3rem"}}>📋</span>
+                <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--info-color)",fontWeight:700}}>Stage 2: Instruction Tuning (SFT)</span>
+              </div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Human trainers write thousands of (instruction, ideal response) pairs. The model learns the format of being helpful.</div>
+              <div style={{display:"inline-block",padding:"3px 10px",background:"var(--info-bg)",borderRadius:5,fontSize:"0.78rem",color:"var(--info-color)",fontWeight:600}}>Output: Helpful but rough</div>
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.2rem",padding:"4px 0"}}>↓</div>
+            <div style={{background:"white",borderRadius:12,border:"1px solid var(--work-border)",padding:"1.2rem",borderLeft:"4px solid var(--accent)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:"1.3rem"}}>👍</span>
+                <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--accent)",fontWeight:700}}>Stage 3: RLHF</span>
+              </div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Humans rank multiple model responses from best to worst. The model learns to prefer responses humans rated highly.</div>
+              <div style={{display:"inline-block",padding:"3px 10px",background:"var(--work-bg)",borderRadius:5,fontSize:"0.78rem",color:"var(--accent)",fontWeight:600}}>Output: ChatGPT / Claude</div>
+            </div>
+          </div>
+
+          <Callout color="var(--build-color)" icon="🎓"><S>Analogy:</S> Pre-training is like getting a medical degree — you absorb everything in the textbooks. Fine-tuning is residency — you learn bedside manner, how to talk to patients, when to refer to a specialist. Same knowledge, but now you know how to <S>apply it helpfully</S>.</Callout>
+
+          <Callout color="var(--info-color)" icon="📘">This entire Part 1 covers <S>pre-training</S>. Fine-tuning (SFT and RLHF) will be covered in detail in a later module.</Callout>
+
+          <Callout color="var(--info-color)">After all training stages (pre-training + fine-tuning), everything is <S>frozen forever</S>. The model never learns again — the weights that were learned are locked in place. When you use ChatGPT or Claude, you are running a frozen snapshot.</Callout>
         </section>
 
         <SectionDivider part="2" title="How the Model Works" sub="The Inference Story" color="var(--work-color)"/>
