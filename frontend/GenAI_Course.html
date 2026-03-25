@@ -496,6 +496,319 @@ function EmbeddingViz() {
 }
 
 // ============================================================
+// INTERACTIVE: Weights Demo
+// ============================================================
+function WeightsDemo() {
+  const gridW = 420;
+  const gridH = 320;
+  const padL = 60;
+  const padR = 20;
+  const padT = 25;
+  const padB = 55;
+  const xMax = 11; // supports weight=5 -> x=10
+  const yMax = 16; // supports weight=5 -> y=15
+
+  const start = { x: 2, y: 3 };
+  const target = { x: 6, y: 9 };
+  const kitten = { x: 6.5, y: 9.5 };
+  const [weightChoice, setWeightChoice] = useState(null); // null | 1 | 3 | 5
+
+  const mul = weightChoice === null ? 1 : weightChoice;
+  const pos = { x: start.x * mul, y: start.y * mul };
+
+  const scaleX = (x) => padL + ((gridW - padL - padR) * x) / xMax;
+  const scaleY = (y) => (gridH - padB) - ((gridH - padT - padB) * y) / yMax;
+
+  const catCx = scaleX(pos.x);
+  const catCy = scaleY(pos.y);
+  const kittenCx = scaleX(kitten.x);
+  const kittenCy = scaleY(kitten.y);
+  const targetCx = scaleX(target.x);
+  const targetCy = scaleY(target.y);
+
+  const dotColor = weightChoice === 5 ? "#F87171" : "#60A5FA";
+  const isSuccess = weightChoice === 3;
+  const isError = weightChoice === 5;
+
+  const dotBadgeX = Math.min(catCx + 8, gridW - 95);
+  const dotBadgeY = Math.max(catCy - 18, 8);
+
+  // Part B
+  const [isTrained, setIsTrained] = useState(false);
+  const trainW = 420;
+  const trainH = 280;
+  const trainPad = 20;
+
+  const makeRandomPositions = () => {
+    const rand = (min, max) => min + Math.random() * (max - min);
+    return {
+      king: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      queen: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      prince: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      princess: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      dog: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      cat: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      puppy: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      kitten: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      pizza: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      pasta: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+      sushi: { x: rand(trainPad, trainW - trainPad), y: rand(trainPad, trainH - trainPad) },
+    };
+  };
+
+  const [randomPositions, setRandomPositions] = useState(() => makeRandomPositions());
+
+  useEffect(() => {
+    if (!isTrained) setRandomPositions(makeRandomPositions());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTrained]);
+
+  const clusterTargets = {
+    king: { x: 320, y: 65 },
+    queen: { x: 360, y: 85 },
+    prince: { x: 305, y: 105 },
+    princess: { x: 350, y: 125 },
+    dog: { x: 95, y: 205 },
+    cat: { x: 140, y: 225 },
+    puppy: { x: 120, y: 255 },
+    kitten: { x: 80, y: 245 },
+    pizza: { x: 165, y: 155 },
+    pasta: { x: 210, y: 170 },
+    sushi: { x: 250, y: 145 },
+  };
+
+  const groups = [
+    { word: "king", color: "#2563EB" },
+    { word: "queen", color: "#3B82F6" },
+    { word: "prince", color: "#60A5FA" },
+    { word: "princess", color: "#93C5FD" },
+    { word: "dog", color: "#059669" },
+    { word: "cat", color: "#10B981" },
+    { word: "puppy", color: "#34D399" },
+    { word: "kitten", color: "#6EE7B7" },
+    { word: "pizza", color: "#D97706" },
+    { word: "pasta", color: "#F59E0B" },
+    { word: "sushi", color: "#FBBF24" },
+  ];
+
+  const coordsForWord = (w) => (isTrained ? clusterTargets[w] : randomPositions[w]);
+
+  const trainTrain = () => setIsTrained(true);
+  const trainReset = () => {
+    setIsTrained(false);
+    setRandomPositions(makeRandomPositions());
+  };
+
+  const monoStyle = {
+    fontFamily: "'JetBrains Mono', monospace",
+    background: "#252833",
+    padding: "2px 8px",
+    borderRadius: 4,
+    color: "#E2E8F0",
+    fontSize: "0.88rem",
+  };
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.25rem 0 1.5rem"}}>
+      <div style={{color:"#F59E0B",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.25rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Why Weights Matter</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.05rem"}}>Moving a point by multiplying its coordinates</div>
+
+      <div style={{background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"1rem",marginBottom:"1.25rem"}}>
+        {/* Part A */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10}}>
+          <div style={{color:"#94A3B8",fontSize:"0.72rem",letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Moving a Token with Weights</div>
+          <div style={{fontFamily:"'JetBrains Mono'",color:"#CBD5E1",fontSize:"0.82rem"}}>State: {weightChoice === null ? "null" : weightChoice}</div>
+        </div>
+
+        <svg width={gridW} height={gridH} style={{width:"100%",maxWidth:gridW,display:"block",margin:"0 auto"}}>
+          {/* grid */}
+          {Array.from({ length: xMax + 1 }, (_, i) => i).map((i) => (
+            i % 1 === 0 && (
+              <line
+                key={"v" + i}
+                x1={scaleX(i)}
+                y1={padT}
+                x2={scaleX(i)}
+                y2={gridH - padB}
+                stroke="#263043"
+                strokeOpacity={0.45}
+                strokeWidth={1}
+              />
+            )
+          ))}
+          {Array.from({ length: yMax + 1 }, (_, i) => i).map((i) => (
+            i % 2 === 0 && (
+              <line
+                key={"h" + i}
+                x1={padL}
+                y1={scaleY(i)}
+                x2={gridW - padR}
+                y2={scaleY(i)}
+                stroke="#263043"
+                strokeOpacity={0.45}
+                strokeWidth={1}
+              />
+            )
+          ))}
+
+          {/* axes */}
+          <line x1={padL} y1={gridH - padB} x2={gridW - padR} y2={gridH - padB} stroke="#334155" strokeWidth={1} />
+          <line x1={padL} y1={padT} x2={padL} y2={gridH - padB} stroke="#334155" strokeWidth={1} />
+
+          <text x={(padL + (gridW - padR)) / 2} y={gridH - 16} fill="#94A3B8" fontSize="12" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+            Dimension 1
+          </text>
+          <text
+            x={18}
+            y={(padT + (gridH - padB)) / 2}
+            fill="#94A3B8"
+            fontSize="12"
+            fontFamily="'JetBrains Mono', monospace"
+            textAnchor="middle"
+            transform={`rotate(-90 18 ${(padT + (gridH - padB)) / 2})`}
+          >
+            Dimension 2
+          </text>
+
+          {/* target zone */}
+          <circle
+            cx={targetCx}
+            cy={targetCy}
+            r={Math.max(18, (Math.min(gridW, gridH) / 18) * 2)}
+            fill="#10B98122"
+            stroke="#10B98155"
+            strokeWidth={1}
+          />
+          <text x={targetCx} y={targetCy - 26} fill="#34D399" fontSize="12" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+            Target zone (closer to 'kitten')
+          </text>
+
+          {/* kitten */}
+          <circle cx={kittenCx} cy={kittenCy} r={4.5} fill="#6EE7B7" opacity={0.45} />
+
+          {/* too-much red zone */}
+          {isError && (
+            <rect
+              x={scaleX(8)}
+              y={scaleY(12)}
+              width={gridW - padR - scaleX(8)}
+              height={scaleY(0) - scaleY(12)}
+              fill="#EF44441A"
+              stroke="#EF444455"
+              strokeDasharray="4 3"
+              opacity={0.9}
+            />
+          )}
+
+          {/* cat */}
+          <circle
+            cx={catCx}
+            cy={catCy}
+            r={8}
+            fill={dotColor}
+            style={{ transition: "all 0.5s ease" }}
+          />
+
+          {/* coordinate badge */}
+          <g style={{ transition: "all 0.5s ease" }} transform={`translate(${dotBadgeX}, ${dotBadgeY})`}>
+            <rect x={0} y={0} width={70} height={22} rx={6} fill="#111827" stroke="#2E3240" />
+            <text x={35} y={15} fill="#E2E8F0" fontSize="12" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+              [{pos.x.toFixed(1).replace(".0","")},{pos.y.toFixed(1).replace(".0","")}]
+            </text>
+          </g>
+        </svg>
+
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",margin:"1rem 0 0.75rem"}}>
+          <button onClick={()=>setWeightChoice(1)} style={{padding:"9px 12px",borderRadius:8,border:"1px solid #404552",background:weightChoice===1?"#252833":"transparent",color:weightChoice===1?"#E2E8F0":"#94A3B8",cursor:"pointer",fontSize:"0.82rem",fontWeight:700}}>
+            Weight = 1 (no change)
+          </button>
+          <button onClick={()=>setWeightChoice(3)} style={{padding:"9px 12px",borderRadius:8,border:"1px solid #404552",background:weightChoice===3?"#252833":"transparent",color:weightChoice===3?"#E2E8F0":"#94A3B8",cursor:"pointer",fontSize:"0.82rem",fontWeight:700}}>
+            Weight = 3 (just right)
+          </button>
+          <button onClick={()=>setWeightChoice(5)} style={{padding:"9px 12px",borderRadius:8,border:"1px solid #404552",background:weightChoice===5?"#252833":"transparent",color:weightChoice===5?"#E2E8F0":"#94A3B8",cursor:"pointer",fontSize:"0.82rem",fontWeight:700}}>
+            Weight = 5 (too much)
+          </button>
+        </div>
+
+        <div style={{color:"#CBD5E1",fontFamily:"'JetBrains Mono'",fontSize:"0.86rem"}}>
+          Current weight: <span style={{color:isSuccess ? "#34D399" : isError ? "#F87171" : "#E2E8F0",fontWeight:800}}>{weightChoice === null ? "—" : weightChoice}</span>
+          {"  "}•{"  "}
+          Calculation: <span style={{color:"#E2E8F0"}}>[{start.x}×{mul}, {start.y}×{mul}] = [{pos.x}, {pos.y}]</span>
+        </div>
+
+        {isSuccess && (
+          <div style={{marginTop:10,padding:"0.75rem 0.9rem",background:"#10B98114",border:"1px solid #10B98144",borderRadius:10,color:"#E2E8F0",fontSize:"0.9rem"}}>
+            <span style={{color:"#34D399",fontWeight:800,marginRight:8}}>Success</span>[{start.x}×3, {start.y}×3] = [6, 9] (lands in the green zone)
+          </div>
+        )}
+        {isError && (
+          <div style={{marginTop:10,padding:"0.75rem 0.9rem",background:"#EF444414",border:"1px solid #EF444444",borderRadius:10,color:"#E2E8F0",fontSize:"0.9rem"}}>
+            <span style={{color:"#F87171",fontWeight:800,marginRight:8}}>Error</span>[{start.x}×5, {start.y}×5] = [10, 15] (too far — outside the target zone)
+          </div>
+        )}
+      </div>
+
+      {/* Part B */}
+      <div style={{borderTop:"1px solid #2E3240",paddingTop:"1.25rem"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10}}>
+          <div>
+            <div style={{color:"#F0F4F8",fontWeight:800,fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem"}}>After billions of weight adjustments...</div>
+            <div style={{color:"#94A3B8",fontSize:"0.82rem",marginTop:4}}>Words drift until meaning-based clusters emerge.</div>
+          </div>
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+            <button onClick={trainTrain} style={{padding:"9px 14px",background:"#F59E0B",color:"#111",border:"none",borderRadius:8,fontWeight:800,cursor:"pointer",fontSize:"0.85rem"}}>Train Model</button>
+            <button onClick={trainReset} style={{padding:"9px 14px",background:"transparent",color:"#94A3B8",border:"1px solid #404552",borderRadius:8,fontWeight:800,cursor:"pointer",fontSize:"0.85rem"}}>Reset</button>
+          </div>
+        </div>
+
+        <svg width={trainW} height={trainH} style={{width:"100%",display:"block",margin:"0 auto",background:"#12141C",borderRadius:12,border:"1px solid #2E3240"}}>
+          {isTrained && (
+            <>
+              <circle cx={345} cy={85} r={80} fill="none" stroke="#60A5FA" strokeOpacity={0.35} strokeDasharray="6 5" />
+              <text x={345} y={85} fill="#60A5FA" fontSize="13" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                Royalty
+              </text>
+
+              <circle cx={120} cy={215} r={85} fill="none" stroke="#34D399" strokeOpacity={0.35} strokeDasharray="6 5" />
+              <text x={120} y={215} fill="#34D399" fontSize="13" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                Animals
+              </text>
+
+              <circle cx={215} cy={160} r={75} fill="none" stroke="#F59E0B" strokeOpacity={0.35} strokeDasharray="6 5" />
+              <text x={215} y={160} fill="#F59E0B" fontSize="13" fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                Food
+              </text>
+            </>
+          )}
+
+          {groups.map((g) => {
+            const c = coordsForWord(g.word);
+            const cx = c.x;
+            const cy = c.y;
+            return (
+              <g key={g.word}>
+                <circle cx={cx} cy={cy} r={6} fill={g.color} opacity={isTrained ? 0.95 : 0.9} style={{ transition: "all 1s ease" }} />
+                <text
+                  x={cx + 9}
+                  y={cy + 4}
+                  fill={g.color}
+                  fontSize="13"
+                  fontFamily="'JetBrains Mono', monospace"
+                  style={{ transition: "all 1s ease" }}
+                >
+                  {g.word}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // INTERACTIVE: Attention Demo
 // ============================================================
 function AttentionDemo() {
@@ -821,14 +1134,57 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
           <TrainedTokenizerDemo/>
         </section>
 
-        <section id="ch3"><ChH num="3" title="Training the Model" sub="Learning meaning, grammar, and facts" color="var(--build-color)"/>
-          <P>The core idea: <S color="var(--info-color)">predict the next token</S>, get it wrong, adjust weights. Repeat trillions of times.</P>
-          <CB>{`Input:  "The cat sat on the"  →  Target: "mat"
-Model predicts: "dog" ← WRONG → adjust weights
-... repeat TRILLIONS of times ...`}</CB>
-          <P>Over trillions of examples, the <S color="var(--info-color)">embedding table</S> positions similar words close together. <S color="var(--purple)">Attention weights</S> learn to connect related words. <S color="var(--accent)">Feed-forward weights</S> absorb facts.</P>
+        <section id="ch3"><ChH num="3" title="Training the Model" sub="Learning meaning through weight adjustment" color="var(--build-color)"/>
+
+          <P>The core idea: make the model <S color="var(--info-color)">predict the next token</S>. But how does a model "know" which token should come next?</P>
+
+          <P>Every token is mapped to a point in a multi-dimensional space — think of a giant map where every word has a location. The model's job during training is to <S color="var(--build-color)">move related tokens closer together</S> in this space. "Cat" should be near "kitten." "King" should be near "queen." "Banana" should be far from both.</P>
+
+          <P>But how do you move a point in space? Think of 2D coordinates. A token sits at <A color="var(--info-color)">[3, 4]</A>. To move it to <A color="var(--accent)">[6, 8]</A>, you multiply by 2: <code style={{fontFamily:"'JetBrains Mono', monospace",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#E2E8F0",fontSize:"0.88rem"}}>[3×2, 4×2] = [6, 8]</code>. That multiplier — <S color="var(--build-color)">2</S> — is a weight.</P>
+
+          <Callout color="var(--build-color)" icon="🔑">
+            <S>Weights are just numbers that move tokens around in space.</S> The right weights pull related words together. The wrong weights push them apart. Training is the process of finding the right weights.
+          </Callout>
+
+          <WeightsDemo/>
+
+          <P>In reality, the model uses <S>1,536 to 12,288 dimensions</S>, not 2. And instead of one weight, there are billions — but the principle is identical: multiply coordinates by weights to reposition tokens.</P>
+
+          <P>The complete training loop:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0 1.25rem"}}>
+            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
+              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>1</div>
+              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>All tokens start at <span style={{color:"#FBBF24",fontWeight:800}}>RANDOM</span> positions in space</div>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
+              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>2</div>
+              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Model tries to predict the next token</div>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
+              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>3</div>
+              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Gets it wrong → measures <span style={{color:"#94A3B8"}}>"how wrong"</span> (loss)</div>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
+              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>4</div>
+              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Adjusts weights to move tokens to better positions</div>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"flex-start",background:"#12141C",border:"1px solid #2E3240",borderRadius:12,padding:"0.85rem 1rem"}}>
+              <div style={{width:28,height:28,borderRadius:999,background:"var(--build-color)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono', monospace",fontWeight:800,fontSize:"0.82rem"}}>5</div>
+              <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.7}}>Repeat trillions of times</div>
+            </div>
+          </div>
+
+          <P>Over trillions of examples, three things emerge:</P>
+          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"0.6rem 0 1.1rem"}}>
+            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- The <S color="var(--info-color)">embedding table</S> positions similar words close together (shown in demo below)</div>
+            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- <S color="var(--purple)">Attention weights</S> learn to connect related words across a sentence</div>
+            <div style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8}}>- <S color="var(--accent)">Feed-forward weights</S> absorb facts and knowledge</div>
+          </div>
+
           <EmbeddingViz/>
-          <Callout color="var(--info-color)">After training, everything is <S>frozen</S>. The model never learns again.</Callout>
+
+          <Callout color="var(--info-color)">After training, everything is <S>frozen</S>. The model never learns again — the weights that were learned are locked in place forever.</Callout>
         </section>
 
         <SectionDivider part="2" title="How the Model Works" sub="The Inference Story" color="var(--work-color)"/>
