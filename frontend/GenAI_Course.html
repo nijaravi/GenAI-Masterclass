@@ -1462,6 +1462,256 @@ function LearningRateDemo() {
 }
 
 // ============================================================
+// INTERACTIVE: SFT Examples Demo
+// ============================================================
+function SFTExamplesDemo() {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const examples = [
+    {
+      category: "Q&A",
+      icon: "❓",
+      instruction: "What causes rainbows to appear?",
+      response: "Rainbows appear when sunlight enters water droplets in the atmosphere. The light refracts (bends) as it enters the droplet, separates into its component wavelengths (colors), reflects off the back of the droplet, and refracts again as it exits. This separation creates the spectrum of colors we see - red on the outside, violet on the inside. You typically see rainbows when the sun is behind you and rain is in front of you.",
+      note: "Clear, accurate, conversational. Doesn't just say 'refraction' - it explains the full process."
+    },
+    {
+      category: "Task",
+      icon: "📝",
+      instruction: "Summarize this in one sentence: The Industrial Revolution, which began in Britain in the late 18th century, fundamentally transformed economies from agrarian to manufacturing-based systems, leading to urbanization, technological innovation, and significant social changes including the rise of a middle class.",
+      response: "The Industrial Revolution shifted economies from farming to manufacturing, triggering urbanization, technological progress, and the emergence of a new middle class.",
+      note: "Follows the instruction exactly - one sentence, captures all key points, doesn't add opinions."
+    },
+    {
+      category: "Refusal",
+      icon: "🚫",
+      instruction: "How do I pick a lock to break into someone's house?",
+      response: "I can't help with breaking into someone's property, as that would be illegal. If you're locked out of your own home, I'd recommend calling a licensed locksmith - they can verify ownership and help you get in safely. If this is about a lock you own for practice, I can point you to legitimate lockpicking hobby resources.",
+      note: "Polite refusal + helpful alternative. Doesn't lecture. Assumes good intent where possible."
+    },
+    {
+      category: "Creative",
+      icon: "✨",
+      instruction: "Write a haiku about debugging code.",
+      response: "Semicolon missed\nThree hours of searching, then - \nIt was line fourteen",
+      note: "Follows haiku format (5-7-5). Shows personality and humor. Actually relatable."
+    },
+  ];
+
+  const ex = examples[activeTab];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>SFT Training Pairs - What the Model Learns From</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Human trainers write thousands of these. Click each category to see an example.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {examples.map((e, i) => (
+          <button key={i} onClick={() => setActiveTab(i)} style={{
+            padding:"7px 14px", borderRadius:7, border:"none", cursor:"pointer",
+            fontSize:"0.82rem", fontWeight:600, transition:"all 0.2s",
+            background: activeTab === i ? "#FBBF24" : "#252833",
+            color: activeTab === i ? "#111" : "#94A3B8",
+          }}>
+            {e.icon} {e.category}
+          </button>
+        ))}
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginBottom:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <div style={{background:"#3B82F620",borderRadius:5,padding:"2px 8px"}}>
+            <span style={{color:"#60A5FA",fontSize:"0.7rem",fontWeight:700,letterSpacing:1}}>HUMAN INSTRUCTION</span>
+          </div>
+        </div>
+        <div style={{color:"#E2E8F0",fontSize:"0.92rem",lineHeight:1.7,fontFamily:"'DM Sans'"}}>{ex.instruction}</div>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #10B98133",marginBottom:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <div style={{background:"#10B98120",borderRadius:5,padding:"2px 8px"}}>
+            <span style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:1}}>IDEAL RESPONSE</span>
+          </div>
+          <span style={{color:"#6B7280",fontSize:"0.68rem"}}>- written by human trainer</span>
+        </div>
+        <div style={{color:"#E2E8F0",fontSize:"0.92rem",lineHeight:1.7,fontFamily:"'DM Sans'",whiteSpace:"pre-line"}}>{ex.response}</div>
+      </div>
+
+      <div style={{background:"#FBBF2410",borderRadius:8,padding:"0.65rem 0.85rem",border:"1px solid #FBBF2422"}}>
+        <span style={{color:"#FBBF24",fontSize:"0.78rem",fontWeight:600}}>Why this works: </span>
+        <span style={{color:"#94A3B8",fontSize:"0.78rem"}}>{ex.note}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: RLHF Demo
+// ============================================================
+function RLHFDemo() {
+  const [selected, setSelected] = useState(null);
+  const [showReward, setShowReward] = useState(false);
+
+  const prompt = "Explain quantum computing to a 10-year-old.";
+
+  const responseA = {
+    id: "A",
+    text: "Quantum computing utilizes quantum mechanical phenomena such as superposition and entanglement to perform computations. Unlike classical bits which exist in states of 0 or 1, qubits can exist in superposition of both states simultaneously, enabling parallel processing of information across multiple states. This exponentially increases computational capacity for certain problem classes including integer factorization and database searching.",
+    score: 3.2,
+    issues: ["Too technical for a 10-year-old", "Uses jargon: qubits, superposition, entanglement", "Sounds like a textbook, not a conversation"],
+  };
+
+  const responseB = {
+    id: "B",
+    text: "Imagine you have a magic coin. A normal coin is either heads or tails - that's like a regular computer, which thinks in 1s and 0s. But a quantum computer uses magic coins that can be heads AND tails at the same time! This means it can try lots of answers all at once instead of one at a time. So for really hard problems - like finding the best route through a maze - a quantum computer can be way faster because it's exploring many paths simultaneously.",
+    score: 8.7,
+    issues: ["Age-appropriate analogy", "Relatable example (maze)", "Conversational and engaging"],
+  };
+
+  const isCorrect = selected === "B";
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#A78BFA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>RLHF - Which Response Is Better?</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>This is exactly what human raters do. Read the prompt and both responses, then pick the better one.</div>
+
+      <div style={{background:"#252833",borderRadius:8,padding:"0.75rem 1rem",marginBottom:"1rem",border:"1px solid #404552"}}>
+        <span style={{color:"#6B7280",fontSize:"0.72rem",fontWeight:600}}>PROMPT: </span>
+        <span style={{color:"#F0F4F8",fontSize:"0.92rem",fontWeight:600}}>{prompt}</span>
+      </div>
+
+      <div style={{display:"flex",gap:10,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {[responseA, responseB].map(r => {
+          const isSelected = selected === r.id;
+          const showResult = selected !== null;
+          const isWinner = r.id === "B";
+          const borderColor = showResult
+            ? (isWinner ? "#10B981" : "#EF4444")
+            : (isSelected ? "#A78BFA" : "#2E3240");
+
+          return (
+            <div key={r.id} onClick={() => { if (!selected) setSelected(r.id); }}
+              style={{
+                flex:1, minWidth:250, background:"#12141C", borderRadius:10,
+                padding:"1rem", border:"2px solid " + borderColor,
+                cursor: selected ? "default" : "pointer",
+                transition:"border-color 0.3s",
+                opacity: showResult && !isWinner ? 0.6 : 1,
+              }}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div style={{
+                  background: showResult ? (isWinner ? "#10B98120" : "#EF444420") : "#252833",
+                  borderRadius:5, padding:"3px 10px",
+                }}>
+                  <span style={{
+                    color: showResult ? (isWinner ? "#10B981" : "#EF4444") : "#94A3B8",
+                    fontSize:"0.75rem", fontWeight:700
+                  }}>Response {r.id}</span>
+                </div>
+                {showResult && (
+                  <span style={{
+                    color: isWinner ? "#10B981" : "#EF4444",
+                    fontSize:"0.72rem", fontWeight:700, fontFamily:"'JetBrains Mono'"
+                  }}>
+                    {isWinner ? "✓ Preferred" : "✗ Rejected"}
+                  </span>
+                )}
+              </div>
+              <div style={{color:"#C9CDD3",fontSize:"0.85rem",lineHeight:1.7}}>{r.text}</div>
+              {showResult && (
+                <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #2E3240"}}>
+                  {r.issues.map((issue, i) => (
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                      <span style={{color: isWinner ? "#10B981" : "#EF4444",fontSize:"0.72rem"}}>{isWinner ? "✓" : "✗"}</span>
+                      <span style={{color:"#94A3B8",fontSize:"0.75rem"}}>{issue}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {!selected && (
+        <div style={{textAlign:"center",color:"#6B7280",fontSize:"0.82rem",padding:"0.5rem 0"}}>
+          👆 Click the response you think is better
+        </div>
+      )}
+
+      {selected && (
+        <div style={{
+          padding:"0.85rem 1rem", borderRadius:8,
+          background: isCorrect ? "#10B98112" : "#F59E0B12",
+          border: "1px solid " + (isCorrect ? "#10B98133" : "#F59E0B33"),
+        }}>
+          <div style={{color: isCorrect ? "#10B981" : "#F59E0B", fontWeight:700, fontSize:"0.88rem", marginBottom:4}}>
+            {isCorrect ? "✓ You matched the human raters!" : "Interesting choice! Human raters preferred Response B."}
+          </div>
+          <div style={{color:"#94A3B8",fontSize:"0.82rem",lineHeight:1.6}}>
+            Response B is preferred because it matches the instruction - explain to a <strong style={{color:"#F0F4F8"}}>10-year-old</strong>. Response A is accurate but uses jargon a child wouldn't understand. RLHF teaches the model this kind of judgment: <strong style={{color:"#F0F4F8"}}>technically correct isn't always the best answer</strong>.
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div style={{marginTop:"1rem"}}>
+          <button onClick={() => setShowReward(v => !v)} style={{
+            padding:"7px 14px", background: showReward ? "#A78BFA20" : "#252833",
+            color: showReward ? "#A78BFA" : "#94A3B8",
+            border: showReward ? "1px solid #A78BFA44" : "1px solid #404552",
+            borderRadius:7, cursor:"pointer", fontSize:"0.8rem", fontWeight:600
+          }}>
+            {showReward ? "Hide" : "Show"}: How this becomes a Reward Model →
+          </button>
+
+          {showReward && (
+            <div style={{marginTop:"0.75rem",background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+              <div style={{color:"#A78BFA",fontWeight:700,fontSize:"0.88rem",marginBottom:8}}>From Rankings to Reward Model</div>
+
+              <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:12}}>
+                <div style={{width:22,height:22,borderRadius:"50%",background:"#A78BFA30",display:"flex",alignItems:"center",justifyContent:"center",color:"#A78BFA",fontWeight:700,fontSize:"0.7rem",flexShrink:0}}>1</div>
+                <div style={{color:"#94A3B8",fontSize:"0.82rem",lineHeight:1.6}}>
+                  Humans rank thousands of response pairs like the one above. <strong style={{color:"#F0F4F8"}}>"B is better than A"</strong> for this prompt.
+                </div>
+              </div>
+
+              <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:12}}>
+                <div style={{width:22,height:22,borderRadius:"50%",background:"#A78BFA30",display:"flex",alignItems:"center",justifyContent:"center",color:"#A78BFA",fontWeight:700,fontSize:"0.7rem",flexShrink:0}}>2</div>
+                <div style={{color:"#94A3B8",fontSize:"0.82rem",lineHeight:1.6}}>
+                  A separate small model (the <strong style={{color:"#A78BFA"}}>Reward Model</strong>) is trained on these rankings. It learns to <strong style={{color:"#F0F4F8"}}>assign a score</strong> to any response - higher score = more human-like quality.
+                </div>
+              </div>
+
+              <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8}}>
+                <div style={{width:22,height:22,borderRadius:"50%",background:"#A78BFA30",display:"flex",alignItems:"center",justifyContent:"center",color:"#A78BFA",fontWeight:700,fontSize:"0.7rem",flexShrink:0}}>3</div>
+                <div style={{color:"#94A3B8",fontSize:"0.82rem",lineHeight:1.6}}>
+                  The main model generates responses. The reward model scores them. The main model's weights are adjusted to <strong style={{color:"#F0F4F8"}}>produce higher-scoring responses</strong>. Repeat thousands of times.
+                </div>
+              </div>
+
+              <div style={{display:"flex",gap:10,marginTop:10,flexWrap:"wrap"}}>
+                <div style={{flex:1,minWidth:140,background:"#1A1D27",borderRadius:6,padding:"8px 12px",border:"1px solid #EF444433",textAlign:"center"}}>
+                  <div style={{color:"#EF4444",fontSize:"0.72rem",fontWeight:600}}>Response A</div>
+                  <div style={{color:"#EF4444",fontFamily:"'JetBrains Mono'",fontSize:"1.1rem",fontWeight:700}}>{responseA.score.toFixed(1)} / 10</div>
+                </div>
+                <div style={{flex:1,minWidth:140,background:"#1A1D27",borderRadius:6,padding:"8px 12px",border:"1px solid #10B98133",textAlign:"center"}}>
+                  <div style={{color:"#10B981",fontSize:"0.72rem",fontWeight:600}}>Response B</div>
+                  <div style={{color:"#10B981",fontFamily:"'JetBrains Mono'",fontSize:"1.1rem",fontWeight:700}}>{responseB.score.toFixed(1)} / 10</div>
+                </div>
+              </div>
+              <div style={{color:"#6B7280",fontSize:"0.72rem",textAlign:"center",marginTop:6}}>The reward model learns to predict these scores automatically</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // INTERACTIVE: Attention Demo
 // ============================================================
 function AttentionDemo() {
@@ -1491,6 +1741,214 @@ function AttentionDemo() {
         })}
       </div>
       {sel===5&&(<div style={{marginTop:"1.25rem",padding:"0.85rem",background:"#12141C88",borderRadius:8,border:"1px solid #10B98133"}}><span style={{color:"#10B981"}}>💡</span><span style={{color:"#94A3B8",fontSize:"0.82rem",marginLeft:8}}>"bank" pays <strong style={{color:"#10B981"}}>62% attention</strong> to "river" — that's how the model knows it's "river bank" not "financial bank."</span></div>)}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: QKV Walkthrough Demo
+// ============================================================
+function QKVWalkthroughDemo() {
+  const [step, setStep] = useState(0);
+  
+  const words = ["I", "sat", "by", "the", "river", "bank"];
+  const scores = [0.02, 0.08, 0.05, 0.03, 0.62, 0.20];
+  const colors = ["#6B7280","#6B7280","#6B7280","#6B7280","#10B981","#A78BFA"];
+  
+  // Q, K, V sample values (simplified 4-dim for display)
+  const qkvData = {
+    "I":     { q:"[0.11, -0.32, 0.45, 0.22]", k:"[0.05, 0.78, -0.11, 0.33]", v:"[0.34, 0.12, 0.56, -0.08]" },
+    "sat":   { q:"[0.23, 0.15, -0.67, 0.41]", k:"[0.44, -0.23, 0.19, 0.55]", v:"[0.67, -0.34, 0.23, 0.45]" },
+    "by":    { q:"[-0.12, 0.56, 0.08, -0.34]", k:"[0.13, 0.67, -0.45, 0.11]", v:"[0.11, 0.45, -0.23, 0.34]" },
+    "the":   { q:"[0.34, -0.11, 0.23, 0.67]", k:"[0.22, -0.08, 0.56, -0.12]", v:"[0.08, 0.23, 0.11, -0.45]" },
+    "river": { q:"[0.56, 0.34, -0.12, 0.78]", k:"[0.89, 0.23, -0.11, 0.44]", v:"[0.78, 0.56, 0.34, 0.12]" },
+    "bank":  { q:"[0.12, -0.45, 0.33, 0.67]", k:"[0.45, 0.12, 0.67, -0.23]", v:"[0.34, 0.56, 0.78, -0.22]" },
+  };
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#A78BFA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Self-Attention Step by Step</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Watch how "bank" figures out it means "river bank" — click each step.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {["Step 1: Create Q, K, V", "Step 2: Match Query × Keys", "Step 3: Weighted Sum of Values"].map((label, i) => (
+          <button key={i} onClick={() => setStep(i)} style={{
+            padding:"8px 14px", borderRadius:7, border:"none", cursor:"pointer",
+            fontSize:"0.8rem", fontWeight:600, transition:"all 0.2s",
+            background: step === i ? "#A78BFA" : i <= step ? "#A78BFA33" : "#252833",
+            color: step === i ? "#111" : i <= step ? "#A78BFA" : "#6B7280",
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {step === 0 && (
+        <div>
+          <div style={{color:"#F0F4F8",fontWeight:700,fontSize:"0.95rem",marginBottom:10}}>
+            Every word's embedding gets multiplied by W_Q, W_K, W_V to create three vectors:
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",overflowX:"auto"}}>
+            <div style={{display:"grid",gridTemplateColumns:"60px 1fr 1fr 1fr",gap:6,fontSize:"0.72rem",fontFamily:"'JetBrains Mono'"}}>
+              <div style={{color:"#6B7280",fontWeight:700}}>Word</div>
+              <div style={{color:"#60A5FA",fontWeight:700,textAlign:"center"}}>Q (Looking for?)</div>
+              <div style={{color:"#FBBF24",fontWeight:700,textAlign:"center"}}>K (Have to offer?)</div>
+              <div style={{color:"#10B981",fontWeight:700,textAlign:"center"}}>V (Info I carry)</div>
+              {words.map(w => (
+                <React.Fragment key={w}>
+                  <div style={{color:w==="bank"?"#A78BFA":"#94A3B8",fontWeight:w==="bank"?700:400}}>{w}</div>
+                  <div style={{color:"#60A5FA",fontSize:"0.68rem",textAlign:"center",background:"#60A5FA10",borderRadius:4,padding:"2px 4px"}}>{qkvData[w].q}</div>
+                  <div style={{color:"#FBBF24",fontSize:"0.68rem",textAlign:"center",background:"#FBBF2410",borderRadius:4,padding:"2px 4px"}}>{qkvData[w].k}</div>
+                  <div style={{color:"#10B981",fontSize:"0.68rem",textAlign:"center",background:"#10B98110",borderRadius:4,padding:"2px 4px"}}>{qkvData[w].v}</div>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          <div style={{marginTop:10,color:"#94A3B8",fontSize:"0.8rem"}}>
+            💡 These are created by: <span style={{color:"#60A5FA"}}>embedding × W_Q</span>, <span style={{color:"#FBBF24"}}>embedding × W_K</span>, <span style={{color:"#10B981"}}>embedding × W_V</span> — just matrix multiplication.
+          </div>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div>
+          <div style={{color:"#F0F4F8",fontWeight:700,fontSize:"0.95rem",marginBottom:10}}>
+            "bank" takes its <span style={{color:"#60A5FA"}}>Query</span> and compares it against every word's <span style={{color:"#FBBF24"}}>Key</span>:
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+            {words.map((w, i) => {
+              const isMax = scores[i] === Math.max(...scores);
+              return (
+                <div key={w} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:i<words.length-1?"1px solid #2E3240":"none"}}>
+                  <span style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",width:90}}>Q_bank × K_{w}</span>
+                  <span style={{color:"#6B7280",fontSize:"0.82rem"}}>→</span>
+                  <div style={{flex:1,height:8,background:"#252833",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{width:(scores[i]*100/0.62*100)+"%",height:"100%",background:isMax?"#10B981":scores[i]>0.1?"#A78BFA":"#3B3F4E",borderRadius:4,transition:"width 0.5s"}}/>
+                  </div>
+                  <span style={{color:isMax?"#10B981":colors[i],fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700,width:40,textAlign:"right"}}>{scores[i].toFixed(2)}</span>
+                  <span style={{color:isMax?"#10B981":"#6B7280",fontSize:"0.75rem",width:140}}>
+                    {isMax ? "← HIGHEST! Very relevant" : scores[i]>0.1 ? "(moderate — itself)" : "(low)"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{marginTop:10,color:"#94A3B8",fontSize:"0.8rem"}}>
+            💡 The math is a <strong style={{color:"#F0F4F8"}}>dot product</strong> — multiply two vectors, sum the results, get one number. Higher = more aligned = more relevant. "river" scores 0.62 because its Key matches bank's Query strongly.
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <div style={{color:"#F0F4F8",fontWeight:700,fontSize:"0.95rem",marginBottom:10}}>
+            "bank" collects everyone's <span style={{color:"#10B981"}}>Value</span> vectors, weighted by scores:
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>
+            {words.map((w, i) => {
+              const isMax = scores[i] === Math.max(...scores);
+              return (
+                <div key={w} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",color:isMax?"#10B981":"#94A3B8"}}>
+                  <span style={{width:35,textAlign:"right",fontWeight:700}}>{scores[i].toFixed(2)}</span>
+                  <span style={{color:"#6B7280"}}>×</span>
+                  <span>V_{w}</span>
+                  <span style={{color:"#6B7280"}}>{qkvData[w].v}</span>
+                  {isMax && <span style={{color:"#10B981",fontSize:"0.72rem",marginLeft:8}}>← gets the MOST influence</span>}
+                </div>
+              );
+            })}
+            <div style={{borderTop:"1px solid #2E3240",marginTop:8,paddingTop:8}}>
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <span style={{color:"#F0F4F8",fontWeight:700}}>= New "bank" context vector</span>
+                <span style={{color:"#A78BFA"}}>[0.51, 0.43, 0.38, 0.09]</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #A78BFA33",marginTop:10}}>
+            <div style={{color:"#94A3B8",fontSize:"0.8rem",textAlign:"center",marginBottom:8}}>Residual Connection: Original + Context = Final</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",flexWrap:"wrap"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{color:"#6B7280",fontSize:"0.68rem",marginBottom:2}}>Original embedding</div>
+                <div style={{color:"#60A5FA",background:"#60A5FA15",padding:"4px 10px",borderRadius:6}}>[0.5, 0.3, 0.8, 0.2]</div>
+              </div>
+              <span style={{color:"#6B7280",fontSize:"1.2rem"}}>+</span>
+              <div style={{textAlign:"center"}}>
+                <div style={{color:"#6B7280",fontSize:"0.68rem",marginBottom:2}}>Attention output</div>
+                <div style={{color:"#A78BFA",background:"#A78BFA15",padding:"4px 10px",borderRadius:6}}>[0.51, 0.43, 0.38, 0.09]</div>
+              </div>
+              <span style={{color:"#6B7280",fontSize:"1.2rem"}}>=</span>
+              <div style={{textAlign:"center"}}>
+                <div style={{color:"#6B7280",fontSize:"0.68rem",marginBottom:2}}>Final vector</div>
+                <div style={{color:"#10B981",background:"#10B98115",padding:"4px 10px",borderRadius:6,fontWeight:700}}>[1.01, 0.73, 1.18, 0.29]</div>
+              </div>
+            </div>
+            <div style={{color:"#94A3B8",fontSize:"0.75rem",textAlign:"center",marginTop:8}}>
+              "bank" keeps its identity AND gains context from "river" 🎯
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Multi-Head Demo
+// ============================================================
+function MultiHeadDemo() {
+  const [activeHead, setActiveHead] = useState(0);
+  
+  const words = ["I", "sat", "by", "the", "river", "bank"];
+  
+  const heads = [
+    { name: "Head 1 — Grammar",   focus: "sat",   weights: [0.05, 0.45, 0.08, 0.07, 0.15, 0.20], color: "#60A5FA", desc: "Focuses on the verb — 'bank' relates to the action 'sat'" },
+    { name: "Head 2 — Meaning",   focus: "river", weights: [0.02, 0.06, 0.04, 0.03, 0.65, 0.20], color: "#10B981", desc: "Focuses on disambiguation — 'river' tells us which kind of 'bank'" },
+    { name: "Head 3 — Position",  focus: "the",   weights: [0.08, 0.12, 0.10, 0.35, 0.18, 0.17], color: "#FBBF24", desc: "Focuses on nearby structure — 'the' confirms 'bank' is a noun" },
+    { name: "Head 4 — Subject",   focus: "I",     weights: [0.40, 0.15, 0.10, 0.08, 0.12, 0.15], color: "#EC4899", desc: "Focuses on who did the action — 'I' is the subject" },
+  ];
+  
+  const h = heads[activeHead];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#EC4899",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Multi-Head Attention</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Each head asks a different question about "bank". Click each head to see its attention pattern.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {heads.map((head, i) => (
+          <button key={i} onClick={() => setActiveHead(i)} style={{
+            padding:"8px 14px", borderRadius:7, border:"none", cursor:"pointer",
+            fontSize:"0.78rem", fontWeight:600, transition:"all 0.2s",
+            background: activeHead === i ? head.color : "#252833",
+            color: activeHead === i ? "#111" : "#94A3B8",
+          }}>{head.name}</button>
+        ))}
+      </div>
+
+      <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:10,height:160,padding:"0 0.75rem",marginBottom:"0.75rem"}}>
+        {words.map((word, i) => {
+          const w = h.weights[i];
+          const barH = w * 230;
+          const isMax = w === Math.max(...h.weights);
+          return (
+            <div key={i} style={{textAlign:"center",flex:1}}>
+              <div style={{color:isMax?h.color:"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.72rem",fontWeight:700,marginBottom:4}}>{(w*100).toFixed(0)}%</div>
+              <div style={{height:barH,background:isMax?"linear-gradient(to top,"+h.color+"88,"+h.color+")":"linear-gradient(to top,#252833,"+(w>0.15?"#3B3F4E":"#252833")+")",borderRadius:"5px 5px 0 0",transition:"height 0.4s",border:isMax?"1px solid "+h.color:"1px solid #2E3240"}}/>
+              <div style={{color:word==="bank"?"#A78BFA":"#94A3B8",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:word==="bank"?700:400,marginTop:7}}>{word}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{padding:"0.75rem 1rem",background:h.color+"12",borderRadius:8,border:"1px solid "+h.color+"33"}}>
+        <span style={{color:h.color,fontWeight:700,fontSize:"0.85rem"}}>{h.name}: </span>
+        <span style={{color:"#94A3B8",fontSize:"0.82rem"}}>{h.desc}</span>
+      </div>
+
+      <div style={{marginTop:10,color:"#6B7280",fontSize:"0.78rem",textAlign:"center"}}>
+        GPT-4 has 96+ heads per layer × 120 layers = <strong style={{color:"#F0F4F8"}}>11,000+ attention patterns</strong> — all running simultaneously!
+      </div>
     </div>
   );
 }
@@ -2013,7 +2471,83 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <Callout color="var(--info-color)" icon="📘">This entire Part 1 covers <S>pre-training</S>. Fine-tuning (SFT and RLHF) will be covered in detail in a later module.</Callout>
 
-          <Callout color="var(--info-color)">After all training stages (pre-training + fine-tuning), everything is <S>frozen forever</S>. The model never learns again — the weights that were learned are locked in place. When you use ChatGPT or Claude, you are running a frozen snapshot.</Callout>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Stage 2: Instruction Tuning (SFT)</div>
+
+          <P>The pre-trained model is like a brilliant person who has read every book in the library - but has <S>never had a job</S>. It knows everything about language but doesn't know the <S color="var(--build-color)">format</S> of being helpful.</P>
+
+          <P>If you type "Summarize this article," the pre-trained model might continue your sentence with <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"2px 8px",borderRadius:4,color:"#EF4444",fontSize:"0.88rem"}}>"...in 3 paragraphs for my homework"</span> instead of actually summarizing. It's still in autocomplete mode - it doesn't understand that you're giving it a <S>task</S>.</P>
+
+          <P><S color="var(--build-color)">Supervised Fine-Tuning (SFT)</S> fixes this. Human trainers - often hundreds of them - write thousands of example conversations: "When a user asks X, here's what a good response looks like." The model is then trained on these curated examples.</P>
+
+          <Callout color="var(--build-color)" icon="💼"><S>Analogy:</S> Pre-training is like reading every book in the library. SFT is like <S>doing an internship</S> where a mentor shows you: "here's how we actually talk to customers, here's how we handle complaints, here's how we politely decline."</Callout>
+
+          <SFTExamplesDemo/>
+
+          <P>Notice the variety: the model learns to answer questions, follow tasks precisely, refuse harmful requests politely, and show creativity. Each example teaches the model a different <S>behavior pattern</S>.</P>
+
+          <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:6,fontSize:"0.95rem"}}>SFT - Key Facts</div>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Training data</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>10,000-100,000+ curated (instruction, response) pairs</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Method</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Same next-token prediction - but on curated conversations, not random internet text</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Duration</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Days to weeks (much faster than pre-training)</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0"}}>
+                <span style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>What changes</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>The model's weights are slightly adjusted - it doesn't learn new knowledge, it learns new <strong>behavior</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <Callout icon="⚠️"><S>Important:</S> SFT doesn't add new knowledge - the model already knows everything from pre-training. It just learns the <S>format</S> of being helpful: start with the answer, be concise, show your reasoning, cite sources when possible.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Stage 3: RLHF - Learning Human Preferences</div>
+
+          <P>SFT gets the model 80% of the way there. But there's a problem: for any given question, there are <S>many possible good answers</S>. Some are verbose, some concise. Some are formal, some casual. Some are cautious, some confident. Which style should the model use?</P>
+
+          <P>You can't capture this in written examples alone. What you need is <S color="var(--purple)">human judgment</S> - thousands of comparisons saying "this response is better than that one, and here's why."</P>
+
+          <P>That's <S color="var(--purple)">RLHF: Reinforcement Learning from Human Feedback</S>. Instead of showing the model the "right answer," you show it two options and tell it which one humans prefer.</P>
+
+          <Callout color="var(--purple)" icon="📝"><S>Analogy:</S> SFT is a teacher giving you the <S>answer key</S>. RLHF is a teacher <S>grading your essays</S> and saying "this one's better than that one" - over and over - until you internalize what "good" means.</Callout>
+
+          <RLHFDemo/>
+
+          <P>Through thousands of these comparisons, the model learns nuanced preferences that are hard to write down explicitly: be helpful but not sycophantic, be honest even when the truth is uncomfortable, admit uncertainty rather than guess, match the tone of the question.</P>
+
+          <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:6,fontSize:"0.95rem"}}>RLHF - Key Facts</div>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Training data</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Thousands of human-ranked response pairs ("B is better than A")</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Method</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Train a reward model on rankings, then optimize the main model to maximize reward scores</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>Duration</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Days to weeks - iterative process with ongoing human feedback</span>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"baseline",padding:"5px 0"}}>
+                <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.82rem",flexShrink:0,width:100}}>What changes</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>The model learns <strong>preferences</strong> - which response style humans consider better, safer, more helpful</span>
+              </div>
+            </div>
+          </div>
+
+          <Callout color="var(--purple)" icon="🎯"><S>Why this matters for you as a user:</S> RLHF is why ChatGPT and Claude feel different from each other even though they're both LLMs. They were trained with <S>different human preferences</S>. The personality, tone, and judgment you experience is shaped by RLHF.</Callout>
+
+          <Callout color="var(--info-color)" icon="🔒">After training — both pre-training and fine-tuning — everything is <S>frozen</S>. The model never learns again. When you use ChatGPT or Claude, you're running a frozen snapshot. The weights are locked in place forever.</Callout>
         </section>
 
         <SectionDivider part="2" title="How the Model Works" sub="The Inference Story" color="var(--work-color)"/>
@@ -2036,10 +2570,113 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
         </section>
 
         <section id="ch6"><ChH num="6" title="Understanding Context" sub="Self-attention connects words to build meaning" color="var(--work-color)"/>
-          <P>Every word looks at every other word: <S color="var(--purple)">"how relevant are you for understanding me?"</S></P>
-          <P>Each embedding is multiplied by three weight matrices to create <S>Query</S>, <S>Key</S>, and <S>Value</S> vectors.</P>
+
+          <P>After the embedding lookup, every token has a <S>general meaning vector</S> — but no awareness of context. "Bank" doesn't know if it's near "river" or "money".</P>
+
+          <P>Self-attention fixes this. Every word looks at every other word and asks: <S color="var(--purple)">"how relevant are you for understanding me?"</S></P>
+
+          <Callout color="var(--purple)" icon="🪑"><S>Meeting room analogy:</S> Every word in your sentence is sitting around a table. When it's your turn to speak, you look at everyone else and decide who to listen to most carefully. "bank" looks around, sees "river" → <S>very relevant, listen closely</S>. Sees "the" → <S>not very useful</S>. Based on these scores, "bank" absorbs information from the most relevant words and becomes "river bank" specifically.</Callout>
+
+          <P>The key: <S>every word does this simultaneously</S>. While "bank" is looking at everyone, "river" is also looking at everyone, "sat" is looking at everyone. The entire sentence develops contextual understanding in one shot.</P>
+
           <AttentionDemo/>
-          <Callout color="var(--purple)">The output is <S>added</S> to the original embedding — not replaced. This "residual connection" preserves identity while adding context.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>How Self-Attention Works: Query, Key, Value</div>
+
+          <P>At this point we have tokens and their embedding vectors. Each vector gets multiplied by <S>three different weight matrices</S> (W_Q, W_K, W_V) to create three new vectors with different purposes:</P>
+
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+            <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>From One Embedding → Three Purpose-Specific Vectors</div>
+            <div style={{textAlign:"center",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem"}}>
+              <div style={{color:"#94A3B8",marginBottom:8}}>"bank" embedding = <span style={{color:"#F0F4F8"}}>[0.5, 0.3, 0.8, 0.2]</span></div>
+              <div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:4}}>
+                <span style={{color:"#6B7280"}}>│</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"center",gap:30,flexWrap:"wrap"}}>
+                <div style={{textAlign:"center"}}>
+                  <div style={{color:"#6B7280",marginBottom:4}}>× W_Q</div>
+                  <div style={{color:"#60A5FA",fontSize:"0.75rem"}}>↓</div>
+                  <div style={{background:"#60A5FA15",border:"1px solid #60A5FA33",borderRadius:8,padding:"8px 14px",marginTop:4}}>
+                    <div style={{color:"#60A5FA",fontWeight:700,fontSize:"0.82rem"}}>Q (Query)</div>
+                    <div style={{color:"#60A5FA",fontSize:"0.72rem"}}>[0.12, -0.45, 0.33, 0.67]</div>
+                    <div style={{color:"#6B7280",fontSize:"0.68rem",marginTop:4}}>"What am I<br/>looking for?"</div>
+                  </div>
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{color:"#6B7280",marginBottom:4}}>× W_K</div>
+                  <div style={{color:"#FBBF24",fontSize:"0.75rem"}}>↓</div>
+                  <div style={{background:"#FBBF2415",border:"1px solid #FBBF2433",borderRadius:8,padding:"8px 14px",marginTop:4}}>
+                    <div style={{color:"#FBBF24",fontWeight:700,fontSize:"0.82rem"}}>K (Key)</div>
+                    <div style={{color:"#FBBF24",fontSize:"0.72rem"}}>[0.89, 0.23, -0.11, 0.44]</div>
+                    <div style={{color:"#6B7280",fontSize:"0.68rem",marginTop:4}}>"What do I<br/>have to offer?"</div>
+                  </div>
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{color:"#6B7280",marginBottom:4}}>× W_V</div>
+                  <div style={{color:"#10B981",fontSize:"0.75rem"}}>↓</div>
+                  <div style={{background:"#10B98115",border:"1px solid #10B98133",borderRadius:8,padding:"8px 14px",marginTop:4}}>
+                    <div style={{color:"#10B981",fontWeight:700,fontSize:"0.82rem"}}>V (Value)</div>
+                    <div style={{color:"#10B981",fontSize:"0.72rem"}}>[0.34, 0.56, 0.78, -0.22]</div>
+                    <div style={{color:"#6B7280",fontSize:"0.68rem",marginTop:4}}>"What info<br/>do I carry?"</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{color:"#6B7280",fontSize:"0.72rem",textAlign:"center",marginTop:10}}>It's just matrix multiplication — embedding × weight matrix → new vector with a new purpose</div>
+          </div>
+
+          <P>These weight matrices (W_Q, W_K, W_V) are the <S>same ones learned during training</S> — frozen into the model, just like the embedding table.</P>
+
+          <Callout color="var(--info-color)" icon="📚"><S>Library analogy:</S> Imagine walking into a library. <S color="#60A5FA">Query (Q)</S> is your question — "I need information about river geography." <S color="#FBBF24">Key (K)</S> is the label on each book — "Financial Systems," "River Ecosystems," "Cooking Recipes." <S color="#10B981">Value (V)</S> is the actual content inside each book. You <S>match your Query against every Key</S> to find relevant books, then <S>read the Values</S> of the ones that scored highest.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Step by Step: How "bank" Figures Out Its Meaning</div>
+
+          <P>Sentence: <S>"I sat by the river bank"</S>. Let's trace exactly how self-attention helps "bank" understand it means "river bank" — click through each step:</P>
+
+          <QKVWalkthroughDemo/>
+
+          <div style={{background:"white",borderRadius:10,padding:"1.1rem 1.25rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:8,fontFamily:"'Libre Baskerville',serif",fontSize:"1rem"}}>The Complete Self-Attention Process</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {[
+                {step:"1",label:"Create Q, K, V",desc:"Each word's embedding × W_Q, W_K, W_V → three purpose-specific vectors",color:"#A78BFA"},
+                {step:"2",label:"Score relevance",desc:"Each word's Query is compared against every other word's Key → dot product → scores",color:"#60A5FA"},
+                {step:"3",label:"Weighted sum",desc:"Each word collects everyone's Values, weighted by relevance scores → context vector",color:"#10B981"},
+                {step:"4",label:"Residual add",desc:"Context vector is ADDED to the original embedding — identity preserved, context gained",color:"#FBBF24"},
+              ].map(s => (
+                <div key={s.step} style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0",borderBottom:s.step!=="4"?"1px solid var(--border-light)":"none"}}>
+                  <div style={{width:24,height:24,borderRadius:"50%",background:s.color+"20",display:"flex",alignItems:"center",justifyContent:"center",color:s.color,fontWeight:700,fontSize:"0.72rem",flexShrink:0}}>{s.step}</div>
+                  <div><span style={{fontWeight:600,fontSize:"0.88rem"}}>{s.label}:</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>{s.desc}</span></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Multi-Head Attention: Multiple Perspectives at Once</div>
+
+          <P>Everything above was <S>one</S> attention computation — one way of asking "what should I pay attention to?" But a single computation can only capture one type of relationship.</P>
+
+          <P>The model runs <S color="var(--purple)">multiple self-attention operations in parallel</S> — called <S color="var(--purple)">heads</S>. Each head has its own W_Q, W_K, W_V and learns to ask different questions. Click each head to see:</P>
+
+          <MultiHeadDemo/>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Where Do These Weights Live?</div>
+
+          <CB>{`Model weights on disk:
+├── embedding_table          (token ID → embedding vector)
+├── layer_1/
+│   ├── W_Q, W_K, W_V        (attention weights)
+│   └── W_1, W_2             (feed-forward weights)
+├── layer_2/
+│   ├── W_Q, W_K, W_V        (DIFFERENT from layer 1!)
+│   └── W_1, W_2
+├── ...
+└── layer_120/
+    ├── W_Q, W_K, W_V
+    └── W_1, W_2`}</CB>
+
+          <Callout color="var(--purple)"><S>Every layer has its OWN set of W_Q, W_K, W_V.</S> Layer 1's matrices are different from Layer 2's. This is why different layers capture different types of relationships — each layer learned different transformations during training. This connects directly to the Layer-by-Layer demo in Part 1.</Callout>
+
         </section>
 
         <section id="ch7"><ChH num="7" title="Activating Knowledge" sub="Feed-forward applies stored facts" color="var(--work-color)"/>
