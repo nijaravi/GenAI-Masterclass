@@ -809,6 +809,281 @@ function WeightsDemo() {
 }
 
 // ============================================================
+// INTERACTIVE: Layer-by-Layer Demo
+// ============================================================
+function LayerByLayerDemo() {
+  const [currentLayer, setCurrentLayer] = useState(0);
+  const [showTeleport, setShowTeleport] = useState(false);
+
+  // Layer-by-layer positions: each layer nudges the token closer to target
+  const layers = [
+    { pos: [2.0, 3.0], label: "Start", detail: "Random initialization — token placed arbitrarily", color: "#94A3B8" },
+    { pos: [2.8, 4.1], label: "Layer 1", detail: "Attention weights detect basic word patterns", color: "#60A5FA" },
+    { pos: [3.5, 5.3], label: "Layer 2", detail: "Feed-forward weights apply grammar knowledge", color: "#A78BFA" },
+    { pos: [4.2, 6.2], label: "Layer 3", detail: "Attention refines word relationships", color: "#FBBF24" },
+    { pos: [5.0, 7.4], label: "Layer 4", detail: "Feed-forward encodes factual associations", color: "#F97316" },
+    { pos: [5.6, 8.2], label: "Layer 5", detail: "Attention captures long-range context", color: "#EC4899" },
+    { pos: [6.0, 9.0], label: "Layer 6", detail: "Final refinement — token in correct position!", color: "#10B981" },
+  ];
+
+  const toSVG = (dx, dy) => ({ x: 50 + dx * 30, y: 280 - dy * 22.5 });
+  const targetPos = toSVG(6, 9);
+  const kittenPos = toSVG(6.5, 9.2);
+  const currentPos = toSVG(layers[currentLayer].pos[0], layers[currentLayer].pos[1]);
+
+  // For the teleport comparison
+  const teleportPos = toSVG(6, 9);
+  const startPos = toSVG(2, 3);
+
+  const nextLayer = () => {
+    if (currentLayer < layers.length - 1) {
+      setCurrentLayer((c) => c + 1);
+      setShowTeleport(false);
+    }
+  };
+
+  const reset = () => {
+    setCurrentLayer(0);
+    setShowTeleport(false);
+  };
+
+  const toggleTeleport = () => setShowTeleport((v) => !v);
+
+  return (
+    <div style={{ background: "#1A1D27", borderRadius: 14, padding: "1.75rem", border: "1px solid #2E3240", margin: "1.5rem 0" }}>
+      <div style={{ color: "#A78BFA", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>Interactive Demo</div>
+      <div style={{ color: "#F0F4F8", fontSize: "1.15rem", fontWeight: 700, fontFamily: "'Libre Baskerville',serif", marginBottom: 4 }}>Layer-by-Layer: How Weights Actually Work</div>
+      <div style={{ color: "#94A3B8", fontSize: "0.82rem", marginBottom: "1.25rem" }}>Each layer has its own weights that nudge the token a little closer. Click &quot;Next Layer&quot; to step through.</div>
+
+      {/* Controls */}
+      <div style={{ display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+        <button
+          onClick={nextLayer}
+          disabled={currentLayer >= layers.length - 1}
+          style={{
+            padding: "7px 18px",
+            background: currentLayer >= layers.length - 1 ? "#252833" : "#A78BFA",
+            color: currentLayer >= layers.length - 1 ? "#6B7280" : "#111",
+            border: "none",
+            borderRadius: 7,
+            fontWeight: 700,
+            cursor: currentLayer >= layers.length - 1 ? "default" : "pointer",
+            fontSize: "0.85rem",
+            opacity: currentLayer >= layers.length - 1 ? 0.5 : 1,
+          }}
+        >
+          Next Layer →</button>
+        <button onClick={reset} style={{ padding: "7px 14px", background: "transparent", color: "#94A3B8", border: "1px solid #404552", borderRadius: 7, cursor: "pointer", fontSize: "0.8rem" }}>Reset</button>
+        <button
+          onClick={toggleTeleport}
+          style={{
+            padding: "7px 14px",
+            marginLeft: "auto",
+            background: showTeleport ? "#F59E0B20" : "transparent",
+            color: showTeleport ? "#F59E0B" : "#6B7280",
+            border: showTeleport ? "1px solid #F59E0B44" : "1px solid #404552",
+            borderRadius: 7,
+            cursor: "pointer",
+            fontSize: "0.78rem",
+          }}
+        >
+          {showTeleport ? "Hide" : "Compare:"} Single Jump
+        </button>
+      </div>
+
+      {/* Stats bar */}
+      <div style={{ display: "flex", gap: 10, marginBottom: "1rem", flexWrap: "wrap" }}>
+        <div style={{ background: "#252833", padding: "5px 12px", borderRadius: 6, fontSize: "0.78rem" }}>
+          <span style={{ color: "#94A3B8" }}>Layer </span>
+          <span style={{ color: layers[currentLayer].color, fontWeight: 700, fontFamily: "'JetBrains Mono'" }}>{currentLayer}</span>
+          <span style={{ color: "#94A3B8" }}> / {layers.length - 1}</span>
+        </div>
+        <div style={{ background: "#252833", padding: "5px 12px", borderRadius: 6, fontSize: "0.78rem" }}>
+          <span style={{ color: "#94A3B8" }}>Position </span>
+          <span style={{ color: "#60A5FA", fontWeight: 700, fontFamily: "'JetBrains Mono'" }}>[{layers[currentLayer].pos[0].toFixed(1)}, {layers[currentLayer].pos[1].toFixed(1)}]</span>
+        </div>
+      </div>
+
+      {/* SVG Canvas */}
+      <svg viewBox="0 0 460 320" style={{ width: "100%", background: "#12141C", borderRadius: 10, border: "1px solid #2E3240" }}>
+        {/* Grid lines */}
+        {[2, 4, 6, 8, 10].map((v) => (
+          <line key={"gx" + v} x1={toSVG(v, 0).x} y1={20} x2={toSVG(v, 0).x} y2={290} stroke="#2E3240" strokeWidth={0.5} />
+        ))}
+        {[3, 6, 9, 12].map((v) => (
+          <line key={"gy" + v} x1={40} y1={toSVG(0, v).y} x2={420} y2={toSVG(0, v).y} stroke="#2E3240" strokeWidth={0.5} />
+        ))}
+        {/* Axis numbers */}
+        {[2, 4, 6, 8, 10].map((v) => (
+          <text key={"lx" + v} x={toSVG(v, 0).x} y={302} fill="#4B5563" fontSize={9} textAnchor="middle" fontFamily="JetBrains Mono">{v}</text>
+        ))}
+        {[3, 6, 9, 12].map((v) => (
+          <text key={"ly" + v} x={35} y={toSVG(0, v).y + 3} fill="#4B5563" fontSize={9} textAnchor="end" fontFamily="JetBrains Mono">{v}</text>
+        ))}
+        <text x={230} y={318} fill="#6B7280" fontSize={10} textAnchor="middle" fontFamily="DM Sans">Dimension 1</text>
+        <text x={12} y={160} fill="#6B7280" fontSize={10} textAnchor="middle" fontFamily="DM Sans" transform="rotate(-90,12,160)">Dimension 2</text>
+
+        {/* Target zone */}
+        <circle cx={targetPos.x} cy={targetPos.y} r={35} fill="#05966910" stroke="#059669" strokeDasharray="4,4" strokeWidth={1} />
+        <text x={targetPos.x} y={targetPos.y + 48} fill="#059669" fontSize={9} textAnchor="middle" fontFamily="DM Sans" fontWeight={600}>Target zone</text>
+
+        {/* kitten dot */}
+        <circle cx={kittenPos.x} cy={kittenPos.y} r={5} fill="#059669" opacity={0.5} />
+        <text x={kittenPos.x + 12} y={kittenPos.y + 4} fill="#059669" fontSize={10} fontFamily="DM Sans" fontWeight={700}>kitten</text>
+
+        {/* Teleport comparison line — single jump */}
+        {showTeleport && (
+          <>
+            <line
+              x1={startPos.x}
+              y1={startPos.y}
+              x2={teleportPos.x}
+              y2={teleportPos.y}
+              stroke="#F59E0B"
+              strokeWidth={2}
+              strokeDasharray="6,4"
+              opacity={0.4}
+            />
+            <text
+              x={(startPos.x + teleportPos.x) / 2 + 15}
+              y={(startPos.y + teleportPos.y) / 2}
+              fill="#F59E0B"
+              fontSize={9}
+              fontFamily="DM Sans"
+              fontWeight={600}
+              opacity={0.7}
+            >
+              Single jump (simplified)
+            </text>
+          </>
+        )}
+
+        {/* Breadcrumb trail — dotted line connecting visited positions */}
+        {currentLayer > 0 &&
+          layers.slice(0, currentLayer + 1).map((l, i) => {
+            if (i === 0) return null;
+            const prev = toSVG(layers[i - 1].pos[0], layers[i - 1].pos[1]);
+            const curr = toSVG(l.pos[0], l.pos[1]);
+            return (
+              <line
+                key={"trail" + i}
+                x1={prev.x}
+                y1={prev.y}
+                x2={curr.x}
+                y2={curr.y}
+                stroke={l.color}
+                strokeWidth={1.5}
+                strokeDasharray="3,3"
+                opacity={0.6}
+              />
+            );
+          })}
+
+        {/* Previous position dots (breadcrumbs) */}
+        {layers.slice(0, currentLayer).map((l, i) => {
+          const p = toSVG(l.pos[0], l.pos[1]);
+          return (
+            <g key={"prev" + i}>
+              <circle cx={p.x} cy={p.y} r={4} fill={l.color} opacity={0.3} />
+              <text x={p.x + 8} y={p.y - 6} fill={l.color} fontSize={7} fontFamily="JetBrains Mono" opacity={0.5}>
+                {l.label}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Current position — the main "cat" dot */}
+        <circle
+          cx={currentPos.x}
+          cy={currentPos.y}
+          r={8}
+          fill={currentLayer === layers.length - 1 ? "#10B981" : "#3B82F6"}
+          style={{ transition: "cx 0.5s ease, cy 0.5s ease" }}
+        />
+        <text
+          x={currentPos.x}
+          y={currentPos.y - 14}
+          fill="#F0F4F8"
+          fontSize={11}
+          textAnchor="middle"
+          fontFamily="DM Sans"
+          fontWeight={700}
+          style={{ transition: "x 0.5s ease, y 0.5s ease" }}
+        >
+          cat
+        </text>
+        <text
+          x={currentPos.x}
+          y={currentPos.y + 24}
+          fill={layers[currentLayer].color}
+          fontSize={8}
+          textAnchor="middle"
+          fontFamily="JetBrains Mono"
+          fontWeight={600}
+          style={{ transition: "x 0.5s ease, y 0.5s ease" }}
+        >
+          [{layers[currentLayer].pos[0].toFixed(1)}, {layers[currentLayer].pos[1].toFixed(1)}]
+        </text>
+      </svg>
+
+      {/* Current layer description */}
+      <div
+        style={{
+          marginTop: "0.75rem",
+          padding: "0.75rem 1rem",
+          background: layers[currentLayer].color + "12",
+          borderRadius: 8,
+          border: "1px solid " + layers[currentLayer].color + "33",
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: layers[currentLayer].color + "25",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: layers[currentLayer].color,
+            fontWeight: 700,
+            fontSize: "0.78rem",
+            fontFamily: "'JetBrains Mono'",
+            flexShrink: 0,
+          }}
+        >
+          {currentLayer === 0 ? "•" : currentLayer}
+        </div>
+        <div>
+          <div style={{ color: layers[currentLayer].color, fontWeight: 700, fontSize: "0.85rem" }}>{layers[currentLayer].label}</div>
+          <div style={{ color: "#94A3B8", fontSize: "0.78rem" }}>{layers[currentLayer].detail}</div>
+        </div>
+        {currentLayer > 0 && (
+          <div style={{ marginLeft: "auto", textAlign: "right", flexShrink: 0 }}>
+            <div style={{ color: layers[currentLayer].color, fontSize: "0.72rem", fontWeight: 600 }}>Own weight matrices</div>
+            <div style={{ color: "#6B7280", fontSize: "0.65rem" }}>W_Q, W_K, W_V, W_1, W_2</div>
+          </div>
+        )}
+      </div>
+
+      {/* Final insight when all layers done */}
+      {currentLayer === layers.length - 1 && (
+        <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "#10B98112", borderRadius: 8, border: "1px solid #10B98133" }}>
+          <span style={{ color: "#10B981", fontSize: "0.82rem" }}>💡 </span>
+          <span style={{ color: "#94A3B8", fontSize: "0.82rem" }}>
+            <strong style={{ color: "#10B981" }}>No single layer got us there.</strong> Each layer contributed a small nudge using its own set of weight matrices.
+            Real models repeat this <strong style={{ color: "#F0F4F8" }}>32 to 120+ times</strong> — that's why they have billions of weights total.
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // INTERACTIVE: Cluster Demo
 // ============================================================
 function ClusterDemo() {
@@ -1524,7 +1799,43 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <WeightsDemo/>
 
-          <P>In reality, the model uses <S>1,536 to 12,288 dimensions</S>, not 2. And instead of one weight, there are <S>billions</S> — but the principle is identical: multiply coordinates by weights to reposition tokens.</P>
+          <P>In reality, the model works in <S>1,536 to 12,288 dimensions</S>, not 2. And instead of a single weight, there are <S>billions</S> of them. But there's another important difference...</P>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"1.75rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>One Big Jump vs. Many Small Nudges</div>
+
+          <P>The WeightsDemo above showed a <S>single weight</S> moving "cat" from [2, 3] to [6, 9] in one jump. That's the core concept — weights are multipliers that reposition tokens. But real models don't work in one jump.</P>
+
+          <P>A real model has <S color="var(--purple)">dozens of layers</S> — typically 32 to 120+. Each layer has its <S>own set of weights</S>. When a token flows through the model, each layer nudges it a little bit. Layer 1 moves it slightly, Layer 2 adjusts further, Layer 3 refines more — and by the final layer, it has arrived at the right position.</P>
+
+          <Callout color="var(--purple)" icon="🗺️"><S>Analogy:</S> The single-weight demo was like <S>teleporting</S> to your destination. Real models are more like <S>GPS turn-by-turn navigation</S> — each layer is one turn that gets you closer. No single turn gets you there, but the full sequence does.</Callout>
+
+          <LayerByLayerDemo/>
+
+          <Callout color="var(--info-color)" icon="🔢">
+            <S>What are all those weight matrices?</S> Each layer has 5 main weight matrices — think of each one as a "transformation lens" that reshapes the token's vector in a different way. <S color="var(--purple)">W_Q, W_K, W_V</S> are used by attention to figure out which words are relevant to each other. <S color="var(--accent)">W_1, W_2</S> are used by the feed-forward network to apply stored knowledge. Each matrix is a large grid of numbers (e.g. 1536 × 1536 = ~2.4 million numbers in one matrix alone). Multiply that across 5 matrices × 120 layers — that's how you get <S>billions of total weights</S>.
+          </Callout>
+
+          <P>This is why models have <S>billions of parameters</S> — each layer has its own set of weight matrices. And why <S>deeper models are more capable</S>: more layers means more refined nudges, which means more precise final positions.</P>
+
+          <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:8,fontSize:"0.95rem"}}>What Different Layers Learn</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:"#60A5FA",flexShrink:0}}/>
+                <div><span style={{fontWeight:600,fontSize:"0.88rem"}}>Early layers (1–10):</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Basic patterns — grammar, syntax, punctuation rules</span></div>
+              </div>
+              <div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--border-light)"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:"#FBBF24",flexShrink:0}}/>
+                <div><span style={{fontWeight:600,fontSize:"0.88rem"}}>Middle layers (10–60):</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Relationships — word associations, sentence structure, topic coherence</span></div>
+              </div>
+              <div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:"#10B981",flexShrink:0}}/>
+                <div><span style={{fontWeight:600,fontSize:"0.88rem"}}>Deep layers (60–120+):</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>Abstract reasoning — logic, nuance, complex knowledge synthesis</span></div>
+              </div>
+            </div>
+          </div>
+
+          <Callout color="var(--info-color)" icon="📊"><S>Scale comparison:</S> GPT-2 had <S>12 layers</S> and 1.5B parameters — it could write basic text. GPT-4 is estimated to have <S>120 layers</S> and over 1 trillion parameters — it can reason, code, and pass professional exams. More layers = more refined understanding.</Callout>
 
           <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>The Training Loop</div>
 
@@ -1561,14 +1872,83 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
             <div style={{padding:"1rem 1.25rem",background:"var(--info-bg)",border:"1px solid var(--info-border)",borderRadius:10,borderLeft:"4px solid var(--info-color)"}}>
               <div style={{color:"var(--info-color)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Embedding Table</div>
               <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Positions similar words close together in space. "King" near "queen." "Dog" near "puppy." This is the model's vocabulary of meaning.</div>
+              <div style={{marginTop:"0.75rem",background:"#F3F7FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"0.6rem 0.75rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#4B5563",marginBottom:"0.4rem"}}>
+                  <span>Token (example)</span>
+                  <span>Vector (first 4)</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:6,fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#EFF6FF",borderRadius:8,padding:"0.35rem 0.45rem"}}>
+                    <span style={{color:"#1D4ED8"}}>cat (ID 317)</span>
+                    <span style={{color:"#111827"}}>[0.12, -0.45, 0.78, 0.33, ...]</span>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#FFF7ED",borderRadius:8,padding:"0.35rem 0.45rem",border:"1px solid #FDBA74"}}>
+                    <span style={{color:"#B45309"}}>kitten (ID 3847)</span>
+                    <span style={{color:"#111827"}}>[0.82, -0.31, 0.44, 0.67, ...]</span>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#EFF6FF",borderRadius:8,padding:"0.35rem 0.45rem"}}>
+                    <span style={{color:"#2563EB"}}>car (ID 318)</span>
+                    <span style={{color:"#111827"}}>[-0.55, 0.21, -0.67, 0.14, ...]</span>
+                  </div>
+                </div>
+                <div style={{marginTop:"0.45rem",color:"var(--text-muted)",fontSize:"0.72rem",lineHeight:1.5}}>
+                  Neighbor intuition: the model stores meanings as vectors, so similar meanings land near each other.
+                </div>
+              </div>
             </div>
             <div style={{padding:"1rem 1.25rem",background:"var(--purple-bg)",border:"1px solid #C4B5FD",borderRadius:10,borderLeft:"4px solid var(--purple)"}}>
               <div style={{color:"var(--purple)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Attention Weights</div>
-              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Learn which words to connect across a sentence. "Bank" looks at "river" to know it means riverbank, not a financial institution.</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Learn which words to connect across a sentence. Here, “bank” attends to “river” because “river” is the nearby clue for the “riverbank” meaning; banking clues like “loan” or “financial” get much less attention.</div>
+              <div style={{marginTop:"0.75rem",background:"#F7F3FF",border:"1px solid #E9D5FF",borderRadius:10,padding:"0.6rem 0.75rem"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#4B5563",marginBottom:"0.45rem"}}>
+                  <span>Query token: <span style={{color:"var(--purple)",fontWeight:700}}>bank</span></span>
+                  <span>Focus weights</span>
+                </div>
+                {[
+                  { t:"river", w:0.62, c:"#A78BFA" },
+                  { t:"bank", w:0.22, c:"#7C3AED" },
+                  { t:"loan", w:0.06, c:"#6B7280" },
+                  { t:"financial", w:0.04, c:"#6B7280" },
+                ].map((r, i) => (
+                  <div key={r.t} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<3?6:0}}>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#94A3B8",width:80}}>{r.t}</span>
+                    <div style={{flex:1,height:7,background:"#E9D5FF",borderRadius:999,overflow:"hidden"}}>
+                      <div style={{width:(r.w*100)+"%",height:"100%",background:r.c,transition:"width 0.3s ease"}}/>
+                    </div>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#111827",width:46,textAlign:"right"}}>{(r.w).toFixed(2)}</span>
+                  </div>
+                ))}
+                <div style={{marginTop:"0.45rem",color:"var(--text-muted)",fontSize:"0.72rem",lineHeight:1.5}}>
+                  Attention uses surrounding tokens as evidence to choose a sense for ambiguous words like “bank”.
+                </div>
+              </div>
             </div>
             <div style={{padding:"1rem 1.25rem",background:"var(--accent-light)",border:"1px solid var(--work-border)",borderRadius:10,borderLeft:"4px solid var(--accent)"}}>
               <div style={{color:"var(--accent)",fontWeight:700,marginBottom:4,fontSize:"0.95rem"}}>Feed-Forward Weights</div>
               <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Absorb factual knowledge. "Paris is the capital of France" gets encoded in these weights through repeated exposure.</div>
+              <div style={{marginTop:"0.75rem",background:"#FFF7ED",border:"1px solid #FCD34D",borderRadius:10,padding:"0.6rem 0.75rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#4B5563",marginBottom:"0.45rem"}}>
+                  <span>Activated features (example)</span>
+                  <span>Activation</span>
+                </div>
+                {[
+                  { id:"F-12", v:0.91, c:"#10B981" },
+                  { id:"F-33", v:0.18, c:"#F59E0B" },
+                  { id:"F-07", v:0.12, c:"#6B7280" },
+                  { id:"F-90", v:0.05, c:"#6B7280" },
+                ].map((r, i) => (
+                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<3?6:0}}>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#94A3B8",width:64}}>{r.id}</span>
+                    <div style={{flex:1,height:7,background:"#FDE68A",borderRadius:999,overflow:"hidden"}}>
+                      <div style={{width:(r.v*100)+"%",height:"100%",background:r.c,transition:"width 0.3s ease",borderRadius:999}}/>
+                    </div>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",color:"#111827",width:46,textAlign:"right"}}>{r.v.toFixed(2)}</span>
+                  </div>
+                ))}
+                <div style={{marginTop:"0.45rem",color:"var(--text-muted)",fontSize:"0.72rem",lineHeight:1.5}}>
+                  Higher activation means the network has learned a stronger association for the current context.
+                </div>
+              </div>
             </div>
           </div>
 
