@@ -98,6 +98,36 @@
     .main { margin-left: 0; }
     .content { padding: 1.5rem 1rem 3rem; }
   }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Chapter 1 — two training phases side by side */
+  .big-picture-phases {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.65rem 0.35rem;
+    align-items: stretch;
+    margin: 0.85rem 0 0.65rem;
+  }
+  .big-picture-phases .phase-card { min-width: 0; }
+  .big-picture-phases .phase-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0 0.15rem;
+  }
+  @media (max-width: 720px) {
+    .big-picture-phases {
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+    }
+    .big-picture-phases .phase-arrow {
+      transform: rotate(90deg);
+      padding: 0.2rem 0;
+    }
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -1954,6 +1984,336 @@ function MultiHeadDemo() {
 }
 
 // ============================================================
+// INTERACTIVE: Feed-Forward Demo
+// ============================================================
+function FeedForwardDemo() {
+  const [step, setStep] = useState(0);
+
+  // Simplified example: input is 4-dim, expand to 8-dim, compress back to 4-dim
+  const inputVec = [0.6, 1.0, 1.2, 0.8]; // "river bank" vector after self-attention
+  const expandedRaw = [0.8, -0.3, 0.5, -0.7, 0.9, -0.1, 0.4, -0.9]; // after W_1
+  const afterRelu = [0.8, 0.0, 0.5, 0.0, 0.9, 0.0, 0.4, 0.0]; // after ReLU
+  const labels = ["geography", "banking", "nature", "cooking", "water", "sports", "erosion", "finance"];
+  const outputVec = [0.87, 1.00, 0.82, 0.77]; // after W_2
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Feed-Forward: Expand → Filter → Compress</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>The "river bank" vector passes through the feed-forward network. Click each step.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {["Input (from attention)", "Step 1: Expand (×W_1)", "Step 2: ReLU Filter", "Step 3: Compress (×W_2)"].map((label, i) => (
+          <button key={i} onClick={() => setStep(i)} style={{
+            padding:"8px 14px", borderRadius:7, border:"none", cursor:"pointer",
+            fontSize:"0.78rem", fontWeight:600, transition:"all 0.2s",
+            background: step === i ? "#10B981" : i <= step ? "#10B98133" : "#252833",
+            color: step === i ? "#111" : i <= step ? "#10B981" : "#6B7280",
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {step === 0 && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:10}}>Vector for "river bank" — after self-attention enriched it with context:</div>
+          <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
+            {inputVec.map((v, i) => (
+              <div key={i} style={{background:"#A78BFA20",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 16px",textAlign:"center",minWidth:65}}>
+                <div style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"1rem",fontWeight:700}}>{v.toFixed(1)}</div>
+                <div style={{color:"#6B7280",fontSize:"0.65rem",marginTop:2}}>dim {i+1}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{color:"#6B7280",fontSize:"0.72rem",textAlign:"center",marginTop:10}}>4 dimensions — this is the context-aware vector from self-attention</div>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:10}}>Multiply by W_1 → expands from 4 dims to 8 dims (activates knowledge areas):</div>
+          <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
+            {expandedRaw.map((v, i) => (
+              <div key={i} style={{background:v>0?"#10B98115":"#EF444415",border:"1px solid "+(v>0?"#10B98133":"#EF444433"),borderRadius:8,padding:"8px 10px",textAlign:"center",minWidth:75}}>
+                <div style={{color:v>0?"#10B981":"#EF4444",fontFamily:"'JetBrains Mono'",fontSize:"0.9rem",fontWeight:700}}>{v>0?"+":""}{v.toFixed(1)}</div>
+                <div style={{color:v>0?"#10B981":"#EF4444",fontSize:"0.6rem",marginTop:2}}>{labels[i]}</div>
+                <div style={{color:"#6B7280",fontSize:"0.58rem"}}>{v>0?"relevant":"irrelevant"}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{color:"#6B7280",fontSize:"0.72rem",textAlign:"center",marginTop:10}}>
+            8 dimensions now — <span style={{color:"#10B981"}}>positive values</span> = relevant knowledge, <span style={{color:"#EF4444"}}>negative values</span> = irrelevant
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:10}}>ReLU activation: negative values → 0 (irrelevant knowledge turned OFF):</div>
+          <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
+            {afterRelu.map((v, i) => {
+              const wasNeg = expandedRaw[i] < 0;
+              return (
+                <div key={i} style={{background:wasNeg?"#25283380":"#10B98115",border:"1px solid "+(wasNeg?"#404552":"#10B98133"),borderRadius:8,padding:"8px 10px",textAlign:"center",minWidth:75,opacity:wasNeg?0.4:1}}>
+                  <div style={{color:wasNeg?"#6B7280":"#10B981",fontFamily:"'JetBrains Mono'",fontSize:"0.9rem",fontWeight:700}}>{v.toFixed(1)}</div>
+                  <div style={{color:wasNeg?"#6B7280":"#10B981",fontSize:"0.6rem",marginTop:2}}>{labels[i]}</div>
+                  <div style={{color:wasNeg?"#EF4444":"#10B981",fontSize:"0.58rem",fontWeight:700}}>{wasNeg?"OFF ✗":"ON ✓"}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{color:"#6B7280",fontSize:"0.72rem",textAlign:"center",marginTop:10}}>
+            <span style={{color:"#10B981"}}>4 knowledge areas ON</span> (geography, nature, water, erosion) — <span style={{color:"#EF4444"}}>4 turned OFF</span> (banking, cooking, sports, finance)
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",marginBottom:10}}>
+            <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:10}}>Multiply by W_2 → compress back to 4 dims. Only active knowledge contributes:</div>
+            <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.75rem",lineHeight:1.9}}>
+              {labels.map((label, i) => {
+                const isActive = afterRelu[i] > 0;
+                return (
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,color:isActive?"#10B981":"#6B7280",opacity:isActive?1:0.35}}>
+                    <span style={{width:30,textAlign:"right",fontWeight:700}}>{afterRelu[i].toFixed(1)}</span>
+                    <span style={{color:"#6B7280"}}>×</span>
+                    <span>W_2[{label}]</span>
+                    <span style={{color:"#6B7280"}}>→</span>
+                    <span>{isActive ? "CONTRIBUTES" : "zero × anything = NOTHING"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #10B98133"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:8,textAlign:"center"}}>Final output — enriched with relevant knowledge only:</div>
+            <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
+              {outputVec.map((v, i) => (
+                <div key={i} style={{background:"#10B98120",border:"1px solid #10B98144",borderRadius:8,padding:"10px 16px",textAlign:"center",minWidth:65}}>
+                  <div style={{color:"#10B981",fontFamily:"'JetBrains Mono'",fontSize:"1rem",fontWeight:700}}>{v.toFixed(2)}</div>
+                  <div style={{color:"#6B7280",fontSize:"0.65rem",marginTop:2}}>dim {i+1}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{color:"#10B981",fontSize:"0.75rem",textAlign:"center",marginTop:8,fontWeight:600}}>
+              Built entirely from geography, nature, water, erosion knowledge.
+              Banking and cooking knowledge was ignored (zero × anything = zero).
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Knowledge Activation Demo
+// ============================================================
+function KnowledgeActivationDemo() {
+  const [activeWord, setActiveWord] = useState("river bank");
+
+  const activations = {
+    "river bank": {
+      on: [{label:"geography",v:0.8,color:"#10B981"},{label:"nature",v:0.5,color:"#10B981"},{label:"water features",v:0.9,color:"#10B981"},{label:"erosion",v:0.4,color:"#10B981"}],
+      off: [{label:"financial",v:0},{label:"cooking",v:0},{label:"software",v:0},{label:"sports",v:0}]
+    },
+    "bank account": {
+      on: [{label:"financial",v:0.9,color:"#60A5FA"},{label:"transactions",v:0.7,color:"#60A5FA"},{label:"interest rates",v:0.6,color:"#60A5FA"},{label:"savings",v:0.5,color:"#60A5FA"}],
+      off: [{label:"geography",v:0},{label:"nature",v:0},{label:"cooking",v:0},{label:"sports",v:0}]
+    },
+    "Python code": {
+      on: [{label:"programming",v:0.9,color:"#FBBF24"},{label:"functions",v:0.7,color:"#FBBF24"},{label:"variables",v:0.8,color:"#FBBF24"},{label:"debugging",v:0.5,color:"#FBBF24"}],
+      off: [{label:"snake",v:0},{label:"jungle",v:0},{label:"cooking",v:0},{label:"geography",v:0}]
+    },
+    "Paris trip": {
+      on: [{label:"France",v:0.9,color:"#EC4899"},{label:"Eiffel Tower",v:0.8,color:"#EC4899"},{label:"tourism",v:0.7,color:"#EC4899"},{label:"culture",v:0.6,color:"#EC4899"}],
+      off: [{label:"cooking",v:0},{label:"software",v:0},{label:"sports",v:0},{label:"banking",v:0}]
+    },
+  };
+
+  const data = activations[activeWord];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>What Knowledge Gets Activated?</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Different words activate different knowledge neurons. Click a word to see:</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {Object.keys(activations).map(word => (
+          <button key={word} onClick={() => setActiveWord(word)} style={{
+            padding:"8px 16px", borderRadius:7, border:"none", cursor:"pointer",
+            fontSize:"0.85rem", fontWeight:700, fontFamily:"'JetBrains Mono'", transition:"all 0.2s",
+            background: activeWord === word ? activations[word].on[0].color : "#252833",
+            color: activeWord === word ? "#111" : "#94A3B8",
+          }}>{word}</button>
+        ))}
+      </div>
+
+      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:200,background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>✓ KNOWLEDGE ON (after ReLU)</div>
+          {data.on.map((n, i) => (
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span style={{color:n.color,fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700,width:30}}>{n.v.toFixed(1)}</span>
+              <div style={{flex:1,height:8,background:"#252833",borderRadius:4,overflow:"hidden"}}>
+                <div style={{width:(n.v*100)+"%",height:"100%",background:n.color,borderRadius:4,transition:"width 0.4s"}}/>
+              </div>
+              <span style={{color:n.color,fontSize:"0.78rem",width:110}}>{n.label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{flex:1,minWidth:200,background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+          <div style={{color:"#EF4444",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>✗ KNOWLEDGE OFF (zeroed by ReLU)</div>
+          {data.off.map((n, i) => (
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,opacity:0.4}}>
+              <span style={{color:"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700,width:30}}>0.0</span>
+              <div style={{flex:1,height:8,background:"#252833",borderRadius:4}}/>
+              <span style={{color:"#6B7280",fontSize:"0.78rem",width:110,textDecoration:"line-through"}}>{n.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{marginTop:10,color:"#94A3B8",fontSize:"0.78rem",textAlign:"center"}}>
+        💡 Same network, same W_1 and W_2 weights — but different inputs activate different knowledge. That's how one network stores knowledge about millions of topics.
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Autoregressive Demo
+// ============================================================
+function AutoregressiveDemo() {
+  const [iteration, setIteration] = useState(0);
+
+  const steps = [
+    { input: ["What", " is", " Hadoop", "?"], predicted: null, prob: null, note: "Ready — prompt tokenized into 4 tokens" },
+    { input: ["What", " is", " Hadoop", "?"], predicted: " Hadoop", prob: "78%", note: "Full pipeline (96 layers) → last token's vector → predict from 100K vocabulary" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop"], predicted: " is", prob: "92%", note: "Append previous token, run entire pipeline AGAIN on 5 tokens" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop", " is"], predicted: " a", prob: "85%", note: "6 tokens now — every iteration the input grows by 1" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop", " is", " a"], predicted: " distributed", prob: "61%", note: "Model activates Hadoop knowledge from feed-forward weights" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop", " is", " a", " distributed"], predicted: " computing", prob: "74%", note: "Each token costs a full pass through ALL transformer layers" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop", " is", " a", " distributed", " computing"], predicted: " framework", prob: "67%", note: "Token 6 generated — imagine this running 500 times for a full response" },
+    { input: ["What", " is", " Hadoop", "?", " Hadoop", " is", " a", " distributed", " computing", " framework"], predicted: ".", prob: "58%", note: "Model decides to end the sentence" },
+  ];
+
+  const maxIter = steps.length - 1;
+  const current = steps[iteration];
+  const generatedTokens = steps.slice(1, iteration + 1).map(s => s.predicted).filter(Boolean);
+  const response = generatedTokens.join("");
+
+  const nextStep = () => { if (iteration < maxIter) setIteration(i => i + 1); };
+  const reset = () => setIteration(0);
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem",flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{color:"#EF4444",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+          <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif"}}>Autoregressive Generation</div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={nextStep} disabled={iteration>=maxIter} style={{
+            padding:"7px 18px",background:iteration>=maxIter?"#252833":"#EF4444",
+            color:iteration>=maxIter?"#6B7280":"#fff",border:"none",borderRadius:7,
+            fontWeight:700,cursor:iteration>=maxIter?"default":"pointer",fontSize:"0.85rem",
+            opacity:iteration>=maxIter?0.5:1
+          }}>Generate Next Token →</button>
+          <button onClick={reset} style={{padding:"7px 14px",background:"transparent",color:"#94A3B8",border:"1px solid #404552",borderRadius:7,cursor:"pointer",fontSize:"0.8rem"}}>Reset</button>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:10,marginBottom:"1rem",flexWrap:"wrap"}}>
+        <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}>
+          <span style={{color:"#94A3B8"}}>Iteration </span>
+          <span style={{color:"#EF4444",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{iteration}</span>
+          <span style={{color:"#6B7280"}}> / {maxIter}</span>
+        </div>
+        <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}>
+          <span style={{color:"#94A3B8"}}>Input tokens </span>
+          <span style={{color:"#60A5FA",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{current.input.length}</span>
+        </div>
+        {iteration > 0 && current.prob && (
+          <div style={{background:"#252833",padding:"5px 12px",borderRadius:6,fontSize:"0.78rem"}}>
+            <span style={{color:"#94A3B8"}}>Confidence </span>
+            <span style={{color:"#10B981",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{current.prob}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginBottom:8}}>
+        <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Input to Model (this iteration)</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {current.input.map((token, i) => {
+            const isPrompt = i < 4;
+            const isNew = i === current.input.length - 1 && iteration > 0 && i >= 4;
+            return (
+              <span key={i} style={{
+                padding:"4px 10px",borderRadius:5,fontSize:"0.82rem",fontFamily:"'JetBrains Mono'",fontWeight:600,
+                background: isNew ? "#EF444420" : isPrompt ? "#60A5FA15" : "#10B98115",
+                color: isNew ? "#EF4444" : isPrompt ? "#60A5FA" : "#10B981",
+                border: "1px solid " + (isNew ? "#EF444433" : isPrompt ? "#60A5FA33" : "#10B98133"),
+              }}>{token}</span>
+            );
+          })}
+          {iteration > 0 && current.predicted && (
+            <>
+              <span style={{color:"#6B7280",alignSelf:"center",fontSize:"1rem"}}>→</span>
+              <span style={{padding:"4px 10px",borderRadius:5,fontSize:"0.82rem",fontFamily:"'JetBrains Mono'",fontWeight:700,
+                background:"#FBBF2420",color:"#FBBF24",border:"1px solid #FBBF2433",
+                boxShadow:"0 0 12px #FBBF2422"
+              }}>{current.predicted}</span>
+              <span style={{color:"#6B7280",fontSize:"0.72rem",alignSelf:"center"}}>({current.prob})</span>
+            </>
+          )}
+        </div>
+        <div style={{color:"#6B7280",fontSize:"0.72rem",marginTop:6,display:"flex",gap:12,flexWrap:"wrap"}}>
+          <span><span style={{color:"#60A5FA"}}>■</span> prompt tokens</span>
+          <span><span style={{color:"#10B981"}}>■</span> previously generated</span>
+          {iteration > 0 && <span><span style={{color:"#FBBF24"}}>■</span> predicted this iteration</span>}
+        </div>
+      </div>
+
+      {iteration > 0 && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #2E3240",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",fontSize:"0.72rem",fontFamily:"'JetBrains Mono'",justifyContent:"center"}}>
+            <span style={{color:"#60A5FA",background:"#60A5FA15",padding:"3px 8px",borderRadius:4}}>Tokenize</span>
+            <span style={{color:"#6B7280"}}>→</span>
+            <span style={{color:"#A78BFA",background:"#A78BFA15",padding:"3px 8px",borderRadius:4}}>Embed</span>
+            <span style={{color:"#6B7280"}}>→</span>
+            <span style={{color:"#EC4899",background:"#EC489915",padding:"3px 8px",borderRadius:4}}>Attention</span>
+            <span style={{color:"#6B7280"}}>→</span>
+            <span style={{color:"#10B981",background:"#10B98115",padding:"3px 8px",borderRadius:4}}>Feed-Forward</span>
+            <span style={{color:"#6B7280"}}>→</span>
+            <span style={{color:"#F59E0B",background:"#F59E0B15",padding:"3px 8px",borderRadius:4}}>×96 layers</span>
+            <span style={{color:"#6B7280"}}>→</span>
+            <span style={{color:"#FBBF24",background:"#FBBF2415",padding:"3px 8px",borderRadius:4,fontWeight:700}}>Predict 1 token</span>
+          </div>
+        </div>
+      )}
+
+      {iteration > 0 && (
+        <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #10B98133"}}>
+          <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Response so far</div>
+          <div style={{color:"#F0F4F8",fontSize:"1.05rem",fontFamily:"'DM Sans'",lineHeight:1.7}}>
+            <span style={{color:"#6B7280",fontStyle:"italic"}}>Q: What is Hadoop? </span>
+            <span style={{color:"#10B981",fontWeight:600}}>{response}</span>
+            {iteration < maxIter && <span style={{color:"#FBBF24",animation:"blink 1s infinite"}}>▌</span>}
+          </div>
+        </div>
+      )}
+
+      <div style={{marginTop:8,color:"#94A3B8",fontSize:"0.78rem",padding:"0.5rem 0.75rem",background:"#12141C88",borderRadius:6}}>
+        {current.note}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // INTERACTIVE: Temperature Demo
 // ============================================================
 function TemperatureDemo() {
@@ -1985,6 +2345,196 @@ function TemperatureDemo() {
             <div style={{color:probs[i]>0.05?"#E5E7EB":"#4B5563",fontSize:"0.6rem",fontFamily:"'JetBrains Mono'",marginTop:5,transform:"rotate(-30deg)",transformOrigin:"top left",whiteSpace:"nowrap",marginLeft:7}}>{word}</div>
           </div>);
         })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Top-K vs Top-P Demo
+// ============================================================
+function TopKTopPDemo() {
+  const [mode, setMode] = useState("topk"); // "topk" or "topp"
+  const [topK, setTopK] = useState(3);
+  const [topP, setTopP] = useState(0.5);
+
+  const tokens = [
+    { word: "distributed", prob: 0.25 },
+    { word: "framework",   prob: 0.12 },
+    { word: "popular",     prob: 0.10 },
+    { word: "powerful",    prob: 0.08 },
+    { word: "open",        prob: 0.07 },
+    { word: "software",    prob: 0.05 },
+    { word: "big",         prob: 0.04 },
+    { word: "scalable",    prob: 0.03 },
+    { word: "Java",        prob: 0.02 },
+    { word: "banana",      prob: 0.001 },
+  ];
+
+  // Calculate which tokens are kept
+  let kept = [];
+  if (mode === "topk") {
+    kept = tokens.map((t, i) => i < topK);
+  } else {
+    let cumulative = 0;
+    let cutoffReached = false;
+    kept = tokens.map(t => {
+      if (cutoffReached) return false;
+      cumulative += t.prob;
+      if (cumulative >= topP) cutoffReached = true;
+      return true;
+    });
+  }
+
+  const keptCount = kept.filter(Boolean).length;
+
+  // Cumulative probabilities for Top-P display
+  let cumProbs = [];
+  let cum = 0;
+  tokens.forEach(t => { cum += t.prob; cumProbs.push(cum); });
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#F97316",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Top-K vs Top-P Filtering</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>After "Hadoop is a ___" — which tokens can the model choose from?</div>
+
+      {/* Mode toggle */}
+      <div style={{display:"flex",gap:6,marginBottom:"1rem"}}>
+        <button onClick={() => setMode("topk")} style={{
+          padding:"8px 18px", borderRadius:7, border:"none", cursor:"pointer",
+          fontSize:"0.85rem", fontWeight:700, transition:"all 0.2s",
+          background: mode==="topk" ? "#F97316" : "#252833",
+          color: mode==="topk" ? "#111" : "#94A3B8",
+        }}>Top-K (fixed cutoff)</button>
+        <button onClick={() => setMode("topp")} style={{
+          padding:"8px 18px", borderRadius:7, border:"none", cursor:"pointer",
+          fontSize:"0.85rem", fontWeight:700, transition:"all 0.2s",
+          background: mode==="topp" ? "#8B5CF6" : "#252833",
+          color: mode==="topp" ? "#111" : "#94A3B8",
+        }}>Top-P (adaptive cutoff)</button>
+      </div>
+
+      {/* Slider */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:"1.25rem"}}>
+        {mode === "topk" ? (
+          <>
+            <span style={{color:"#F97316",fontSize:"0.82rem",fontWeight:600,fontFamily:"'JetBrains Mono'"}}>K = {topK}</span>
+            <input type="range" min="1" max="10" step="1" value={topK} onChange={e => setTopK(parseInt(e.target.value))}
+              style={{flex:1}}/>
+            <span style={{color:"#6B7280",fontSize:"0.75rem"}}>Keep exactly {topK} tokens</span>
+          </>
+        ) : (
+          <>
+            <span style={{color:"#8B5CF6",fontSize:"0.82rem",fontWeight:600,fontFamily:"'JetBrains Mono'"}}>P = {topP.toFixed(1)}</span>
+            <input type="range" min="0.1" max="1.0" step="0.1" value={topP} onChange={e => setTopP(parseFloat(e.target.value))}
+              style={{flex:1}}/>
+            <span style={{color:"#6B7280",fontSize:"0.75rem"}}>Keep until {(topP*100).toFixed(0)}% covered</span>
+          </>
+        )}
+      </div>
+
+      {/* Token list */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+        {tokens.map((t, i) => {
+          const isKept = kept[i];
+          const accentColor = mode === "topk" ? "#F97316" : "#8B5CF6";
+          const barWidth = (t.prob / 0.25) * 100; // normalize to max
+          return (
+            <div key={i} style={{
+              display:"flex",alignItems:"center",gap:8,padding:"6px 0",
+              borderBottom: i < tokens.length-1 ? "1px solid #2E3240" : "none",
+              opacity: isKept ? 1 : 0.25,
+              transition:"opacity 0.3s",
+            }}>
+              {/* Kept/eliminated indicator */}
+              <span style={{color:isKept?accentColor:"#EF4444",fontSize:"0.78rem",width:16,flexShrink:0,fontWeight:700}}>
+                {isKept ? "✓" : "✗"}
+              </span>
+              {/* Token name */}
+              <span style={{color:isKept?"#F0F4F8":"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",width:90,fontWeight:isKept?600:400}}>
+                {t.word}
+              </span>
+              {/* Probability bar */}
+              <div style={{flex:1,height:8,background:"#252833",borderRadius:4,overflow:"hidden"}}>
+                <div style={{width:barWidth+"%",height:"100%",background:isKept?accentColor:"#3B3F4E",borderRadius:4,transition:"all 0.3s"}}/>
+              </div>
+              {/* Probability value */}
+              <span style={{color:isKept?accentColor:"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.75rem",width:45,textAlign:"right",fontWeight:600}}>
+                {(t.prob*100).toFixed(1)}%
+              </span>
+              {/* Cumulative (for Top-P mode) */}
+              {mode === "topp" && (
+                <span style={{color:isKept&&cumProbs[i]>=topP?"#10B981":"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.68rem",width:55,textAlign:"right"}}>
+                  cum:{(cumProbs[i]*100).toFixed(0)}%
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      <div style={{marginTop:10,padding:"0.65rem 0.85rem",borderRadius:8,
+        background: mode==="topk" ? "#F9731612" : "#8B5CF612",
+        border: "1px solid " + (mode==="topk" ? "#F9731633" : "#8B5CF633"),
+      }}>
+        <span style={{color:mode==="topk"?"#F97316":"#8B5CF6",fontSize:"0.82rem",fontWeight:600}}>
+          {mode === "topk"
+            ? `Top-K = ${topK}: Always exactly ${topK} tokens kept, regardless of confidence.`
+            : `Top-P = ${topP.toFixed(1)}: ${keptCount} tokens kept (adapted to confidence level).`
+          }
+        </span>
+        {mode === "topp" && (
+          <span style={{color:"#94A3B8",fontSize:"0.78rem",display:"block",marginTop:4}}>
+            {topP <= 0.3 ? "Very focused — only the most likely tokens survive."
+             : topP <= 0.6 ? "Moderate variety — a handful of reasonable options."
+             : topP <= 0.9 ? "Good balance — enough variety for natural-sounding text."
+             : "Very permissive — almost everything is considered. Risk of odd choices."}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// VISUAL: Sampling Pipeline
+// ============================================================
+function SamplingPipelineViz() {
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#60A5FA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Visual</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"1.25rem"}}>How They Work Together</div>
+
+      <div style={{display:"flex",gap:0,alignItems:"stretch",flexWrap:"wrap"}}>
+        {/* Step 1 */}
+        <div style={{flex:1,minWidth:160,background:"#12141C",borderRadius:"10px 0 0 10px",border:"1px solid #2E3240",padding:"1rem",borderRight:"none",position:"relative"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>STEP 1</div>
+          <div style={{color:"#60A5FA",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Raw Scores</div>
+          <div style={{color:"#6B7280",fontSize:"0.75rem",lineHeight:1.5}}>Model outputs ~100K scores — one for every token in vocabulary</div>
+          <div style={{position:"absolute",right:-10,top:"50%",transform:"translateY(-50%)",zIndex:2,color:"#4B5563",fontSize:"1.1rem"}}>→</div>
+        </div>
+        {/* Step 2 */}
+        <div style={{flex:1,minWidth:160,background:"#12141C",border:"1px solid #2E3240",padding:"1rem",borderRight:"none",position:"relative"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>STEP 2</div>
+          <div style={{color:"#F97316",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Temperature</div>
+          <div style={{color:"#6B7280",fontSize:"0.75rem",lineHeight:1.5}}>Divide all scores by temperature value. Reshapes the entire distribution.</div>
+          <div style={{position:"absolute",right:-10,top:"50%",transform:"translateY(-50%)",zIndex:2,color:"#4B5563",fontSize:"1.1rem"}}>→</div>
+        </div>
+        {/* Step 3 */}
+        <div style={{flex:1,minWidth:160,background:"#12141C",border:"1px solid #2E3240",padding:"1rem",borderRight:"none",position:"relative"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>STEP 3</div>
+          <div style={{color:"#8B5CF6",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Top-P / Top-K</div>
+          <div style={{color:"#6B7280",fontSize:"0.75rem",lineHeight:1.5}}>Cut off the tail. Remove tokens below the probability threshold.</div>
+          <div style={{position:"absolute",right:-10,top:"50%",transform:"translateY(-50%)",zIndex:2,color:"#4B5563",fontSize:"1.1rem"}}>→</div>
+        </div>
+        {/* Step 4 */}
+        <div style={{flex:1,minWidth:160,background:"#12141C",borderRadius:"0 10px 10px 0",border:"1px solid #2E3240",padding:"1rem"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>STEP 4</div>
+          <div style={{color:"#10B981",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Pick One Token</div>
+          <div style={{color:"#6B7280",fontSize:"0.75rem",lineHeight:1.5}}>Random selection from surviving tokens, weighted by probability.</div>
+        </div>
       </div>
     </div>
   );
@@ -2036,7 +2586,7 @@ function Sidebar({active,onNav}){
     </div>
     <div className="sidebar-section">
       <button className={"sidebar-group-toggle"+(isCourseOpen?" expanded":"")} onClick={()=>setIsCourseOpen(v=>!v)}>
-        <span>How LLMs Actually Work</span>
+        <span>1. How LLMs Actually Work</span>
         <span className="caret">▶</span>
       </button>
       {isCourseOpen&&(
@@ -2121,31 +2671,31 @@ function App(){
 
         <section id="ch1"><ChH num="1" title="The Big Picture" sub="Two training phases that create an LLM" color="var(--build-color)"/>
           <P>Before you can use an LLM, someone had to <S>build</S> it. This happens in two distinct phases.</P>
-          <div style={{display:"flex",flexDirection:"column",gap:14,margin:"1.25rem 0"}}>
-            <div style={{background:"white",borderRadius:12,border:"1px solid var(--build-border)",padding:"1.3rem",borderLeft:"4px solid var(--build-color)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:34,height:34,borderRadius:"50%",background:"var(--build-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"1rem"}}>1</div>
-                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.2rem",color:"var(--build-color)",fontWeight:700}}>Train the Tokenizer</span>
+          <div className="big-picture-phases">
+            <div className="phase-card" style={{background:"white",borderRadius:10,border:"1px solid var(--build-border)",padding:"0.75rem 0.9rem",borderLeft:"3px solid var(--build-color)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,flexWrap:"wrap",gap:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:"var(--build-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.82rem"}}>1</div>
+                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.02rem",color:"var(--build-color)",fontWeight:700}}>Train the Tokenizer</span>
                 </div>
-                <span style={{color:"var(--text-muted)",fontSize:"0.82rem"}}>Hours • Cheap</span>
+                <span style={{color:"var(--text-muted)",fontSize:"0.72rem"}}>Hours • Cheap</span>
               </div>
-              <P><S>Input:</S> Massive text dataset (internet, books, code)</P>
-              <P><S>Output:</S> Vocabulary table (~100K entries) + Merge rules</P>
-              <P><S>What it does:</S> Figures out how to split text into pieces (tokens)</P>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>Input:</S> Massive text dataset (internet, books, code)</div>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>Output:</S> Vocabulary (~100K) + merge rules</div>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>What it does:</S> Splits text into tokens</div>
             </div>
-            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.3rem"}}>↓</div>
-            <div style={{background:"white",borderRadius:12,border:"1px solid var(--info-border)",padding:"1.3rem",borderLeft:"4px solid var(--info-color)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:34,height:34,borderRadius:"50%",background:"var(--info-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"1rem"}}>2</div>
-                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.2rem",color:"var(--info-color)",fontWeight:700}}>Train the Model</span>
+            <div className="phase-arrow" aria-hidden="true">→</div>
+            <div className="phase-card" style={{background:"white",borderRadius:10,border:"1px solid var(--info-border)",padding:"0.75rem 0.9rem",borderLeft:"3px solid var(--info-color)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,flexWrap:"wrap",gap:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:"var(--info-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.82rem"}}>2</div>
+                  <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.02rem",color:"var(--info-color)",fontWeight:700}}>Train the Model</span>
                 </div>
-                <span style={{color:"var(--text-muted)",fontSize:"0.82rem"}}>Months • Millions $$$</span>
+                <span style={{color:"var(--text-muted)",fontSize:"0.72rem"}}>Months • Millions $$$</span>
               </div>
-              <P><S>Input:</S> Same text, tokenized using Phase 1's tokenizer</P>
-              <P><S>Output:</S> Embedding table + Attention weights + Feed-forward weights</P>
-              <P><S>What it does:</S> Learns language — meaning, grammar, facts, reasoning</P>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>Input:</S> Same text, tokenized (Phase 1)</div>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>Output:</S> Embeddings + attention + feed-forward weights</div>
+              <div style={{fontSize:"0.84rem",lineHeight:1.45,color:"var(--text)",margin:"0.22rem 0"}}><S>What it does:</S> Learns language, facts, reasoning</div>
             </div>
           </div>
           <Callout color="var(--build-color)"><S>Why two phases?</S> The model needs NUMBERS, not text. Phase 1 creates the converter. Phase 2 uses it to learn language.</Callout>
@@ -2203,7 +2753,24 @@ Step 99,998:   Barthol + omew      (appeared only 4,200 times)
 Step 99,999:   ...one more merge...
 Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
           <P><S>Result:</S> "hello" = 1 token, "Bartholomew" = 3 tokens (Barth + ol + omew)</P>
-          <P>The vocabulary limit is a design choice. Bigger vocabulary = more single-token words = faster processing but more memory. Smaller vocabulary = more splitting = slower but lighter. Modern LLMs typically use 100K-128K tokens as the sweet spot.</P>
+          <div style={{background:"white",border:"1px solid var(--build-border)",borderRadius:10,padding:"0.9rem 1rem",margin:"0.9rem 0"}}>
+            <div style={{fontWeight:700,color:"var(--build-color)",fontSize:"0.88rem",marginBottom:"0.55rem"}}>Vocabulary size is a design tradeoff</div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              <div style={{flex:1,minWidth:250,background:"#FFFBF2",border:"1px solid #F2D9A7",borderRadius:8,padding:"0.55rem 0.65rem"}}>
+                <div style={{fontWeight:700,fontSize:"0.8rem",color:"#8B5E34",marginBottom:4}}>Bigger vocabulary</div>
+                <div style={{fontSize:"0.79rem",lineHeight:1.5,color:"var(--text)"}}>More words become single tokens, so text is processed in fewer steps.</div>
+                <div style={{fontSize:"0.76rem",lineHeight:1.5,color:"var(--text-secondary)",marginTop:4}}><S>Tradeoff:</S> Faster processing, but more memory usage.</div>
+              </div>
+              <div style={{flex:1,minWidth:250,background:"#F7FAFF",border:"1px solid #CFE2FF",borderRadius:8,padding:"0.55rem 0.65rem"}}>
+                <div style={{fontWeight:700,fontSize:"0.8rem",color:"#1E6091",marginBottom:4}}>Smaller vocabulary</div>
+                <div style={{fontSize:"0.79rem",lineHeight:1.5,color:"var(--text)"}}>More words stay split into multiple pieces, so there are more token steps.</div>
+                <div style={{fontSize:"0.76rem",lineHeight:1.5,color:"var(--text-secondary)",marginTop:4}}><S>Tradeoff:</S> Lighter memory footprint, but slower processing.</div>
+              </div>
+            </div>
+            <div style={{marginTop:8,padding:"0.5rem 0.65rem",borderRadius:8,background:"var(--build-bg)",border:"1px solid var(--build-border)",fontSize:"0.8rem",color:"var(--text)"}}>
+              <S>Common sweet spot in modern LLMs:</S> around <S color="var(--build-color)">100K-128K tokens</S>.
+            </div>
+          </div>
           <P>After training, two things are stored and <S color="var(--build-color)">frozen forever</S>:</P>
           <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:260,padding:"1rem",background:"var(--build-bg)",border:"1px solid var(--build-border)",borderRadius:10}}>
@@ -2257,7 +2824,7 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <WeightsDemo/>
 
-          <P>In reality, the model works in <S>1,536 to 12,288 dimensions</S>, not 2. And instead of a single weight, there are <S>billions</S> of them. But there's another important difference...</P>
+          <P>In reality, the model works in <S>1,536 to 12,288 dimensions</S>, not 2. And instead of a single weight, there are <S>billions</S> of them.</P>
 
           <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"1.75rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>One Big Jump vs. Many Small Nudges</div>
 
@@ -2432,11 +2999,42 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <Callout color="var(--build-color)" icon="⚠️">What goes in shapes what comes out. Trained mostly on English? The model is better at English. Trained on lots of code? It can write code. This is why <S>training data quality and bias</S> are critical concerns.</Callout>
 
+          <div style={{margin:"1.5rem 0 1.1rem"}}>
+            <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.18rem",fontWeight:700,color:"var(--orange)",marginBottom:"0.55rem"}}>Reality Check: Compute Alone Is Not Enough</div>
+            <P style={{margin:"0.35rem 0 0.85rem"}}>Many people assume bigger GPUs and more pre-training data automatically produce a helpful assistant. <S color="var(--red)">Surprise:</S> they do not. Pre-training gives language capability, but assistant behavior requires <S color="var(--orange)">alignment with human preferences</S>.</P>
+
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"stretch"}}>
+              <div style={{flex:1,minWidth:260,background:"#FFF7ED",border:"1px solid #F6D3A6",borderRadius:10,padding:"0.85rem"}}>
+                <div style={{fontWeight:700,color:"#B45309",fontSize:"0.86rem",marginBottom:6}}>❌ Only Pre-training + Compute</div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.65,color:"#7C2D12",display:"flex",flexDirection:"column",gap:2}}>
+                  <div>Internet text + massive compute</div>
+                  <div>+ Next-token objective</div>
+                  <div>→ Strong text completer</div>
+                  <div>→ Inconsistent assistant behavior</div>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",color:"var(--text-muted)",fontSize:"1.15rem",padding:"0 2px"}}>→</div>
+              <div style={{flex:1,minWidth:260,background:"#ECFDF5",border:"1px solid #BBF7D0",borderRadius:10,padding:"0.85rem"}}>
+                <div style={{fontWeight:700,color:"#047857",fontSize:"0.86rem",marginBottom:6}}>✅ Add Alignment Signals</div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.65,color:"#065F46",display:"flex",flexDirection:"column",gap:2}}>
+                  <div>Pre-training model</div>
+                  <div>+ Human preference data</div>
+                  <div>+ Teacher-model data (human-supervised)</div>
+                  <div>→ Helpful, safer assistant behavior</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{marginTop:8,fontSize:"0.8rem",color:"var(--text-secondary)",background:"#F8FAFC",border:"1px solid var(--border)",borderRadius:8,padding:"0.55rem 0.7rem"}}>
+              <S>Practical note:</S> Most recent frontier models use a blend of human-created data and model-generated data reviewed or guided by human standards.
+            </div>
+          </div>
+
           <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginTop:"2.5rem",marginBottom:"1rem"}}>From Text Predictor to Helpful Assistant</div>
 
-          <P>Everything above is called <S color="var(--build-color)">pre-training</S> — the model learns to predict the next token. The result is a raw text completer. You type "The capital of France is" and it predicts "Paris." But it does not <S>follow instructions</S> or <S>have a conversation</S>.</P>
+          <P>Everything above is <S color="var(--build-color)">pre-training</S>: next-token prediction over massive text and massive compute. That creates a powerful language engine, but mostly a <S>text completer</S>. It can continue patterns ("The capital of France is" → "Paris"), yet still fail to consistently <S>follow instructions</S>, refuse harmful requests correctly, or hold a clean assistant-style conversation.</P>
 
-          <P>So how does ChatGPT or Claude go from "autocomplete" to "helpful assistant"? Through two additional stages of training called <S color="var(--info-color)">fine-tuning</S>:</P>
+          <P>So how does ChatGPT or Claude move from "autocomplete" to "helpful assistant"? Through additional alignment stages often grouped under <S color="var(--info-color)">fine-tuning</S>:</P>
 
           <div style={{display:"flex",flexDirection:"column",gap:0,margin:"1.25rem 0"}}>
             <div style={{background:"white",borderRadius:12,border:"1px solid var(--build-border)",padding:"1.2rem",borderLeft:"4px solid var(--build-color)"}}>
@@ -2453,7 +3051,7 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
                 <span style={{fontSize:"1.3rem"}}>📋</span>
                 <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--info-color)",fontWeight:700}}>Stage 2: Instruction Tuning (SFT)</span>
               </div>
-              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Human trainers write thousands of (instruction, ideal response) pairs. The model learns the format of being helpful.</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Instruction-response examples teach the model the format of being helpful. In practice, this data is often a mix of human-written and model-generated examples filtered by human quality checks.</div>
               <div style={{display:"inline-block",padding:"3px 10px",background:"var(--info-bg)",borderRadius:5,fontSize:"0.78rem",color:"var(--info-color)",fontWeight:600}}>Output: Helpful but rough</div>
             </div>
             <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"1.2rem",padding:"4px 0"}}>↓</div>
@@ -2462,14 +3060,12 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
                 <span style={{fontSize:"1.3rem"}}>👍</span>
                 <span style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--accent)",fontWeight:700}}>Stage 3: RLHF</span>
               </div>
-              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Humans rank multiple model responses from best to worst. The model learns to prefer responses humans rated highly.</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem",marginBottom:4}}>Preference signals (human rankings, and sometimes model-judged rankings calibrated by human standards) teach the model which responses are better.</div>
               <div style={{display:"inline-block",padding:"3px 10px",background:"var(--work-bg)",borderRadius:5,fontSize:"0.78rem",color:"var(--accent)",fontWeight:600}}>Output: ChatGPT / Claude</div>
             </div>
           </div>
 
           <Callout color="var(--build-color)" icon="🎓"><S>Analogy:</S> Pre-training is like getting a medical degree — you absorb everything in the textbooks. Fine-tuning is residency — you learn bedside manner, how to talk to patients, when to refer to a specialist. Same knowledge, but now you know how to <S>apply it helpfully</S>.</Callout>
-
-          <Callout color="var(--info-color)" icon="📘">This entire Part 1 covers <S>pre-training</S>. Fine-tuning (SFT and RLHF) will be covered in detail in a later module.</Callout>
 
           <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Stage 2: Instruction Tuning (SFT)</div>
 
@@ -2559,6 +3155,10 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
   → ["Hello", ",", " how", " are", " you", "?"]
   → Vocabulary lookup
   → [15339, 11, 1268, 527, 499, 30]`}</CB>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:"1.25rem",padding:"8px 16px 8px 12px",background:"#FFF7ED",borderRadius:20,border:"1px solid #FDBA74"}}>
+            <span style={{fontSize:"0.95rem",lineHeight:1}}>📓</span>
+            <span style={{color:"#9A3412",fontSize:"0.78rem",fontWeight:500}}>Hands-on in <strong>live notebook demo</strong></span>
+          </div>
         </section>
 
         <section id="ch5"><ChH num="5" title="Tokens to Meaning" sub="Embedding lookup gives each token its meaning" color="var(--work-color)"/>
@@ -2567,6 +3167,10 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 11    → [0.01,  0.78, -0.33, ...]  "," general meaning
 1268  → [0.56,  0.12,  0.89, ...]  " how" general meaning`}</CB>
           <Callout icon="⚠️">These are <S>general</S> meanings. "bank" gets the same vector whether about rivers or money. Context comes from self-attention.</Callout>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:"1.25rem",padding:"8px 16px 8px 12px",background:"#FFF7ED",borderRadius:20,border:"1px solid #FDBA74"}}>
+            <span style={{fontSize:"0.95rem",lineHeight:1}}>📓</span>
+            <span style={{color:"#9A3412",fontSize:"0.78rem",fontWeight:500}}>Hands-on in <strong>live notebook demo</strong></span>
+          </div>
         </section>
 
         <section id="ch6"><ChH num="6" title="Understanding Context" sub="Self-attention connects words to build meaning" color="var(--work-color)"/>
@@ -2680,46 +3284,512 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
         </section>
 
         <section id="ch7"><ChH num="7" title="Activating Knowledge" sub="Feed-forward applies stored facts" color="var(--work-color)"/>
-          <P>Self-attention gave context. Feed-forward activates <S>knowledge</S> stored in its weights.</P>
-          <CB>{`Self-Attention: "What does this word mean HERE?"
-Feed-Forward:   "What do I KNOW about this?"
 
-→ EXPAND to 6144 dims (activate knowledge)
-→ ReLU: turn OFF irrelevant knowledge
-→ COMPRESS to 1536 dims (keep relevant facts)`}</CB>
-          <P>One Transformer layer = self-attention + feed-forward. Repeat <S>32 to 120+ times</S>.</P>
-        </section>
+          <P>Self-attention gave the model <S color="var(--purple)">context</S> — "bank" now knows it's near "river." But knowing context and knowing <S>what to do with it</S> are different things.</P>
 
-        <section id="ch8"><ChH num="8" title="Generating the Response" sub="One token at a time" color="var(--work-color)"/>
-          <P>LLMs generate text <S color="var(--red)">one token at a time</S>. Predict one, append it, run everything again.</P>
-          <CB>{`"What is Python?"
-  Iter 1: [What, is, Python, ?]         → "Python"
-  Iter 2: [What, is, Python, ?, Python] → " is"
-  Iter 3: [..., Python, is]             → " a"
-  ...
-  Iter 50: [...]                        → END
-  → "Python is a high-level programming language..."`}</CB>
-          <Callout color="var(--red)" icon="⚡">This is why <S>streaming</S> exists — tokens appear one by one. Longer responses cost more. The model can't go back and fix mistakes.</Callout>
-        </section>
-
-        <section id="ch9"><ChH num="9" title="Controlling Creativity" sub="Temperature, Top-P, and Top-K" color="var(--work-color)"/>
-          <P><S>Temperature</S> controls whether the model picks the safe word or takes creative risks.</P>
-          <TemperatureDemo/>
-          <div style={{marginTop:"1.25rem"}}>
-            <P><S color="var(--info-color)">Top-K:</S> Only consider the top K tokens. Fixed cutoff.</P>
-            <P><S color="var(--orange)">Top-P (nucleus):</S> Keep tokens until cumulative probability reaches P. Adapts to confidence. Generally preferred.</P>
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid #2E3240",margin:"1rem 0",fontFamily:"'JetBrains Mono'",fontSize:"0.88rem",lineHeight:1.9}}>
+            <div><span style={{color:"#A78BFA"}}>Self-Attention:</span> <span style={{color:"#94A3B8"}}>"What does this word mean in THIS sentence?"</span></div>
+            <div><span style={{color:"#10B981"}}>Feed-Forward:</span>  <span style={{color:"#94A3B8"}}>"What do I KNOW about this topic?"</span></div>
           </div>
-          <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
-            <div style={{fontWeight:700,marginBottom:8,fontFamily:"'Libre Baskerville',serif",fontSize:"1rem"}}>Practical Defaults</div>
-            {[{use:"Code generation",temp:"0",topP:"1.0",c:"var(--info-color)"},{use:"Factual Q&A",temp:"0.3",topP:"0.9",c:"#0E7490"},{use:"General conversation",temp:"0.7",topP:"0.9",c:"var(--accent)"},{use:"Creative writing",temp:"1.0",topP:"0.95",c:"var(--build-color)"}].map((r,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
-                <div style={{width:7,height:7,borderRadius:"50%",background:r.c,flexShrink:0}}/>
-                <span style={{flex:1,fontSize:"0.88rem"}}>{r.use}</span>
-                <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>temp={r.temp}</span>
-                <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>top_p={r.topP}</span>
+
+          <Callout color="var(--accent)" icon="💼"><S>Analogy:</S> Self-attention is a <S>meeting</S> where every word discusses with every other word. Feed-forward is each word going to its <S>private desk</S> to think and apply what it knows. Self-attention gives you the discussion; feed-forward gives you the expertise.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>What is the Feed-Forward Network?</div>
+
+          <P>It's a simple two-layer neural network that processes each word <S>independently</S>. After self-attention, each word has a context-enriched vector. The feed-forward network takes this vector and transforms it, activating relevant <S color="var(--accent)">knowledge</S> stored in its weights.</P>
+
+          <P>The critical point: <S>self-attention lets words talk to each other. Feed-forward lets each word think on its own.</S></P>
+
+          <CB>{`Self-Attention:  "bank" talks to "river," "sat," "by," "the," "I"
+                 → now knows it's "river bank"
+
+Feed-Forward:    "river bank" goes into a private room to think
+                 → activates knowledge: geography, erosion, flooding,
+                   things found near river banks, etc.`}</CB>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>How It Works: Expand → Filter → Compress</div>
+
+          <P>The mechanics are simpler than self-attention. Three steps:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--info-border)",borderLeft:"4px solid var(--info-color)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:"var(--info-color)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.8rem",flexShrink:0}}>1</div>
+                <div>
+                  <div style={{color:"var(--info-color)",fontWeight:700}}>EXPAND (× W_1)</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>1536 dims → 6144 dims (4× bigger). Projects into a larger space to <S>activate knowledge areas</S>. Like opening all the filing cabinets.</div>
+                </div>
+              </div>
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"0.9rem"}}>↓</div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--red)33",borderLeft:"4px solid var(--red)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:"var(--red)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.8rem",flexShrink:0}}>2</div>
+                <div>
+                  <div style={{color:"var(--red)",fontWeight:700}}>FILTER (ReLU activation)</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>If value {"<"} 0, set to 0. <S>Turns OFF irrelevant knowledge</S> and keeps relevant knowledge ON. Like slamming shut the filing cabinets you don't need.</div>
+                </div>
+              </div>
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"0.9rem"}}>↓</div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--accent)33",borderLeft:"4px solid var(--accent)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.8rem",flexShrink:0}}>3</div>
+                <div>
+                  <div style={{color:"var(--accent)",fontWeight:700}}>COMPRESS (× W_2)</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>6144 dims → back to 1536 dims. Only the <S>active</S> knowledge contributes (zero × anything = zero). The output is the same size as the input, but now enriched.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <P>Click through each step to see the actual numbers:</P>
+
+          <FeedForwardDemo/>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Why Does This Work? The ReLU Trick</div>
+
+          <P>The magic is in <S color="var(--red)">ReLU zeroing out irrelevant dimensions</S> before compression. When W_2 compresses the vector, it multiplies every dimension by a weight row. But zero times anything is zero — so the rows in W_2 corresponding to irrelevant knowledge contribute <S>nothing</S> to the output.</P>
+
+          <Callout color="var(--accent)" icon="🔑"><S>This is how relevant knowledge survives compression.</S> ReLU decides which knowledge areas are relevant by zeroing out the irrelevant ones. Then W_2 compression naturally carries forward only the active dimensions. The output is smaller in size but contains only the knowledge that matters for this specific word in this specific context.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Different Words Activate Different Knowledge</div>
+
+          <P>The same W_1 and W_2 weight matrices store knowledge about <S>millions of topics</S>. Different input vectors activate different neurons — that's how one network handles everything from geography to cooking to code:</P>
+
+          <KnowledgeActivationDemo/>
+
+          <Callout color="var(--build-color)" icon="📦"><S>Where is the knowledge stored?</S> In W_1 and W_2. During training, the model saw trillions of tokens — Wikipedia, books, code, papers. The patterns and facts got encoded as numerical patterns in these weight matrices. This is why <S>larger models know more</S> — bigger W_1 and W_2 = more neurons = more storage for knowledge.</Callout>
+
+          <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0",overflowX:"auto"}}>
+            <div style={{fontWeight:700,marginBottom:10,fontFamily:"'Libre Baskerville',serif",fontSize:"1rem"}}>Self-Attention vs Feed-Forward</div>
+            <div style={{display:"grid",gridTemplateColumns:"140px 1fr 1fr",gap:0,fontSize:"0.85rem"}}>
+              <div style={{padding:"8px 10px",background:"var(--bg)",fontWeight:700,borderBottom:"2px solid var(--border)"}}></div>
+              <div style={{padding:"8px 10px",background:"var(--purple-bg)",fontWeight:700,color:"var(--purple)",borderBottom:"2px solid var(--border)",textAlign:"center"}}>Self-Attention</div>
+              <div style={{padding:"8px 10px",background:"var(--accent-light)",fontWeight:700,color:"var(--accent)",borderBottom:"2px solid var(--border)",textAlign:"center"}}>Feed-Forward</div>
+              
+              <div style={{padding:"8px 10px",fontWeight:600,borderBottom:"1px solid var(--border-light)"}}>Purpose</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>Understand context between words</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>Apply stored knowledge to each word</div>
+              
+              <div style={{padding:"8px 10px",fontWeight:600,borderBottom:"1px solid var(--border-light)"}}>How words interact</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>Every word talks to every other word</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>Each word processed independently</div>
+              
+              <div style={{padding:"8px 10px",fontWeight:600,borderBottom:"1px solid var(--border-light)"}}>What it stores</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>How to compute relevance (W_Q, W_K, W_V)</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>Factual knowledge and patterns (W_1, W_2)</div>
+              
+              <div style={{padding:"8px 10px",fontWeight:600}}>Analogy</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)"}}>A meeting where everyone discusses</div>
+              <div style={{padding:"8px 10px",color:"var(--text-secondary)"}}>Each person goes to their desk to think</div>
+            </div>
+          </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>One Transformer Layer = Attention + Feed-Forward</div>
+
+          <P>Self-attention and feed-forward always work as a pair. Together they form one <S>Transformer layer</S>. The model repeats this pattern:</P>
+
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0",textAlign:"center"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",fontFamily:"'JetBrains Mono'",fontSize:"0.85rem"}}>
+              <div style={{background:"#A78BFA20",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 16px"}}>
+                <div style={{color:"#A78BFA",fontWeight:700}}>Self-Attention</div>
+                <div style={{color:"#6B7280",fontSize:"0.7rem"}}>understand context</div>
+              </div>
+              <span style={{color:"#6B7280",fontSize:"1.2rem"}}>→</span>
+              <div style={{background:"#10B98120",border:"1px solid #10B98144",borderRadius:8,padding:"10px 16px"}}>
+                <div style={{color:"#10B981",fontWeight:700}}>Feed-Forward</div>
+                <div style={{color:"#6B7280",fontSize:"0.7rem"}}>apply knowledge</div>
+              </div>
+              <span style={{color:"#6B7280",fontSize:"1.2rem"}}>→</span>
+              <div style={{background:"#F59E0B20",border:"1px solid #F59E0B44",borderRadius:8,padding:"10px 16px"}}>
+                <div style={{color:"#F59E0B",fontWeight:700}}>Repeat</div>
+                <div style={{color:"#6B7280",fontSize:"0.7rem"}}>32 to 120+ times</div>
+              </div>
+            </div>
+            <div style={{color:"#6B7280",fontSize:"0.75rem",marginTop:10}}>Each layer has its OWN weights. Deeper layers capture more abstract patterns.</div>
+          </div>
+
+          <Callout icon="📊"><S>GPT-2:</S> 12 layers, 124M parameters. <S>GPT-4:</S> ~120 layers, ~1.7 trillion parameters. More layers = more refined understanding. More parameters = more knowledge stored in W_1, W_2.</Callout>
+
+        </section>
+
+        <section id="ch8"><ChH num="8" title="Generating the Response" sub="One token at a time — the autoregressive loop" color="var(--work-color)"/>
+
+          <P>We've now covered all the building blocks: tokenization (text → numbers), embeddings (numbers → meaning), self-attention (meaning → context), and feed-forward (context → knowledge). Now let's see how they work together to generate a response.</P>
+
+          <P>Here's the fact that surprises most people:</P>
+
+          <div style={{background:"var(--red-bg)",borderRadius:12,padding:"1.5rem",margin:"1.25rem 0",border:"1px solid var(--red)33",textAlign:"center"}}>
+            <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.4rem",color:"var(--red)",fontWeight:700,marginBottom:6}}>LLMs generate text ONE TOKEN AT A TIME.</div>
+            <div style={{color:"var(--text-secondary)",fontSize:"0.95rem"}}>Not a sentence. Not a paragraph. One. Single. Token. Then repeat.</div>
+          </div>
+
+          <P>The model doesn't "think" about the entire answer and write it out. It predicts <S color="var(--red)">one next token</S>, appends it to the input, and runs the <S>entire pipeline again</S> from scratch — tokenize, embed, attention, feed-forward, all 96+ layers — just to predict the next single token. Then again. And again.</P>
+
+          <Callout icon="✍️">It's like writing an essay where you can only think about the <S>very next word</S>. You write one word, read everything you've written so far, then decide the next word. You can never go back and change what you already wrote.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Watch It Happen: Token by Token</div>
+
+          <P>Prompt: <S>"What is Hadoop?"</S> — click "Generate Next Token" to step through each iteration:</P>
+
+          <AutoregressiveDemo/>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Why the Last Token's Vector?</div>
+
+          <P>You might wonder: the model processes all input tokens simultaneously — why does it only use the <S>last token's vector</S> to predict what comes next?</P>
+
+          <P>Because in self-attention, each token can only attend to tokens <S>before it and itself</S>. By the time the model reaches the last position, that vector has absorbed information from <S>every preceding token</S> through 96+ layers of attention. It's the most information-rich vector in the sequence.</P>
+
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+            <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Why the Last Token Carries Full Context</div>
+            <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",lineHeight:1.9}}>
+              <div style={{color:"#94A3B8"}}>Input: "What is Hadoop?"</div>
+              <div style={{marginTop:8}}>
+                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
+                  <span style={{color:"#60A5FA",width:80}}>Position 0:</span>
+                  <span style={{color:"#94A3B8"}}>"What"</span>
+                  <span style={{color:"#6B7280"}}>→ can see: itself only</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
+                  <span style={{color:"#60A5FA",width:80}}>Position 1:</span>
+                  <span style={{color:"#94A3B8"}}>"is"</span>
+                  <span style={{color:"#6B7280"}}>→ can see: "What" + itself</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
+                  <span style={{color:"#60A5FA",width:80}}>Position 2:</span>
+                  <span style={{color:"#94A3B8"}}>"Hadoop"</span>
+                  <span style={{color:"#6B7280"}}>→ can see: "What" + "is" + itself</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center",padding:"6px 0",background:"#EF444410",borderRadius:6,paddingLeft:8}}>
+                  <span style={{color:"#EF4444",width:80,fontWeight:700}}>Position 3:</span>
+                  <span style={{color:"#F0F4F8",fontWeight:700}}>"?"</span>
+                  <span style={{color:"#EF4444",fontWeight:600}}>→ can see: ALL tokens → used for prediction</span>
+                </div>
+              </div>
+              <div style={{marginTop:10,color:"#94A3B8",fontSize:"0.75rem"}}>
+                💡 Think of it like reading left to right. By the time you reach "?", you've absorbed the full meaning of "What is Hadoop?" — you don't need to go back to "What" separately.
+              </div>
+            </div>
+          </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>When Does It Stop?</div>
+
+          <P>The model stops generating when one of two things happens:</P>
+
+          <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:250,background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--accent)33",borderLeft:"4px solid var(--accent)"}}>
+              <div style={{color:"var(--accent)",fontWeight:700,marginBottom:4}}>End-of-Sequence Token</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>The model itself predicts a special "I'm done" token. This means the model decided the response is complete.</div>
+            </div>
+            <div style={{flex:1,minWidth:250,background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--info-color)33",borderLeft:"4px solid var(--info-color)"}}>
+              <div style={{color:"var(--info-color)",fontWeight:700,marginBottom:4}}>Maximum Token Limit</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>You set <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 6px",borderRadius:3,fontSize:"0.82rem"}}>max_tokens=500</span> in your API call, forcing the model to stop at 500 tokens regardless.</div>
+            </div>
+          </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Why This Matters For Your Career</div>
+
+          <P>Understanding autoregressive generation explains real-world behaviors you'll encounter daily:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:"1.3rem",flexShrink:0}}>⏱️</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.95rem",marginBottom:2}}>Why LLMs are slow for long outputs</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>A 500-token response = 500 iterations, each running through all 96+ layers. That's 500 complete passes through the entire model.</div>
+              </div>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:"1.3rem",flexShrink:0}}>📡</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.95rem",marginBottom:2}}>Why streaming exists in ChatGPT and Claude</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Each token is sent to you as it's generated, rather than waiting for all 500 iterations to finish. That's why you see words appearing one by one.</div>
+              </div>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:"1.3rem",flexShrink:0}}>💰</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.95rem",marginBottom:2}}>Why longer responses cost more money</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Each token consumes compute. 500 output tokens costs ~500× the compute of generating 1 token. This is why APIs charge separately for input and output tokens, with output tokens usually more expensive.</div>
+              </div>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:"1.3rem",flexShrink:0}}>🚫</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.95rem",marginBottom:2}}>Why models can't "go back and fix" mistakes</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Once a token is generated, it becomes part of the input for the next iteration. The model can't undo it. If it generates a wrong word early, all subsequent tokens are influenced by that mistake. This is why <S>prompt engineering matters so much</S>.</div>
+              </div>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--border)",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:"1.3rem",flexShrink:0}}>📏</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.95rem",marginBottom:2}}>Why context window limits matter</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>With each iteration, the input grows by one token. By iteration 500, the model processes your entire prompt PLUS 500 generated tokens. If this total exceeds the context window (e.g. 128K tokens), the model can't continue. Your prompt <S>shares</S> the context window with the response.</div>
+              </div>
+            </div>
+          </div>
+
+          <Callout color="var(--red)" icon="⚡"><S>The bottom line:</S> Every token you see appearing in ChatGPT represents a complete forward pass through the entire model — billions of parameters, dozens of layers. The model is doing an enormous amount of work for each single word. Next, we'll see how it decides <S>which</S> token to pick from the 100K+ options available.</Callout>
+
+        </section>
+
+        <section id="ch9"><ChH num="9" title="Controlling Creativity" sub="Temperature, Top-P, Top-K — how the model picks its words" color="var(--work-color)"/>
+
+          <P>In the autoregressive loop, the model produces a score for every token in the vocabulary (~100K scores) at each iteration, then picks one. But <S>how</S> does it pick?</P>
+
+          <P>The simplest approach: always pick the highest-scoring token. This is called <S color="var(--info-color)">greedy decoding</S>.</P>
+
+          <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:250,background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--red)33",borderLeft:"4px solid var(--red)"}}>
+              <div style={{color:"var(--red)",fontWeight:700,marginBottom:4}}>The Problem with Greedy</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Same input = same output, every time. "What is Hadoop?" asked 10 times → identical response 10 times. Output tends to be repetitive, boring, and sometimes gets stuck in loops.</div>
+            </div>
+            <div style={{flex:1,minWidth:250,background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--red)33",borderLeft:"4px solid var(--red)"}}>
+              <div style={{color:"var(--red)",fontWeight:700,marginBottom:4}}>The Problem with Pure Random</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Picking randomly from all 100K tokens → nonsense: "What is Hadoop? Banana quantum purple seventeen."</div>
+            </div>
+          </div>
+
+          <P>You need <S color="var(--accent)">controlled randomness</S> — creative enough to be interesting and natural, but not so random that it's garbage. That's what temperature, top-p, and top-k control.</P>
+
+          <Callout color="var(--build-color)" icon="🎯"><S>This is the most practical topic for your career.</S> Every time you call the OpenAI or Claude API, you'll set these parameters. Understanding them means you can tune outputs for different use cases — precise for code, creative for brainstorming, balanced for Q&A.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>The Probability Distribution</div>
+
+          <P>At each step, the model produces a probability distribution — a list of ~100K tokens, each with a probability of being the next token:</P>
+
+          <CB>{`After processing "What is Hadoop? Hadoop is a"
+
+Token probabilities:
+  "distributed"  → 0.25    ← most likely
+  "framework"    → 0.12
+  "popular"      → 0.10
+  "powerful"     → 0.08
+  "open"         → 0.07
+  "software"     → 0.05
+  "big"          → 0.04
+  ...
+  "banana"       → 0.00001 ← almost impossible
+  "purple"       → 0.000001`}</CB>
+
+          <P>All three parameters control how the model picks from this list:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+            <div style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",background:"var(--orange-bg)",borderRadius:8,border:"1px solid var(--orange)22"}}>
+              <span style={{color:"var(--orange)",fontWeight:700,fontSize:"0.92rem",width:100,flexShrink:0}}>Temperature</span>
+              <span style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Reshapes the entire distribution — makes it sharper (confident) or flatter (random)</span>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",background:"var(--orange-bg)",borderRadius:8,border:"1px solid var(--orange)22"}}>
+              <span style={{color:"#F97316",fontWeight:700,fontSize:"0.92rem",width:100,flexShrink:0}}>Top-K</span>
+              <span style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Cuts off after the top K tokens — fixed number, ignores the rest</span>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",background:"var(--purple-bg)",borderRadius:8,border:"1px solid var(--purple)22"}}>
+              <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.92rem",width:100,flexShrink:0}}>Top-P</span>
+              <span style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>Keeps tokens until cumulative probability reaches P — adaptive, adjusts to confidence</span>
+            </div>
+          </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Temperature: Reshaping Confidence</div>
+
+          <P><S>Temperature</S> is a single number that controls how "confident" or "spread out" the probability distribution is. To understand it, you need to know that the model doesn't output probabilities directly — it outputs <S>raw scores</S> (called logits), which are then converted into probabilities. Temperature intervenes in between.</P>
+
+          <P>Here's the process, with real numbers. It has three parts: raw scores, softmax, and where temperature fits in.</P>
+
+          {/* ── Step 1: Raw scores ── */}
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Step 1 — The Model Outputs Raw Scores (Logits)</div>
+            <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:10}}>The final layer of the model produces one number per token in its vocabulary. These are <S color="#F87171">not</S> probabilities — they're raw scores called <S color="#F0F4F8">logits</S>. They can be any number: positive, negative, large, small. Higher means "the model thinks this token fits better here."</div>
+            <div style={{display:"grid",gridTemplateColumns:"120px 1fr",gap:"4px 12px",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem"}}>
+              <div style={{color:"#6B7280",fontWeight:700}}>Token</div>
+              <div style={{color:"#6B7280",fontWeight:700}}>Raw Score (logit)</div>
+              {[
+                {t:"\"distributed\"",s:"4.0",c:"#F0F4F8"},
+                {t:"\"framework\"",s:"3.0",c:"#94A3B8"},
+                {t:"\"popular\"",s:"2.5",c:"#94A3B8"},
+                {t:"\"banana\"",s:"0.5",c:"#6B7280"},
+              ].map((r,i) => (
+                <React.Fragment key={i}>
+                  <div style={{color:r.c}}>{r.t}</div>
+                  <div style={{color:r.c,fontWeight:i===0?700:400}}>{r.s}</div>
+                </React.Fragment>
+              ))}
+            </div>
+            <div style={{color:"#6B7280",fontSize:"0.72rem",marginTop:8}}>These numbers don't sum to 100 or to 1 — they're just the model's raw opinion. We need to convert them into probabilities. That's what softmax does.</div>
+          </div>
+
+          {/* ── Step 2: Converting Scores to Probabilities ── */}
+          <div style={{background:"#F8FAFC",borderRadius:10,padding:"1.25rem",border:"1px solid var(--border)",margin:"1rem 0"}}>
+            <div style={{fontWeight:700,fontSize:"1rem",marginBottom:8,fontFamily:"'Libre Baskerville',serif"}}>Step 2 — Converting Scores to Probabilities</div>
+            <P style={{marginBottom:12}}>We can't pick a random token from raw scores — we need proper probabilities. The function that does this conversion is called <S>softmax</S>. It takes any list of numbers and turns them into <S>probabilities that always sum to exactly 100%.</S> It does two things:</P>
+            <div style={{paddingLeft:8,borderLeft:"3px solid var(--primary)",marginBottom:12}}>
+              <P style={{marginBottom:4}}><S>1. Exponentiate</S> — raise <em>e</em> (≈ 2.718) to the power of each score. This makes all values positive and amplifies differences.</P>
+              <P style={{marginBottom:0}}><S>2. Normalize</S> — divide each result by the sum of all results. This forces them to sum to exactly 1.0 (100%).</P>
+            </div>
+
+            <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:8}}>Worked Example — Softmax on Our Four Scores</div>
+            <div style={{background:"#1A1D27",borderRadius:8,padding:"1rem",border:"1px solid #2E3240"}}>
+              <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.72rem",lineHeight:2,color:"#94A3B8"}}>
+                <div style={{color:"#6B7280",fontWeight:700,marginBottom:2}}>Raw scores: [4.0, 3.0, 2.5, 0.5]</div>
+                <div><span style={{color:"#6B7280"}}>Step A:</span> Exponentiate each score</div>
+                <div style={{paddingLeft:14}}>e<sup>4.0</sup> = <span style={{color:"#F0F4F8"}}>54.6</span> &nbsp; e<sup>3.0</sup> = <span style={{color:"#F0F4F8"}}>20.1</span> &nbsp; e<sup>2.5</sup> = <span style={{color:"#F0F4F8"}}>12.2</span> &nbsp; e<sup>0.5</sup> = <span style={{color:"#F0F4F8"}}>1.6</span></div>
+                <div><span style={{color:"#6B7280"}}>Step B:</span> Sum them up</div>
+                <div style={{paddingLeft:14}}>54.6 + 20.1 + 12.2 + 1.6 = <span style={{color:"#F0F4F8"}}>88.5</span></div>
+                <div><span style={{color:"#6B7280"}}>Step C:</span> Divide each by the sum</div>
+                <div style={{paddingLeft:14}}>
+                  "distributed" = 54.6 ÷ 88.5 = <span style={{color:"#2563EB",fontWeight:700}}>62%</span> &nbsp;&nbsp;
+                  "framework" = 20.1 ÷ 88.5 = <span style={{color:"#059669",fontWeight:700}}>23%</span>
+                </div>
+                <div style={{paddingLeft:14}}>
+                  "popular" = 12.2 ÷ 88.5 = <span style={{color:"#059669",fontWeight:700}}>14%</span> &nbsp;&nbsp;
+                  "banana" = 1.6 ÷ 88.5 = <span style={{color:"#DC2626",fontWeight:700}}>2%</span>
+                </div>
+                <div style={{marginTop:6,borderTop:"1px solid #2E3240",paddingTop:6}}>
+                  <span style={{color:"#F0F4F8",fontWeight:700}}>Total: 62% + 23% + 14% + 2% = 100% ✓</span> &nbsp; <span style={{color:"#94A3B8"}}>Always. Guaranteed by the division step.</span>
+                </div>
+              </div>
+            </div>
+            <div style={{marginTop:10,fontSize:"0.82rem",color:"var(--text-muted)"}}>
+              <S>Key property:</S> Because we divide by the sum of <em>all</em> values, the results must add up to exactly 100%. This is what makes the output a valid probability distribution. It's not a coincidence — it's a mathematical guarantee.
+            </div>
+          </div>
+
+          {/* ── Step 3: Temperature + Softmax ── */}
+          <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Step 3 — Where Temperature Fits In</div>
+            <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:6}}>Temperature inserts one tiny step <S color="#F0F4F8">before</S> softmax: <span style={{fontFamily:"'JetBrains Mono'",color:"#F0F4F8"}}>divide every logit by the temperature value, then apply softmax.</span></div>
+            <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:12}}>The softmax still guarantees 100% — but dividing first changes <S color="#F0F4F8">how spread out</S> the probabilities are.</div>
+
+            <div style={{display:"grid",gridTemplateColumns:"120px 1fr 1fr 1fr",gap:"6px 10px",fontFamily:"'JetBrains Mono'",fontSize:"0.72rem"}}>
+              {/* Header row */}
+              <div style={{color:"#6B7280",fontWeight:700}}>Token</div>
+              <div style={{color:"#2563EB",fontWeight:700,textAlign:"center"}}>temp=0.5<br/><span style={{fontWeight:400,fontSize:"0.65rem"}}>score÷0.5 → softmax</span></div>
+              <div style={{color:"#059669",fontWeight:700,textAlign:"center"}}>temp=1.0<br/><span style={{fontWeight:400,fontSize:"0.65rem"}}>score÷1.0 → softmax</span></div>
+              <div style={{color:"#DC2626",fontWeight:700,textAlign:"center"}}>temp=2.0<br/><span style={{fontWeight:400,fontSize:"0.65rem"}}>score÷2.0 → softmax</span></div>
+
+              {/* distributed */}
+              <div style={{color:"#F0F4F8"}}>"distributed"</div>
+              <div style={{color:"#2563EB",textAlign:"center"}}>4.0÷0.5=8.0 → <span style={{fontWeight:700}}>84%</span></div>
+              <div style={{color:"#059669",textAlign:"center"}}>4.0÷1.0=4.0 → <span style={{fontWeight:700}}>62%</span></div>
+              <div style={{color:"#DC2626",textAlign:"center"}}>4.0÷2.0=2.0 → <span style={{fontWeight:700}}>44%</span></div>
+
+              {/* framework */}
+              <div style={{color:"#94A3B8"}}>"framework"</div>
+              <div style={{color:"#2563EB",textAlign:"center"}}>3.0÷0.5=6.0 → 11%</div>
+              <div style={{color:"#059669",textAlign:"center"}}>3.0÷1.0=3.0 → 23%</div>
+              <div style={{color:"#DC2626",textAlign:"center"}}>3.0÷2.0=1.5 → 27%</div>
+
+              {/* popular */}
+              <div style={{color:"#94A3B8"}}>"popular"</div>
+              <div style={{color:"#2563EB",textAlign:"center"}}>2.5÷0.5=5.0 → 4%</div>
+              <div style={{color:"#059669",textAlign:"center"}}>2.5÷1.0=2.5 → 14%</div>
+              <div style={{color:"#DC2626",textAlign:"center"}}>2.5÷2.0=1.25 → 21%</div>
+
+              {/* banana */}
+              <div style={{color:"#6B7280"}}>"banana"</div>
+              <div style={{color:"#2563EB",textAlign:"center"}}>0.5÷0.5=1.0 → <span style={{fontWeight:700}}>&lt;1%</span></div>
+              <div style={{color:"#059669",textAlign:"center"}}>0.5÷1.0=0.5 → 2%</div>
+              <div style={{color:"#DC2626",textAlign:"center"}}>0.5÷2.0=0.25 → <span style={{fontWeight:700}}>8%</span></div>
+
+              {/* totals */}
+              <div style={{color:"#F0F4F8",fontWeight:700,borderTop:"1px solid #2E3240",paddingTop:6}}>Total</div>
+              <div style={{color:"#2563EB",textAlign:"center",fontWeight:700,borderTop:"1px solid #2E3240",paddingTop:6}}>100%</div>
+              <div style={{color:"#059669",textAlign:"center",fontWeight:700,borderTop:"1px solid #2E3240",paddingTop:6}}>100%</div>
+              <div style={{color:"#DC2626",textAlign:"center",fontWeight:700,borderTop:"1px solid #2E3240",paddingTop:6}}>100%</div>
+            </div>
+
+            {/* Bottom annotations */}
+            <div style={{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}}>
+              <div style={{flex:1,minWidth:140,padding:"6px 10px",background:"#2563EB12",borderRadius:6,border:"1px solid #2563EB22"}}>
+                <div style={{color:"#2563EB",fontSize:"0.72rem",fontWeight:700}}>Low temp (0.5)</div>
+                <div style={{color:"#94A3B8",fontSize:"0.68rem"}}>Dividing by a small number makes scores <S color="#93C5FD">bigger</S> and further apart → softmax concentrates almost everything on the winner (84%)</div>
+              </div>
+              <div style={{flex:1,minWidth:140,padding:"6px 10px",background:"#05966912",borderRadius:6,border:"1px solid #05966922"}}>
+                <div style={{color:"#059669",fontSize:"0.72rem",fontWeight:700}}>Normal temp (1.0)</div>
+                <div style={{color:"#94A3B8",fontSize:"0.68rem"}}>Scores unchanged → the model's natural confidence (62% for the top pick)</div>
+              </div>
+              <div style={{flex:1,minWidth:140,padding:"6px 10px",background:"#DC262612",borderRadius:6,border:"1px solid #DC262622"}}>
+                <div style={{color:"#DC2626",fontSize:"0.72rem",fontWeight:700}}>High temp (2.0)</div>
+                <div style={{color:"#94A3B8",fontSize:"0.68rem"}}>Dividing by a big number makes scores <S color="#FCA5A5">smaller</S> and closer together → softmax spreads probability around, giving "banana" an 8% chance</div>
+              </div>
+            </div>
+          </div>
+
+          <Callout color="var(--orange)" icon="🧮"><S>The intuition:</S> Temperature doesn't change what the model thinks is best — "distributed" always has the highest raw score. It changes <S>how dramatically the winner dominates</S> after softmax converts scores to probabilities. Low temperature = the winner takes almost everything. High temperature = everyone gets a more equal share, including bad options like "banana". Either way, probabilities always sum to exactly 100%.</Callout>
+
+          <P>Try it yourself — drag the slider to see how temperature reshapes the distribution in real time:</P>
+
+          <TemperatureDemo/>
+
+          <div style={{background:"white",borderRadius:10,padding:"1.1rem 1.25rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,marginBottom:8,fontFamily:"'Libre Baskerville',serif",fontSize:"1rem"}}>When to Use What Temperature</div>
+            {[
+              {range:"0 – 0.3",use:"Code generation, data extraction, factual Q&A",why:"You want the CORRECT answer, not a creative one",color:"#2563EB"},
+              {range:"0.4 – 0.7",use:"Conversation, summarization, analysis",why:"Balanced — mostly accurate with some natural variety",color:"#059669"},
+              {range:"0.8 – 1.2",use:"Creative writing, brainstorming, storytelling",why:"You WANT variety and surprise",color:"#D97706"},
+              {range:"1.5+",use:"Experimental, wild ideas",why:"High chance of nonsense — use with caution",color:"#DC2626"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
+                <span style={{color:r.color,fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700,width:70,flexShrink:0}}>{r.range}</span>
+                <div>
+                  <div style={{fontWeight:600,fontSize:"0.88rem"}}>{r.use}</div>
+                  <div style={{color:"var(--text-muted)",fontSize:"0.78rem"}}>{r.why}</div>
+                </div>
               </div>
             ))}
           </div>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Top-K: Fixed Cutoff</div>
+
+          <P>Top-K is simpler: <S color="#F97316">"Only consider the K most probable tokens. Ignore everything else."</S></P>
+
+          <P>If K = 3, the model can only choose from the top 3 tokens. If K = 50, it can choose from 50. The rest are eliminated completely — "banana" never has a chance regardless of temperature.</P>
+
+          <Callout icon="⚠️">Top-K has a limitation: K is <S>fixed</S>. Sometimes only 2 tokens make sense, sometimes 50 do. A fixed K can't adapt to the model's confidence at each step. This is why <S color="var(--purple)">Top-P</S> was invented.</Callout>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Top-P (Nucleus Sampling): Adaptive Cutoff</div>
+
+          <P>Top-P solves the fixed-K problem. Instead of keeping a fixed number of tokens, it says: <S color="var(--purple)">"Keep adding tokens from most probable to least probable until their combined probability reaches P."</S></P>
+
+          <P><S>Why Top-P is better than Top-K:</S> It adapts automatically. When the model is very confident (one token has 0.9 probability), Top-P = 0.9 keeps just that one token. When the model is uncertain (many tokens around 0.05), Top-P = 0.9 keeps many tokens. It <S>naturally adjusts</S> to the model's confidence at each step.</P>
+
+          <P>Try both and see the difference — drag the slider to adjust:</P>
+
+          <TopKTopPDemo/>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>How They Work Together</div>
+
+          <P>In practice, APIs let you set temperature and top-p together. They apply <S>in sequence</S>:</P>
+
+          <SamplingPipelineViz/>
+
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.25rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 1rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>Practical Defaults — What to Use When</div>
+
+          <P>These are parameters you'll set in <S>every API call</S> you make as a GenAI Engineer. There's no single "right" setting — it depends on what you're building:</P>
+
+          <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0"}}>
+            {[
+              {use:"Code generation",temp:"0",topP:"1.0",desc:"Deterministic. Always picks the most likely token. Same input = same output.",color:"var(--info-color)",icon:"💻"},
+              {use:"Factual Q&A / Summarization",temp:"0.3",topP:"0.9",desc:"Mostly picks likely tokens with slight variety. Accurate and reliable.",color:"#0E7490",icon:"📋"},
+              {use:"General conversation",temp:"0.7",topP:"0.9",desc:"Good balance of coherence and naturalness. The sweet spot for most apps.",color:"var(--accent)",icon:"💬"},
+              {use:"Creative writing / Brainstorming",temp:"1.0",topP:"0.95",desc:"More variety, surprising word choices. Good for idea generation.",color:"var(--build-color)",icon:"✨"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
+                <span style={{fontSize:"1.3rem",flexShrink:0}}>{r.icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:"0.92rem",color:r.color}}>{r.use}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",marginTop:2}}>{r.desc}</div>
+                </div>
+                <div style={{display:"flex",gap:8,flexShrink:0}}>
+                  <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",background:"var(--bg)",padding:"2px 8px",borderRadius:4}}>temp={r.temp}</span>
+                  <span style={{color:"var(--text-muted)",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",background:"var(--bg)",padding:"2px 8px",borderRadius:4}}>top_p={r.topP}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--accent)" icon="🔑"><S>The key insight:</S> Temperature, Top-K, and Top-P don't change what the model <S>knows</S> — they only change what it <S>chooses</S>. The same model with the same knowledge produces completely different outputs depending on these settings. A code assistant needs temperature 0. A story generator needs temperature 1.0. Knowing when to use what is part of the engineering skill.</Callout>
+
         </section>
 
         <div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
