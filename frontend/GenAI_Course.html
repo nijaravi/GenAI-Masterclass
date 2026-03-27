@@ -3177,6 +3177,40 @@ Step 100,000:  STOP. Vocabulary limit reached.`}</CB>
 
           <P>After the embedding lookup, every token has a <S>general meaning vector</S> — but no awareness of context. "Bank" doesn't know if it's near "river" or "money".</P>
 
+          <div style={{background:"#F6F7F5",border:"1px solid #E5E7EB",borderRadius:12,padding:"1rem 1rem 0.75rem",margin:"1rem 0 1.1rem"}}>
+            <div style={{position:"relative",height:170}}>
+              {/* Left cluster: finance meaning */}
+              <div style={{position:"absolute",left:"14%",top:"22%",width:10,height:10,borderRadius:"50%",background:"#F59E0B"}} />
+              <div style={{position:"absolute",left:"9%",top:"44%",width:9,height:9,borderRadius:"50%",background:"#F3C98A"}} />
+              <div style={{position:"absolute",left:"20%",top:"38%",width:9,height:9,borderRadius:"50%",background:"#EAB676"}} />
+              <div style={{position:"absolute",left:"24%",top:"56%",width:8,height:8,borderRadius:"50%",background:"#E5B77C"}} />
+              <div style={{position:"absolute",left:"16%",top:"17%",color:"#6B4A1E",fontSize:"2rem"}}>•</div>
+              <div style={{position:"absolute",left:"19%",top:"18%",color:"#6B4A1E",fontSize:"1.05rem"}}>bank</div>
+              <div style={{position:"absolute",left:"24%",top:"39%",color:"#6B4A1E",fontSize:"0.95rem"}}>finance</div>
+              <div style={{position:"absolute",left:"11%",top:"52%",color:"#6B4A1E",fontSize:"0.95rem"}}>money</div>
+              <div style={{position:"absolute",left:"27%",top:"61%",color:"#6B4A1E",fontSize:"0.95rem"}}>loan</div>
+
+              {/* Right cluster: river meaning */}
+              <div style={{position:"absolute",right:"27%",top:"23%",width:10,height:10,borderRadius:"50%",background:"#2F9E83"}} />
+              <div style={{position:"absolute",right:"24%",top:"43%",width:9,height:9,borderRadius:"50%",background:"#7DBDAB"}} />
+              <div style={{position:"absolute",right:"17%",top:"35%",width:9,height:9,borderRadius:"50%",background:"#5BAF98"}} />
+              <div style={{position:"absolute",right:"19%",top:"62%",width:8,height:8,borderRadius:"50%",background:"#8CBFAF"}} />
+              <div style={{position:"absolute",right:"26%",top:"18%",color:"#1E6B59",fontSize:"1.05rem"}}>river</div>
+              <div style={{position:"absolute",right:"18%",top:"39%",color:"#1E6B59",fontSize:"0.95rem"}}>stream</div>
+              <div style={{position:"absolute",right:"22%",top:"55%",color:"#1E6B59",fontSize:"0.95rem"}}>shore</div>
+              <div style={{position:"absolute",right:"18%",top:"67%",color:"#1E6B59",fontSize:"0.95rem"}}>lake</div>
+
+              {/* Center ambiguous token */}
+              <div style={{position:"absolute",left:"44%",top:"39%",width:20,height:20,borderRadius:"50%",background:"#D97198",border:"2px solid #B14973"}} />
+              <div style={{position:"absolute",left:"48%",top:"38%",color:"#6E2443",fontSize:"1.05rem",fontWeight:700}}>bank (ambiguous!)</div>
+
+              {/* Dashed links */}
+              <div style={{position:"absolute",left:"28%",top:"35%",width:"18%",borderTop:"2px dashed #D8D3CE",transform:"rotate(7deg)"}} />
+              <div style={{position:"absolute",left:"52%",top:"35%",width:"18%",borderTop:"2px dashed #D8D3CE",transform:"rotate(-7deg)"}} />
+            </div>
+            <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:"0.82rem"}}>Sits between both clusters — context decides where it truly belongs</div>
+          </div>
+
           <P>Self-attention fixes this. Every word looks at every other word and asks: <S color="var(--purple)">"how relevant are you for understanding me?"</S></P>
 
           <Callout color="var(--purple)" icon="🪑"><S>Meeting room analogy:</S> Every word in your sentence is sitting around a table. When it's your turn to speak, you look at everyone else and decide who to listen to most carefully. "bank" looks around, sees "river" → <S>very relevant, listen closely</S>. Sees "the" → <S>not very useful</S>. Based on these scores, "bank" absorbs information from the most relevant words and becomes "river bank" specifically.</Callout>
