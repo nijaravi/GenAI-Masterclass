@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GenAI Master Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
+  .wrap{max-width:960px;margin:0 auto;padding:2.25rem 1.25rem 3rem}
+  h1{font-family:'Libre Baskerville',serif;font-size:2.2rem;margin:0 0 .4rem}
+  .sub{color:var(--muted);margin-bottom:1.5rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;text-decoration:none;color:inherit;display:block}
+  .tag{font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .title{font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;margin-bottom:4px}
+  .desc{color:var(--muted);font-size:.92rem;line-height:1.6}
+  .build{border-left:4px solid var(--build)} .build .tag{color:var(--build)}
+  .work{border-left:4px solid var(--work)} .work .tag{color:var(--work)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>GenAI Master Course</h1>
+    <div class="sub">Choose a module to continue learning.</div>
+    <div class="grid">
+      <a class="card build" href="./pages/how-llms-work.html">
+        <div class="tag">Section 1</div>
+        <div class="title">How LLMs Actually Work</div>
+        <div class="desc">Training to inference: tokenizer, embeddings, attention, feed-forward, generation, and sampling.</div>
+      </a>
+      <a class="card work" href="./pages/prompt-engineering.html">
+        <div class="tag">Section 2</div>
+        <div class="title">Prompt Engineering</div>
+        <div class="desc">Core techniques, production patterns, practice challenges, and methodology for professional prompting.</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
