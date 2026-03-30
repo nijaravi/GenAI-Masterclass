@@ -780,13 +780,13 @@ from openai import OpenAI`}</CB>
 
           <CB>{`# Option A: Set the key as an environment variable (RECOMMENDED)
 # In your terminal:
-export OPENAI_API_KEY="sk-proj-abc123..."
+export OPENAI_API_KEY="sk-..."
 
 # Then in Python — the client picks it up automatically:
 client = OpenAI()    # ← no key needed, reads from env`}</CB>
 
           <CB>{`# Option B: Pass the key directly (quick testing only)
-client = OpenAI(api_key="sk-proj-abc123...")
+client = OpenAI(api_key="sk-...")
 
 # ⚠️ Never commit API keys to git!`}</CB>
 
