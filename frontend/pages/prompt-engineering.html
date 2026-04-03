@@ -51,7 +51,8 @@
   .sidebar::-webkit-scrollbar { width: 4px; }
   .sidebar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
   .sidebar-logo { padding: 0 1rem 0.85rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
-  .sidebar-logo h2 { font-family: 'Libre Baskerville', serif; font-size: 0.92rem; color: var(--text); line-height: 1.35; }
+  .sidebar-logo h2 { font-family: 'Libre Baskerville', serif; font-size: 0.92rem; color: var(--text); line-height: 1.35; margin-bottom: 0; }
+  .sidebar-logo .brand-by { font-size: 0.72rem; font-weight: 700; color: var(--accent); margin-top: 4px; letter-spacing: 0.02em; }
   .sidebar-logo p { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
   .sidebar-section { padding: 0.25rem 0.75rem; margin-top: 0.25rem; }
   .sidebar-section-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px; color: var(--text-muted); margin-bottom: 0.35rem; padding-left: 0.45rem; }
@@ -568,8 +569,8 @@ function Sidebar({active,onNav}){
   return(
   <div className="sidebar">
     <div className="sidebar-logo">
-      <h2>GenAI Master Course For Professionals</h2>
-      <p>Prompt Engineering</p>
+      <h2>GenAI Decoded</h2>
+      <div className="brand-by">by Nij</div>
     </div>
     <div className="sidebar-section">
       <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./how-llms-work.html"}>

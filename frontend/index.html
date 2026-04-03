@@ -3,16 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GenAI Master Course</title>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<title>GenAI Decoded by Nij</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;}
+  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;--work-bg:#E8F5EE;--work-border:#6EE7B7;}
   *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
   .wrap{max-width:960px;margin:0 auto;padding:2.25rem 1.25rem 3rem}
-  h1{font-family:'Libre Baskerville',serif;font-size:2.2rem;margin:0 0 .4rem}
-  .sub{color:var(--muted);margin-bottom:1.5rem}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;text-decoration:none;color:inherit;display:block}
+  h1{font-family:'Libre Baskerville',serif;font-size:2.2rem;margin:0 0 .75rem;line-height:1.2}
+  .tagline{color:var(--muted);font-size:1.08rem;line-height:1.5;margin:0 0 1.25rem;width:100%;white-space:nowrap}
+  .philosophy{width:100%;background:linear-gradient(135deg,var(--work-bg) 0%,#fff 42%);border:1px solid var(--border);border-left:4px solid var(--work);border-radius:12px;padding:1.1rem 1.35rem;margin:0 0 1.75rem;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+  .phil-label{font-size:0.62rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--work);margin:0 0 0.5rem}
+  .philosophy p{margin:0;font-size:1rem;line-height:1.7;color:var(--text)}
+  .philosophy strong{font-weight:700;color:var(--build)}
+  .build-things{color:var(--work);font-weight:700}
+  .module-hint{color:var(--muted);font-size:0.92rem;margin:0 0 1rem}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%}
+  @media (max-width:640px){
+    .tagline{white-space:normal;font-size:1rem}
+    .grid{grid-template-columns:1fr}
+  }
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;text-decoration:none;color:inherit;display:block;transition:box-shadow .2s ease,transform .15s ease}
+  .card:hover{box-shadow:0 6px 20px rgba(45,43,40,0.08);transform:translateY(-1px)}
   .tag{font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
   .title{font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;margin-bottom:4px}
   .desc{color:var(--muted);font-size:.92rem;line-height:1.6}
@@ -22,8 +33,15 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>GenAI Master Course</h1>
-    <div class="sub">Choose a module to continue learning.</div>
+    <h1>GenAI Decoded By Nij</h1>
+    <p class="tagline">The complete journey from &ldquo;how does this work?&rdquo; to &ldquo;I can build with&nbsp;this.&rdquo;</p>
+
+    <div class="philosophy">
+      <div class="phil-label">Why I built this</div>
+      <p>I built this course because most GenAI tutorials either <strong>dumb it down</strong> (hiding the mechanics) or <strong>overcomplicate it</strong> (drowning you in math). Neither works if you want to actually <span class="build-things">build things</span>.</p>
+    </div>
+
+    <p class="module-hint">Choose a module to continue learning.</p>
     <div class="grid">
       <a class="card build" href="./pages/how-llms-work.html">
         <div class="tag">Section 1</div>
