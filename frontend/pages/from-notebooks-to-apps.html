@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Notebooks to Apps — GenAI Decoded by Nij</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8; --sidebar-bg: #FFFFFF; --card-bg: #FFFFFF;
+  --border: #E8E5E0; --border-light: #F0EDE8;
+  --text: #2D2B28; --text-secondary: #6B6560; --text-muted: #9C9690;
+  --accent: #1A6B4E; --accent-light: #E8F5EE; --accent-hover: #15573F;
+  --build-color: #B45309; --build-bg: #FEF3C7; --build-border: #FCD34D;
+  --work-color: #1A6B4E; --work-bg: #E8F5EE; --work-border: #6EE7B7;
+  --info-color: #1E6091; --info-bg: #EFF6FF; --info-border: #93C5FD;
+  --purple: #6D28D9; --purple-bg: #F3F0FF;
+  --orange: #C2410C; --orange-bg: #FFF7ED;
+  --red: #B91C1C; --red-bg: #FEF2F2;
+  --demo-bg: #1A1D27; --demo-border: #2E3240; --demo-text: #E2E8F0;
+  --sidebar-w: 260px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); font-size:16px; line-height:1.7; }
+::selection { background:#1A6B4E33; }
+pre { white-space:pre-wrap; word-wrap:break-word; }
+.sidebar { position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w); background:var(--sidebar-bg); border-right:1px solid var(--border); overflow-y:auto; z-index:50; padding:0.75rem 0; scrollbar-width:thin; }
+.sidebar::-webkit-scrollbar { width:4px; }
+.sidebar::-webkit-scrollbar-thumb { background:#D1D5DB; border-radius:2px; }
+.sidebar-logo { padding:0 1rem 0.85rem; border-bottom:1px solid var(--border); margin-bottom:0.5rem; }
+.sidebar-logo h2 { font-family:'Libre Baskerville',serif; font-size:0.92rem; color:var(--text); line-height:1.35; }
+.sidebar-logo p { font-size:0.72rem; color:var(--accent); font-weight:600; margin-top:2px; }
+.sidebar-section { padding:0.25rem 0.75rem; margin-top:0.25rem; }
+.sidebar-label { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:1.1px; color:var(--text-muted); margin-bottom:0.35rem; padding:8px 9px 2px; margin-top:4px; }
+.sidebar-item { display:block; padding:5px 9px; border-radius:7px; text-decoration:none; font-size:0.8rem; color:var(--text-secondary); transition:all 0.15s; cursor:pointer; margin-bottom:1px; border:1px solid transparent; }
+.sidebar-item:hover { background:var(--bg); color:var(--text); }
+.sidebar-item.active { background:var(--accent-light); color:var(--accent); font-weight:600; border-color:#6EE7B733; }
+.sidebar-item .num { display:inline-block; width:20px; height:20px; border-radius:5px; text-align:center; line-height:20px; font-size:0.66rem; font-weight:700; margin-right:7px; }
+.sidebar-item .sub { font-size:0.66rem; color:var(--text-muted); display:block; }
+.main { margin-left:var(--sidebar-w); min-height:100vh; }
+.content { max-width:760px; margin:0 auto; padding:2rem 2.5rem 4rem; }
+@media(max-width:900px) { .sidebar{display:none;} .main{margin-left:0;} .content{padding:1.5rem 1rem 3rem;} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes slideDown { from{max-height:0;opacity:0} to{max-height:500px;opacity:1} }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ============================================================
+// HELPER COMPONENTS
+// ============================================================
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function A({children,color="var(--accent)"}){return <span style={{color,fontWeight:600}}>{children}</span>;}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function ChH({num,title,sub,color="var(--accent)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"ch"+num}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function SectionHeading({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+
+// ============================================================
+// INTERACTIVE: Error Handling Flow Demo
+// ============================================================
+function ErrorFlowDemo() {
+  const [scenario, setScenario] = useState("success");
+  const scenarios = {
+    success: {label:"✅ 200 OK",color:"#10B981",status:"200",timeline:[
+      {step:"Your code sends request",icon:"📤",ms:0},
+      {step:"API processes prompt (all layers, token by token)",icon:"⚙️",ms:800},
+      {step:"Response returned with content + usage",icon:"📥",ms:1500},
+    ],response:`{
+  "choices": [{"message": {"content": "Hadoop is a distributed..."}}],
+  "usage": {"prompt_tokens": 14, "completion_tokens": 28}
+}`,advice:"Everything worked. Parse response.choices[0].message.content."},
+    rate_limit: {label:"⚠️ 429 Rate Limit",color:"#F59E0B",status:"429",timeline:[
+      {step:"Your code sends request",icon:"📤",ms:0},
+      {step:"API says: too many requests!",icon:"🚫",ms:100},
+      {step:"Wait (exponential backoff)",icon:"⏳",ms:2000},
+      {step:"Retry automatically",icon:"🔄",ms:4000},
+      {step:"Success on retry",icon:"📥",ms:5000},
+    ],response:`RateLimitError: Rate limit reached for gpt-4o-mini.
+Retry after 2.0 seconds.`,advice:"Don't panic. Implement exponential backoff: wait 1s → 2s → 4s → 8s. Most SDKs handle this automatically."},
+    timeout: {label:"⏱️ Timeout",color:"#F97316",status:"timeout",timeline:[
+      {step:"Your code sends request",icon:"📤",ms:0},
+      {step:"API processing... still processing...",icon:"⚙️",ms:5000},
+      {step:"Connection timeout after 30s",icon:"💥",ms:30000},
+    ],response:`APITimeoutError: Request timed out after 30.0 seconds.`,advice:"Long prompts + high max_tokens = slow. Set a reasonable timeout. Consider streaming for long responses."},
+    invalid: {label:"❌ 400 Bad Request",color:"#EF4444",status:"400",timeline:[
+      {step:"Your code sends request",icon:"📤",ms:0},
+      {step:"API rejects immediately",icon:"🚫",ms:50},
+    ],response:`BadRequestError: Invalid value for 'model': 'gpt-5-turbo'
+does not exist. Available models: gpt-4o, gpt-4o-mini, ...`,advice:"Check your model name, message format, and parameter values. This is a code bug — fix it, don't retry."},
+    context: {label:"📏 Context Overflow",color:"#A78BFA",status:"400",timeline:[
+      {step:"Your code sends a very long prompt",icon:"📤",ms:0},
+      {step:"API says: too many tokens!",icon:"🚫",ms:100},
+    ],response:`BadRequestError: This model's maximum context length is 128000
+tokens. However, your messages resulted in 142857 tokens.`,advice:"Your prompt + expected response exceeds the context window. Truncate input, summarize, or use a model with a larger context window."},
+  };
+  const s = scenarios[scenario];
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#EF4444",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>API Error Scenarios</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each scenario to see what happens and how to handle it.</div>
+      <div style={{display:"flex",gap:5,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {Object.entries(scenarios).map(([key, val]) => (
+          <button key={key} onClick={() => setScenario(key)} style={{
+            padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.78rem",fontWeight:600,
+            background:scenario===key?val.color:"#252833",color:scenario===key?"#111":"#94A3B8",transition:"all 0.2s"
+          }}>{val.label}</button>
+        ))}
+      </div>
+      {/* Timeline */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginBottom:10}}>
+        <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>What Happens</div>
+        {s.timeline.map((t,i) => (
+          <div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0",borderBottom:i<s.timeline.length-1?"1px solid #2E3240":"none"}}>
+            <span style={{fontSize:"1rem",width:24,textAlign:"center"}}>{t.icon}</span>
+            <span style={{color:"#E2E8F0",fontSize:"0.85rem",flex:1}}>{t.step}</span>
+            <span style={{color:"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"0.72rem"}}>{t.ms<1000?t.ms+"ms":(t.ms/1000)+"s"}</span>
+          </div>
+        ))}
+      </div>
+      {/* Response */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+s.color+"33",marginBottom:10}}>
+        <div style={{color:s.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>RESPONSE</div>
+        <pre style={{color:"#94A3B8",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{s.response}</pre>
+      </div>
+      {/* Advice */}
+      <div style={{padding:"0.65rem 0.85rem",background:s.color+"12",borderRadius:8,border:"1px solid "+s.color+"33"}}>
+        <span style={{color:s.color,fontSize:"0.82rem",fontWeight:600}}>How to handle: </span>
+        <span style={{color:"#94A3B8",fontSize:"0.82rem"}}>{s.advice}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Streaming Demo
+// ============================================================
+function StreamingDemo() {
+  const [mode, setMode] = useState(null); // null, "standard", "streaming"
+  const [tokens, setTokens] = useState([]);
+  const [done, setDone] = useState(false);
+  const fullResponse = ["Hadoop", " is", " a", " distributed", " computing", " framework", " designed", " to", " process", " large", " datasets", " across", " clusters", " of", " commodity", " hardware", "."];
+  const timerRef = useRef(null);
+  
+  const startStandard = () => {
+    setMode("standard"); setTokens([]); setDone(false);
+    // Wait 3 seconds then show all at once
+    timerRef.current = setTimeout(() => {
+      setTokens(fullResponse);
+      setDone(true);
+    }, 3000);
+  };
+  const startStreaming = () => {
+    setMode("streaming"); setTokens([]); setDone(false);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < fullResponse.length) {
+        setTokens(prev => [...prev, fullResponse[i]]);
+        i++;
+      } else {
+        clearInterval(interval);
+        setDone(true);
+      }
+    }, 180);
+    timerRef.current = interval;
+  };
+  const reset = () => {
+    if(timerRef.current) { clearTimeout(timerRef.current); clearInterval(timerRef.current); }
+    setMode(null); setTokens([]); setDone(false);
+  };
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#60A5FA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Standard vs Streaming Response</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each mode to see the difference in user experience.</div>
+      <div style={{display:"flex",gap:8,marginBottom:"1.25rem"}}>
+        <button onClick={startStandard} style={{padding:"8px 18px",background:mode==="standard"?"#EF4444":"#252833",color:mode==="standard"?"#fff":"#94A3B8",border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:"0.85rem"}}>Standard (wait for all)</button>
+        <button onClick={startStreaming} style={{padding:"8px 18px",background:mode==="streaming"?"#10B981":"#252833",color:mode==="streaming"?"#fff":"#94A3B8",border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:"0.85rem"}}>Streaming (token by token)</button>
+        <button onClick={reset} style={{padding:"8px 14px",background:"transparent",color:"#94A3B8",border:"1px solid #404552",borderRadius:7,cursor:"pointer",fontSize:"0.8rem"}}>Reset</button>
+      </div>
+      {/* Output area */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",minHeight:80}}>
+        {mode === null && <span style={{color:"#6B7280",fontSize:"0.85rem"}}>← Click a mode to see the response appear</span>}
+        {mode === "standard" && !done && (
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:16,height:16,border:"2px solid #EF4444",borderTop:"2px solid transparent",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+            <span style={{color:"#EF4444",fontSize:"0.85rem"}}>Waiting for complete response... (3 seconds of nothing)</span>
+          </div>
+        )}
+        {mode && tokens.length > 0 && (
+          <div style={{color:"#F0F4F8",fontSize:"1.05rem",lineHeight:1.7}}>
+            <span style={{color:"#6B7280"}}>Q: What is Hadoop?</span>
+            <br/>
+            <span style={{color:mode==="streaming"?"#10B981":"#E2E8F0"}}>A: {tokens.join("")}</span>
+            {!done && mode==="streaming" && <span style={{color:"#10B981",animation:"blink 1s infinite"}}>▌</span>}
+          </div>
+        )}
+      </div>
+      {/* Stats */}
+      {done && (
+        <div style={{marginTop:10,padding:"0.65rem 0.85rem",background:mode==="streaming"?"#10B98112":"#EF444412",borderRadius:8,border:"1px solid "+(mode==="streaming"?"#10B98133":"#EF444433")}}>
+          <span style={{color:mode==="streaming"?"#10B981":"#EF4444",fontSize:"0.82rem",fontWeight:600}}>
+            {mode === "streaming" 
+              ? "✅ Streaming: User sees the first word in ~180ms. Feels instant and responsive."
+              : "❌ Standard: User stared at a blank screen for 3 seconds. Then everything appeared at once."}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: Provider Comparison Demo
+// ============================================================
+function ProviderComparisonDemo() {
+  const [activeTab, setActiveTab] = useState("openai");
+  const providers = {
+    openai: {
+      name: "OpenAI", color: "#10B981", icon: "🟢",
+      code: `from openai import OpenAI
+client = OpenAI()  # reads OPENAI_API_KEY from env
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is Hadoop?"}
+    ],
+    temperature=0.7,
+    max_tokens=500
+)
+
+print(response.choices[0].message.content)`,
+      notes: [
+        {label:"System prompt",value:"Separate message with role: 'system'"},
+        {label:"Models",value:"gpt-4o, gpt-4o-mini, o1, o1-mini"},
+        {label:"JSON mode",value:"response_format: {type: 'json_object'}"},
+        {label:"Streaming",value:"stream=True, iterate over chunks"},
+      ]
+    },
+    anthropic: {
+      name: "Anthropic (Claude)", color: "#A78BFA", icon: "🟣",
+      code: `from anthropic import Anthropic
+client = Anthropic()  # reads ANTHROPIC_API_KEY from env
+
+response = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    system="You are a helpful assistant.",
+    messages=[
+        {"role": "user", "content": "What is Hadoop?"}
+    ],
+    temperature=0.7,
+    max_tokens=500
+)
+
+print(response.content[0].text)`,
+      notes: [
+        {label:"System prompt",value:"Top-level 'system' parameter, NOT in messages"},
+        {label:"Models",value:"claude-sonnet-4-20250514, claude-haiku-4-5-20251001"},
+        {label:"JSON mode",value:"Not built-in — use prompting + tool_use"},
+        {label:"Response path",value:"response.content[0].text (not .choices[0])"},
+      ]
+    },
+    groq: {
+      name: "Groq (open-source)", color: "#F59E0B", icon: "🟡",
+      code: `from openai import OpenAI  # same library!
+client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1"
+)
+
+response = client.chat.completions.create(
+    model="llama-3.1-8b-instant",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is Hadoop?"}
+    ],
+    temperature=0.7,
+    max_tokens=500
+)
+
+print(response.choices[0].message.content)`,
+      notes: [
+        {label:"Library",value:"Uses the OpenAI library! Just change base_url"},
+        {label:"Models",value:"llama-3.1-8b, gemma2-9b, mixtral-8x7b"},
+        {label:"Cost",value:"Free tier available — great for development"},
+        {label:"Speed",value:"Extremely fast inference (custom hardware)"},
+      ]
+    },
+  };
+  const p = providers[activeTab];
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Same Task, Three Providers</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each provider to see the code differences.</div>
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem"}}>
+        {Object.entries(providers).map(([key, val]) => (
+          <button key={key} onClick={() => setActiveTab(key)} style={{
+            padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,
+            background:activeTab===key?val.color:"#252833",color:activeTab===key?"#111":"#94A3B8",transition:"all 0.2s"
+          }}>{val.icon} {val.name}</button>
+        ))}
+      </div>
+      {/* Code */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid "+p.color+"33",marginBottom:10}}>
+        <pre style={{color:"#E2E8F0",fontSize:"0.8rem",fontFamily:"'JetBrains Mono'",lineHeight:1.7,whiteSpace:"pre-wrap",margin:0}}>{p.code}</pre>
+      </div>
+      {/* Key differences */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #2E3240"}}>
+        <div style={{color:p.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>KEY DIFFERENCES</div>
+        {p.notes.map((n,i) => (
+          <div key={i} style={{display:"flex",gap:8,padding:"4px 0",borderBottom:i<p.notes.length-1?"1px solid #2E3240":"none"}}>
+            <span style={{color:p.color,fontWeight:700,fontSize:"0.78rem",width:110,flexShrink:0}}>{n.label}</span>
+            <span style={{color:"#94A3B8",fontSize:"0.78rem"}}>{n.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INTERACTIVE: App Architecture Demo
+// ============================================================
+function AppArchitectureDemo() {
+  const [activeLayer, setActiveLayer] = useState(null);
+  const layers = [
+    {id:"ui",label:"User Interface",icon:"🖥️",color:"#60A5FA",desc:"Streamlit, React, or CLI — where the user interacts. Sends user input to the backend.",tech:"Streamlit (quick), React (production), CLI (scripts)"},
+    {id:"logic",label:"Application Logic",icon:"⚙️",color:"#A78BFA",desc:"Your Python code — validates input, selects prompts from library, manages conversation history.",tech:"Python, FastAPI, prompt templates, session management"},
+    {id:"llm",label:"LLM API Layer",icon:"🤖",color:"#10B981",desc:"Sends prompts to the API, handles streaming, retries on errors, parses responses.",tech:"OpenAI SDK, retry logic, error handling, response parsing"},
+    {id:"data",label:"Data & Storage",icon:"💾",color:"#FBBF24",desc:"Conversation history, user preferences, logs, cost tracking.",tech:"SQLite (simple), PostgreSQL (production), file system"},
+  ];
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Anatomy of a GenAI Application</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each layer to see what it does.</div>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {layers.map((l,i) => (
+          <div key={l.id}>
+            <div onClick={() => setActiveLayer(activeLayer===l.id?null:l.id)} style={{
+              background:activeLayer===l.id?l.color+"15":"#12141C",
+              border:"1px solid "+(activeLayer===l.id?l.color+"44":"#2E3240"),
+              borderRadius:activeLayer===l.id?10:i===0?"10px 10px 0 0":i===layers.length-1?"0 0 10px 10px":0,
+              padding:"0.85rem 1rem",cursor:"pointer",transition:"all 0.2s",
+              borderBottom:i<layers.length-1&&activeLayer!==l.id?"none":"1px solid "+(activeLayer===l.id?l.color+"44":"#2E3240"),
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:"1.2rem"}}>{l.icon}</span>
+                <span style={{color:activeLayer===l.id?l.color:"#F0F4F8",fontWeight:700,fontSize:"0.92rem",flex:1}}>{l.label}</span>
+                <span style={{color:"#6B7280",fontSize:"0.75rem"}}>{activeLayer===l.id?"▼":"▶"}</span>
+              </div>
+              {activeLayer===l.id && (
+                <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid "+l.color+"22"}}>
+                  <div style={{color:"#94A3B8",fontSize:"0.85rem",lineHeight:1.6,marginBottom:6}}>{l.desc}</div>
+                  <div style={{color:l.color,fontSize:"0.78rem",fontFamily:"'JetBrains Mono'"}}>Tech: {l.tech}</div>
+                </div>
+              )}
+            </div>
+            {i<layers.length-1 && activeLayer!==l.id && activeLayer!==layers[i+1]?.id && (
+              <div style={{textAlign:"center",color:"#4B5563",fontSize:"0.8rem",padding:"2px 0"}}>↕</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+const CHAPTERS = [
+  {id:"intro",num:"",title:"Overview",sub:""},
+  {id:"ch1",num:"1",title:"Error Handling & Retries",sub:"When API calls fail",group:"production"},
+  {id:"ch2",num:"2",title:"Streaming Responses",sub:"Token-by-token UX",group:"production"},
+  {id:"ch3",num:"3",title:"Multi-Provider APIs",sub:"OpenAI vs Claude vs Groq",group:"production"},
+  {id:"ch4",num:"4",title:"App Architecture",sub:"From script to application",group:"building"},
+  {id:"ch5",num:"5",title:"Build: CLI Tool",sub:"Your first standalone app",group:"building"},
+  {id:"ch6",num:"6",title:"Build: Streamlit App",sub:"Web UI for your LLM",group:"building"},
+];
+
+function Sidebar({active,onNav}) {
+  return (
+    <div className="sidebar">
+      <div className="sidebar-logo">
+        <h2>GenAI Decoded</h2>
+        <p>by Nij</p>
+      </div>
+      <div className="sidebar-section">
+        <a className={"sidebar-item"+(active==="intro"?" active":"")} onClick={()=>onNav("intro")}><span className="item-title">Overview</span></a>
+        <div className="sidebar-label" style={{color:"var(--red)"}}>Production API Skills</div>
+        {CHAPTERS.filter(c=>c.group==="production").map(c=>(
+          <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+            <span className="num" style={{background:"var(--red-bg)",color:"var(--red)"}}>{c.num}</span>
+            <span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span>
+          </a>
+        ))}
+        <div className="sidebar-label" style={{color:"var(--accent)"}}>Building Apps</div>
+        {CHAPTERS.filter(c=>c.group==="building").map(c=>(
+          <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+            <span className="num" style={{background:"var(--accent-light)",color:"var(--accent)"}}>{c.num}</span>
+            <span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App() {
+  const [active, setActive] = useState("intro");
+  const onNav = (id) => { setActive(id); const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
+
+  return (
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+{/* ── OVERVIEW ── */}
+<section id="intro" style={{paddingTop:"1rem"}}>
+  <h1 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2.4rem",color:"var(--text)",fontWeight:700,lineHeight:1.3,marginBottom:8}}>From Notebooks to Apps</h1>
+  <div style={{color:"var(--accent)",fontSize:"1.1rem",fontStyle:"italic",marginBottom:"1.5rem"}}>The bridge between "I can call an API" and "I have a working application"</div>
+
+  <P>In the previous sections you learned how LLMs work (Section 1) and how to write effective prompts (Section 2). But everything so far has been inside Jupyter notebooks — <S>controlled experiments</S> where nothing goes wrong.</P>
+
+  <P>Real applications are different. API calls <S color="var(--red)">fail</S>. Users send <S color="var(--red)">unexpected input</S>. Responses take <S color="var(--red)">too long</S>. You need to support <S color="var(--red)">multiple providers</S>. And the output needs to reach a <S>user interface</S>, not just a print() statement.</P>
+
+  <Callout color="var(--build-color)" icon="🔧"><S>What this section covers:</S> The engineering skills that turn a notebook prototype into a real application — error handling, streaming, multi-provider support, and building your first GenAI apps (CLI tool + Streamlit web app).</Callout>
+
+  <div style={{display:"flex",gap:14,marginTop:"1.5rem",flexWrap:"wrap"}}>
+    <div style={{flex:1,minWidth:250,background:"white",borderRadius:12,border:"1px solid var(--red)33",overflow:"hidden"}}>
+      <div style={{background:"var(--red)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🛡️ Production API Skills</div>
+      <div style={{padding:"0.85rem"}}>
+        {CHAPTERS.filter(c=>c.group==="production").map(c=>(
+          <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+            <div style={{width:22,height:22,borderRadius:5,background:"var(--red-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--red)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+            <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div style={{flex:1,minWidth:250,background:"white",borderRadius:12,border:"1px solid var(--accent)33",overflow:"hidden"}}>
+      <div style={{background:"var(--accent)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🏗️ Building Apps</div>
+      <div style={{padding:"0.85rem"}}>
+        {CHAPTERS.filter(c=>c.group==="building").map(c=>(
+          <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+            <div style={{width:22,height:22,borderRadius:5,background:"var(--accent-light)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+            <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* ── CH 1: Error Handling ── */}
+<section id="ch1" style={{paddingTop:"2rem"}}>
+  <ChH num="1" title="Error Handling & Retries" sub="What happens when API calls fail — and how to recover" color="var(--red)"/>
+
+  <P>In a notebook, if an API call fails, you just re-run the cell. In production, your app needs to <S color="var(--red)">handle failures gracefully</S> — without crashing, without losing the user's input, and ideally without the user even noticing.</P>
+
+  <P>Here are the five scenarios you'll encounter:</P>
+
+  <ErrorFlowDemo/>
+
+  <SectionHeading>The Retry Pattern</SectionHeading>
+
+  <P>Most transient errors (rate limits, timeouts) are fixed by <S>waiting and retrying</S>. The standard pattern is <S color="var(--info-color)">exponential backoff</S> — each retry waits longer:</P>
+
+  <CB>{`import time
+from openai import OpenAI, RateLimitError, APITimeoutError
+
+client = OpenAI()
+
+def call_with_retry(prompt, max_retries=3):
+    """Call the API with automatic retry on transient errors."""
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                timeout=30
+            )
+            return response.choices[0].message.content
+        
+        except RateLimitError:
+            wait = 2 ** attempt  # 1s, 2s, 4s
+            print(f"Rate limited. Waiting {wait}s...")
+            time.sleep(wait)
+        
+        except APITimeoutError:
+            wait = 2 ** attempt
+            print(f"Timeout. Waiting {wait}s...")
+            time.sleep(wait)
+        
+        except Exception as e:
+            # Non-transient error — don't retry, fix the code
+            raise e
+    
+    raise Exception("Max retries exceeded")`}</CB>
+
+  <Callout color="var(--info-color)" icon="🔑"><S>Rule of thumb:</S> Retry on 429 (rate limit) and timeouts. Do NOT retry on 400 (bad request) or 401 (auth error) — those are bugs in your code, not transient failures.</Callout>
+</section>
+
+{/* ── CH 2: Streaming ── */}
+<section id="ch2" style={{paddingTop:"2rem"}}>
+  <ChH num="2" title="Streaming Responses" sub="Token-by-token delivery for better UX" color="var(--info-color)"/>
+
+  <P>Remember from Chapter 8 (Autoregressive Generation) — the model generates <S color="var(--red)">one token at a time</S>. Without streaming, your app waits for ALL tokens before showing anything. With streaming, each token appears as it's generated.</P>
+
+  <StreamingDemo/>
+
+  <SectionHeading>Implementation</SectionHeading>
+
+  <P>Streaming requires just one parameter change — <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 5px",borderRadius:3,fontSize:"0.82rem",color:"#60A5FA"}}>stream=True</span> — but changes how you process the response:</P>
+
+  <CB>{`# Standard (wait for everything)
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is Hadoop?"}]
+)
+print(response.choices[0].message.content)  # all at once
+
+# Streaming (token by token)
+stream = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is Hadoop?"}],
+    stream=True  # ← this is the only change
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)`}</CB>
+
+  <Callout icon="⚡"><S>When to stream:</S> Any user-facing response longer than ~2 seconds. Classification tasks (short output) don't need streaming. Conversational responses, summaries, and code generation always should.</Callout>
+</section>
+
+{/* ── CH 3: Multi-Provider ── */}
+<section id="ch3" style={{paddingTop:"2rem"}}>
+  <ChH num="3" title="Multi-Provider APIs" sub="OpenAI vs Anthropic vs open-source — differences that matter" color="var(--build-color)"/>
+
+  <P>In production, you'll likely use <S>multiple providers</S> — OpenAI for some tasks, Claude for others, open-source models for cost-sensitive workloads. The core concept is the same (send messages, get response), but the <S color="var(--build-color)">details differ</S>.</P>
+
+  <ProviderComparisonDemo/>
+
+  <Callout color="var(--build-color)" icon="🔑"><S>The biggest gotcha:</S> Anthropic's system prompt is a <S>top-level parameter</S>, not a message in the array. If you put it in messages like OpenAI, it'll be treated as a user message and won't get the special system-level treatment. Always check the provider's docs for these differences.</Callout>
+
+  <SectionHeading>Why Use Multiple Providers?</SectionHeading>
+
+  <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+    {[
+      {reason:"Cost optimization",desc:"Use gpt-4o-mini for simple tasks, gpt-4o for complex ones, Llama via Groq for development. Same app, different models per task.",icon:"💰"},
+      {reason:"Redundancy",desc:"If OpenAI goes down (it happens), fall back to Anthropic or Groq automatically. Never let a single provider outage kill your app.",icon:"🛡️"},
+      {reason:"Best model per task",desc:"Claude is better at long documents. GPT-4o is better at structured output. Llama is free for testing. Use the right tool for each job.",icon:"🎯"},
+      {reason:"Avoid vendor lock-in",desc:"If you build everything on one provider's unique features, switching is painful. Keep your core logic provider-agnostic.",icon:"🔓"},
+    ].map((r,i) => (
+      <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+        <span style={{fontSize:"1.1rem",flexShrink:0}}>{r.icon}</span>
+        <div><span style={{fontWeight:700,fontSize:"0.9rem"}}>{r.reason}:</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>{r.desc}</span></div>
+      </div>
+    ))}
+  </div>
+</section>
+
+{/* ── CH 4: App Architecture ── */}
+<section id="ch4" style={{paddingTop:"2rem"}}>
+  <ChH num="4" title="App Architecture" sub="How a GenAI application is structured" color="var(--accent)"/>
+
+  <P>A notebook is a single file where everything runs top to bottom. An application has <S>layers</S> — each with a specific job. Click each layer to understand what it does:</P>
+
+  <AppArchitectureDemo/>
+
+  <SectionHeading>Notebook vs Application</SectionHeading>
+
+  <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0",overflowX:"auto"}}>
+    <div style={{display:"grid",gridTemplateColumns:"160px 1fr 1fr",gap:0,fontSize:"0.85rem"}}>
+      <div style={{padding:"8px 10px",background:"var(--bg)",fontWeight:700,borderBottom:"2px solid var(--border)"}}></div>
+      <div style={{padding:"8px 10px",background:"var(--red-bg)",fontWeight:700,color:"var(--red)",borderBottom:"2px solid var(--border)",textAlign:"center"}}>Notebook</div>
+      <div style={{padding:"8px 10px",background:"var(--accent-light)",fontWeight:700,color:"var(--accent)",borderBottom:"2px solid var(--border)",textAlign:"center"}}>Application</div>
+      {[
+        ["Error handling","Re-run the cell","Automatic retry with backoff"],
+        ["User input","Hardcoded in cells","User types/uploads in UI"],
+        ["State","Lost when kernel restarts","Persisted in database/session"],
+        ["Secrets","os.environ in notebook","Environment variables / vault"],
+        ["Output","print() statements","Formatted UI components"],
+        ["Deployment","Your laptop","Server, cloud, or container"],
+      ].map(([label,nb,app],i) => (
+        <React.Fragment key={i}>
+          <div style={{padding:"8px 10px",fontWeight:600,borderBottom:"1px solid var(--border-light)"}}>{label}</div>
+          <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>{nb}</div>
+          <div style={{padding:"8px 10px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>{app}</div>
+        </React.Fragment>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ── CH 5: CLI Tool ── */}
+<section id="ch5" style={{paddingTop:"2rem"}}>
+  <ChH num="5" title="Build: CLI Tool" sub="Your first standalone GenAI application" color="var(--accent)"/>
+
+  <P>The simplest possible app — no web framework, no UI library. Just Python + the OpenAI SDK. You run it from the terminal, type a question, get an answer.</P>
+
+  <Callout color="var(--accent)" icon="🎯"><S>Why start here:</S> A CLI tool forces you to handle everything a notebook hides — command-line arguments, error handling, clean output formatting, graceful exit. It's the smallest step from notebook to application.</Callout>
+
+  <SectionHeading>What We'll Build</SectionHeading>
+
+  <CB>{`$ python ask.py "What is Hadoop?"
+
+Hadoop is a distributed computing framework designed to process 
+and store large datasets across clusters of commodity hardware...
+
+─────────────────────────────
+Tokens: 42 (14 in, 28 out) | Cost: $0.000019 | Model: gpt-4o-mini`}</CB>
+
+  <P>Features to implement:</P>
+  <div style={{display:"flex",flexDirection:"column",gap:6,margin:"1rem 0"}}>
+    {[
+      {feat:"Accept question as command-line argument",done:"argparse or sys.argv"},
+      {feat:"Support optional --model flag",done:"Switch between gpt-4o-mini and gpt-4o"},
+      {feat:"Support optional --system flag",done:"Custom system prompt"},
+      {feat:"Error handling",done:"Catch rate limits, timeouts, invalid keys"},
+      {feat:"Token and cost tracking",done:"Display after each response"},
+      {feat:"Streaming output",done:"Tokens appear as generated"},
+    ].map((f,i) => (
+      <div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"6px 0",borderBottom:i<5?"1px solid var(--border-light)":"none"}}>
+        <span style={{color:"var(--accent)",fontWeight:700,fontSize:"0.82rem"}}>✓</span>
+        <span style={{fontSize:"0.88rem",flex:1}}>{f.feat}</span>
+        <span style={{color:"var(--text-muted)",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'"}}>{f.done}</span>
+      </div>
+    ))}
+  </div>
+
+  <Callout icon="📓"><S>Hands-on in the notebook:</S> The companion notebook walks through building this step by step — from the simplest version (10 lines) to the full-featured version with all the features above.</Callout>
+</section>
+
+{/* ── CH 6: Streamlit App ── */}
+<section id="ch6" style={{paddingTop:"2rem"}}>
+  <ChH num="6" title="Build: Streamlit App" sub="A web interface for your LLM — in ~50 lines of Python" color="var(--accent)"/>
+
+  <P>Streamlit turns Python scripts into web apps with zero frontend knowledge. You write Python, Streamlit handles the HTML, CSS, and JavaScript.</P>
+
+  <SectionHeading>What We'll Build</SectionHeading>
+
+  <P>A conversational AI app with:</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    {[
+      {feat:"Chat interface",desc:"Messages displayed in a conversation thread",icon:"💬"},
+      {feat:"System prompt editor",desc:"Customize the model's behavior from the sidebar",icon:"⚙️"},
+      {feat:"Model selector",desc:"Switch between gpt-4o-mini, gpt-4o, and Claude",icon:"🤖"},
+      {feat:"Conversation history",desc:"Context maintained across messages",icon:"📝"},
+      {feat:"Streaming responses",desc:"Tokens appear in real time",icon:"⚡"},
+      {feat:"Cost tracker",desc:"Running total of tokens and cost in the sidebar",icon:"💰"},
+    ].map((f,i) => (
+      <div key={i} style={{flex:"1 1 calc(50% - 6px)",minWidth:200,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid var(--border)",display:"flex",gap:8,alignItems:"flex-start"}}>
+        <span style={{fontSize:"1.1rem",flexShrink:0}}>{f.icon}</span>
+        <div><div style={{fontWeight:700,fontSize:"0.85rem"}}>{f.feat}</div><div style={{color:"var(--text-muted)",fontSize:"0.78rem"}}>{f.desc}</div></div>
+      </div>
+    ))}
+  </div>
+
+  <SectionHeading>How Streamlit Works</SectionHeading>
+
+  <CB>{`# This is a complete Streamlit chat app — really.
+
+import streamlit as st
+from openai import OpenAI
+
+client = OpenAI()
+st.title("My GenAI App")
+
+# Maintain conversation history in session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display existing messages
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+
+# Handle new user input
+if prompt := st.chat_input("Ask anything..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    with st.chat_message("assistant"):
+        stream = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=st.session_state.messages,
+            stream=True
+        )
+        response = st.write_stream(stream)
+    
+    st.session_state.messages.append({"role": "assistant", "content": response})`}</CB>
+
+  <Callout color="var(--accent)" icon="🚀"><S>That's ~20 lines</S> for a fully functional chat app with streaming and conversation history. The notebook extends this with model selection, system prompt customization, and cost tracking — bringing it to a production-ready ~50 lines.</Callout>
+
+  <SectionHeading>Extending the App</SectionHeading>
+
+  <P>In the companion notebook, we'll add these features one by one:</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+    {[
+      {step:"1",title:"Add a sidebar",desc:"System prompt editor + model dropdown + temperature slider",color:"#60A5FA"},
+      {step:"2",title:"Add streaming",desc:"st.write_stream() handles this in one line",color:"#A78BFA"},
+      {step:"3",title:"Add cost tracking",desc:"Track tokens per message, show running total in sidebar",color:"#FBBF24"},
+      {step:"4",title:"Add conversation export",desc:"Download button to save the conversation as JSON or markdown",color:"#10B981"},
+      {step:"5",title:"Add error handling",desc:"Graceful messages when API fails, auto-retry on rate limits",color:"#EF4444"},
+    ].map((s,i) => (
+      <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div style={{width:28,height:28,borderRadius:"50%",background:s.color+"20",display:"flex",alignItems:"center",justifyContent:"center",color:s.color,fontWeight:700,fontSize:"0.78rem",flexShrink:0}}>{s.step}</div>
+        <div><span style={{fontWeight:700,fontSize:"0.9rem"}}>{s.title}:</span> <span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}>{s.desc}</span></div>
+      </div>
+    ))}
+  </div>
+</section>
+
+{/* ── COMPLETION ── */}
+<div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
+  <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>Section 3 Complete</div>
+  <div style={{color:"var(--text-muted)",fontSize:"0.92rem"}}>You've gone from notebook experiments to real applications — with error handling, streaming, multi-provider support, and two working apps.</div>
+  <div style={{color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → RAG (Retrieval Augmented Generation)</div>
+</div>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>

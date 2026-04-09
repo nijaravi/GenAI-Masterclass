@@ -151,15 +151,21 @@ const PE_CHAPTERS = [
   { id: "pe7", num: "7", title: "Prompt Chaining", sub: "Break complex tasks into steps", group: "production" },
   { id: "pe8", num: "8", title: "Prompt Security", sub: "Defend against injection", group: "production" },
   { id: "pe9", num: "9", title: "Advanced Patterns", sub: "ReAct, Self-Consistency", group: "production" },
-  { id: "pe10", num: "10", title: "Combining Techniques", sub: "The decision flow", group: "practice" },
-  { id: "pe11", num: "11", title: "Email Auto-Responder", sub: "Practice challenge", group: "practice" },
-  { id: "pe12", num: "12", title: "Meeting Notes Processor", sub: "Practice challenge", group: "practice" },
-  { id: "pe13", num: "13", title: "Code Doc Generator", sub: "Practice challenge", group: "practice" },
-  { id: "pe14", num: "14", title: "Product Comparison Tool", sub: "Practice challenge", group: "practice" },
-  { id: "pe15", num: "15", title: "Content Moderator", sub: "Practice challenge", group: "practice" },
-  { id: "pe16", num: "16", title: "Prompt Evaluation", sub: "Measure prompt quality", group: "methodology" },
-  { id: "pe17", num: "17", title: "Iteration Methodology", sub: "Professional workflow", group: "methodology" },
-  { id: "pe18", num: "18", title: "Building a Prompt Library", sub: "Reusable, tested prompts", group: "methodology" },
+  { id: "pe10", num: "10", title: "Prompt Formatting", sub: "Delimiters, XML tags, and structure", group: "best-practices" },
+  { id: "pe11", num: "11", title: "Handling Uncertainty", sub: "Give the model a way out", group: "best-practices" },
+  { id: "pe12", num: "12", title: "Step-by-Step Instructions", sub: "Structure prompts as numbered steps", group: "best-practices" },
+  { id: "pe13", num: "13", title: "Grounding with Reference Text", sub: "Answer only from provided context", group: "best-practices" },
+  { id: "pe14", num: "14", title: "Self-Verification", sub: "Make the model check its own work", group: "best-practices" },
+  { id: "pe15", num: "15", title: "Cost Optimization", sub: "Same quality, fewer tokens", group: "best-practices" },
+  { id: "pe16", num: "16", title: "Combining Techniques", sub: "The decision flow", group: "practice" },
+  { id: "pe17", num: "17", title: "Email Auto-Responder", sub: "Practice challenge", group: "practice" },
+  { id: "pe18", num: "18", title: "Meeting Notes Processor", sub: "Practice challenge", group: "practice" },
+  { id: "pe19", num: "19", title: "Code Doc Generator", sub: "Practice challenge", group: "practice" },
+  { id: "pe20", num: "20", title: "Product Comparison Tool", sub: "Practice challenge", group: "practice" },
+  { id: "pe21", num: "21", title: "Content Moderator", sub: "Practice challenge", group: "practice" },
+  { id: "pe22", num: "22", title: "Prompt Evaluation", sub: "Measure prompt quality", group: "methodology" },
+  { id: "pe23", num: "23", title: "Iteration Methodology", sub: "Professional workflow", group: "methodology" },
+  { id: "pe24", num: "24", title: "Building a Prompt Library", sub: "Reusable, tested prompts", group: "methodology" },
   { id: "pe-cheat", num: "", title: "Cheat Sheet", sub: "Which technique when", group: "reference" },
 ];
 
@@ -497,6 +503,73 @@ function RoleVsSystemCostCollapsible() {
   );
 }
 
+function CachePrefixesExpandableCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{background:"white",border:"1px solid var(--border)",borderRadius:8,padding:"0.65rem 0.85rem",position:"relative"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+        <div style={{fontWeight:700,fontSize:"0.88rem"}}>3. Cache common prefixes</div>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-label={open ? "Hide caching details" : "Learn how prompt caching works"}
+          title="Learn more"
+          style={{
+            border:"none",
+            background:"transparent",
+            cursor:"pointer",
+            padding:"0 2px",
+            color:"var(--text-muted)",
+            fontSize:"0.95rem",
+            lineHeight:1,
+            flexShrink:0,
+          }}
+        >ℹ️</button>
+      </div>
+      <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",marginTop:2}}>
+        If your system prompt is reused across calls, use provider prompt caching when available.
+      </div>
+      {open && (
+        <div
+          style={{
+            marginTop:10,
+            paddingTop:10,
+            borderTop:"1px solid var(--border-light)",
+            background:"var(--bg)",
+            borderRadius:6,
+            padding:"0.65rem 0.65rem 0.7rem",
+          }}
+        >
+          <div style={{color:"var(--text-muted)",fontSize:"0.76rem",lineHeight:1.65}}>
+            <div style={{fontWeight:700,color:"var(--text-secondary)",marginBottom:4}}>How it works:</div>
+            <div style={{marginBottom:10}}>
+              Every API call re-sends and re-processes your system prompt from scratch. If it&apos;s 500 tokens and you make 10,000 calls/day, that&apos;s 5 million tokens processed daily — just for the same text being re-read over and over.
+            </div>
+            <div style={{fontWeight:700,color:"var(--text-secondary)",marginBottom:4}}>With caching:</div>
+            <div style={{marginBottom:10}}>
+              The first call processes normally. Subsequent calls within a time window (~5 min) skip re-processing the cached portion — the provider stores the processed version on their servers.
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10}}>
+              <div style={{color:"#B91C1C",fontSize:"0.74rem"}}>
+                <strong style={{color:"var(--text-secondary)"}}>Without caching:</strong> 100K calls × 1000-token system prompt = 100M tokens/day at full price
+              </div>
+              <div style={{color:"#15803D",fontSize:"0.74rem"}}>
+                <strong style={{color:"var(--text-secondary)"}}>With caching:</strong> Same 100M tokens but cached portion is ~90% cheaper
+              </div>
+            </div>
+            <div style={{fontWeight:700,color:"var(--text-secondary)",marginBottom:4}}>Provider support:</div>
+            <ul style={{margin:0,paddingLeft:18,fontSize:"0.74rem"}}>
+              <li style={{marginBottom:4}}><strong>Anthropic:</strong> Explicit — you add a <code style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.7rem"}}>cache_control</code> flag. Cached tokens are 90% cheaper.</li>
+              <li><strong>OpenAI:</strong> Automatic — identical prompt prefixes may be cached silently. Less transparent.</li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ============================================================
 // HELPER COMPONENTS — Light theme
 // ============================================================
@@ -564,6 +637,7 @@ function Sidebar({active,onNav}){
   const [isPEOpen, setIsPEOpen] = useState(true);
   const [isPECoreOpen, setIsPECoreOpen] = useState(true);
   const [isPEProductionOpen, setIsPEProductionOpen] = useState(true);
+  const [isPEBestOpen, setIsPEBestOpen] = useState(true);
   const [isPEPracticeOpen, setIsPEPracticeOpen] = useState(true);
   const [isPEMethodologyOpen, setIsPEMethodologyOpen] = useState(true);
   return(
@@ -611,6 +685,17 @@ function Sidebar({active,onNav}){
           {isPEProductionOpen&&PE_CHAPTERS.filter(c=>c.group==="production").map(c=>(
             <a key={c.id} className={"sidebar-item work-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
               <span className="item-num">{c.num}</span>
+              <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+            </a>
+          ))}
+
+          <button onClick={()=>setIsPEBestOpen(v=>!v)} style={{width:"100%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 9px 2px",marginTop:4,cursor:"pointer"}}>
+            <span style={{color:"var(--info-color)",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Best Practices</span>
+            <span style={{color:"var(--info-color)",fontSize:"0.62rem"}}>{isPEBestOpen?"▼":"▶"}</span>
+          </button>
+          {isPEBestOpen&&PE_CHAPTERS.filter(c=>c.group==="best-practices").map(c=>(
+            <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)} style={{borderLeft:"none"}}>
+              <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>{c.num}</span>
               <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
             </a>
           ))}
@@ -721,6 +806,17 @@ function App(){
                 {PE_CHAPTERS.filter(c=>c.group==="production").map(c=>(
                   <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
                     <div style={{width:22,height:22,borderRadius:5,background:"var(--work-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--work-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--info-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--info-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🧭 Best Practices</div>
+              <div style={{padding:"0.75rem"}}>
+                {PE_CHAPTERS.filter(c=>c.group==="best-practices").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--info-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--info-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
                     <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
                   </div>
                 ))}
@@ -1365,6 +1461,169 @@ Majority vote → 408 (4/5 agree) → high confidence`}</CB>
         </section>
 
         {/* ═══════════════════════════════════════════
+            BEST PRACTICES
+            ═══════════════════════════════════════════ */}
+
+        <div style={{padding:"3rem 0 1.5rem",borderTop:"2px solid var(--info-border)",marginTop:"3rem"}}>
+          <div style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Best Practices</div>
+          <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.8rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Prompt Engineering Habits That Scale</h2>
+          <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>Simple patterns that reduce ambiguity, hallucination, and cost in production</div>
+        </div>
+
+        {/* ── Ch 10: Prompt Formatting ── */}
+        <section id="pe10" style={{paddingTop:"1rem"}}>
+          <ChH num="10" title="Prompt Formatting" sub="Delimiters, XML tags, and structure" color="var(--info-color)"/>
+          <P>When your prompt contains both instructions AND data (like a document to summarize or code to review), the model can confuse one for the other. Delimiters create clear boundaries between "what to do" and "what to do it on."</P>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,margin:"1rem 0"}}>
+            <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+              <div style={{color:"#EF4444",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>BEFORE (NO DELIMITERS)</div>
+              <CB>{`Summarize this text: The quarterly report shows revenue increased by 15%.
+However the team should focus on reducing churn which decreased satisfaction scores.
+Also summarize means give me 2 sentences max.`}</CB>
+            </div>
+            <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+              <div style={{color:"#10B981",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>AFTER (XML DELIMITERS)</div>
+              <CB>{`Summarize the text between the XML tags in 2 sentences max.
+
+<document>
+The quarterly report shows revenue increased by 15%.
+However the team should focus on reducing churn which decreased satisfaction scores.
+</document>`}</CB>
+            </div>
+          </div>
+          <div style={{color:"var(--text-secondary)",fontSize:"0.88rem",marginBottom:"0.85rem"}}>Problem: Did the user mean "summarize means give me 2 sentences" as an instruction, or is it part of the text to summarize? The model has to guess.</div>
+          <div style={{background:"#1A1D27",borderRadius:12,padding:"1rem 1.2rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+            <div style={{color:"#60A5FA",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>COMMON DELIMITER PATTERNS</div>
+            <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.77rem",color:"#94A3B8",lineHeight:1.9}}>
+              <div>``` — for code blocks</div>
+              <div>&lt;document&gt;...&lt;/document&gt; — for structured data, most reliable</div>
+              <div>""" — for text passages</div>
+              <div>--- — for section separators</div>
+            </div>
+          </div>
+          <Callout color="var(--info-color)" icon="🏷️">XML tags are the most reliable delimiter — models are trained on XML/HTML, so they naturally respect tag boundaries. Use them whenever you're passing data into a prompt.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Ch 11: Handling Uncertainty ── */}
+        <section id="pe11" style={{paddingTop:"2rem"}}>
+          <ChH num="11" title="Handling Uncertainty" sub="Give the model a way out" color="var(--info-color)"/>
+          <P>LLMs will always generate an answer — even when they don't know. They'd rather hallucinate a confident-sounding response than admit uncertainty. In production, a wrong answer is worse than no answer.</P>
+          <CB>{`Prompt: "What was TechCorp's revenue in Q3 2024?"
+Model: "TechCorp reported $4.2B in Q3 2024 revenue, a 12% increase..."
+Reality: TechCorp doesn't exist. The model made up everything.`}</CB>
+          <CB>{`Prompt: "What was TechCorp's revenue in Q3 2024?
+If you don't have reliable information, say 'I don't have that data'
+instead of guessing."
+Model: "I don't have that data. TechCorp's Q3 2024 financials are not
+in my training data."`}</CB>
+          <Callout color="var(--info-color)" icon="🛟">Always give the model an explicit escape route. Phrases like "If unsure, say I don't know", "Only answer if you're confident", or "If the information isn't in the provided text, say Not found" prevent hallucination in production systems.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Ch 12: Step-by-Step Instructions ── */}
+        <section id="pe12" style={{paddingTop:"2rem"}}>
+          <ChH num="12" title="Step-by-Step Instructions" sub="Structure prompts as numbered steps" color="var(--info-color)"/>
+          <P>This is NOT chain-of-thought (which makes the model reason out loud). This is about structuring YOUR instructions clearly so the model follows them in order. When a prompt has multiple things to do, numbered steps prevent the model from skipping or reordering.</P>
+          <CB>{`Before:
+"Read this customer email, figure out what product they're talking about,
+determine if they're angry or just asking a question, classify the urgency,
+and give me a JSON with all of that plus a suggested response."`}</CB>
+          <div style={{color:"var(--text-secondary)",fontSize:"0.88rem",marginBottom:"0.85rem"}}>Problem: The model might skip the urgency, forget the suggested response, or jumble the format.</div>
+          <CB>{`After:
+"Process this customer email in order:
+
+Step 1: Identify the product mentioned
+Step 2: Classify sentiment (angry, frustrated, neutral, positive)
+Step 3: Assign urgency (low, medium, high, critical)
+Step 4: Draft a 2-sentence response matching the sentiment
+Step 5: Return everything as JSON with keys: product, sentiment,
+        urgency, response"`}</CB>
+          <Callout color="var(--info-color)" icon="1️⃣">Numbered steps work because of autoregressive generation — the model processes left to right. When it sees "Step 1" completed, those tokens guide "Step 2". Each step builds on the previous one. This connects directly to why chain-of-thought works — structured preceding tokens improve subsequent tokens.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Ch 13: Grounding with Reference Text ── */}
+        <section id="pe13" style={{paddingTop:"2rem"}}>
+          <ChH num="13" title="Grounding with Reference Text" sub="Answer only from provided context" color="var(--info-color)"/>
+          <P>Instead of relying on the model's training data (which might be outdated or wrong), you provide the source material directly and tell the model to answer ONLY from that text. This is the core idea behind RAG (Retrieval-Augmented Generation), which we'll cover in a later section.</P>
+          <CB>{`Answer the question based ONLY on the provided context.
+If the answer is not in the context, say 'Not found in the provided text.'
+Do NOT use your general knowledge.
+
+<context>
+The TechStore return policy allows returns within 30 days of purchase.
+Items must be in original packaging. Electronics have a 15-day window.
+Gift cards are non-refundable.
+</context>
+
+Question: Can I return a laptop after 20 days?`}</CB>
+          <div style={{background:"white",border:"1px solid var(--border)",borderRadius:10,padding:"0.85rem 1rem",margin:"0.9rem 0"}}>
+            <div style={{fontWeight:700,fontSize:"0.9rem",marginBottom:4}}>Expected output</div>
+            <div style={{color:"var(--text-secondary)",fontSize:"0.86rem"}}>Based on the return policy, electronics have a 15-day return window. Since 20 days exceeds this window, the laptop cannot be returned.</div>
+          </div>
+          <div style={{color:"var(--text-secondary)",fontSize:"0.88rem",marginBottom:"0.85rem"}}>Without grounding, the model might answer based on generic return policy knowledge, which could be wrong for this specific store.</div>
+          <Callout color="var(--info-color)" icon="📚">This pattern is a preview of RAG — you're manually providing the context. In a RAG system, the context is automatically retrieved from a vector database. The prompting technique is identical — only the source of the context changes.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Ch 14: Self-Verification ── */}
+        <section id="pe14" style={{paddingTop:"2rem"}}>
+          <ChH num="14" title="Self-Verification" sub="Make the model check its own work" color="var(--info-color)"/>
+          <P>You can ask the model to review its own output before finalizing. This catches errors that a single pass might miss — especially for math, code, and factual claims.</P>
+          <CB>{`Pattern 1 — Inline verification:
+"Solve this problem. After solving, verify your answer
+by working backwards. If you find an error, correct it."
+
+Pattern 2 — Checklist verification:
+"Draft a response to this customer complaint, then check:
+☐ Did I acknowledge their frustration?
+☐ Did I apologize without admitting fault?
+☐ Did I offer a concrete next step?
+☐ Is the response under 100 words?
+If any check fails, revise before outputting."
+
+Pattern 3 — Output validation (in prompt chaining):
+Step 1: Generate the response
+Step 2: Send the response to the model again with
+        "Check this response for factual errors, tone issues,
+         or missing information. List problems found."
+Step 3: If problems found, regenerate with fixes`}</CB>
+          <Callout color="var(--info-color)" icon="✅">Self-verification adds tokens (and cost) but significantly improves quality for high-stakes outputs. Use it for customer-facing content, code generation, and any task where errors are expensive.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Ch 15: Cost Optimization ── */}
+        <section id="pe15" style={{paddingTop:"2rem"}}>
+          <ChH num="15" title="Cost Optimization" sub="Same quality, fewer tokens" color="var(--info-color)"/>
+          <P>Every token costs money. At scale (millions of API calls), small optimizations add up fast. Here are practical ways to reduce cost without reducing quality.</P>
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+            {[
+              {t:"1. Use the smallest model that works",d:"Start with gpt-4o-mini ($0.15/1M input). Only upgrade to gpt-4o ($2.50/1M input) if mini fails your evaluation. That's a 16x cost difference for the same prompt."},
+              {t:"2. Shorten system prompts",d:"A 500-token system prompt sent with every API call costs more than a 100-token one. Trim redundant instructions."},
+            ].map((r,i)=>(
+              <div key={i} style={{background:"white",border:"1px solid var(--border)",borderRadius:8,padding:"0.65rem 0.85rem"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem"}}>{r.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem"}}>{r.d}</div>
+              </div>
+            ))}
+            <CachePrefixesExpandableCard />
+            {[
+              {t:"4. Limit output length",d:"Set max_tokens to what you actually need. Classification might need 50, not 1000."},
+              {t:"5. Batch when possible",d:"One call with 10 items can be cheaper than 10 separate calls due to less overhead."},
+              {t:"6. Measure before optimizing",d:"Optimize the prompts that run most often first — volume beats one-off wins."},
+            ].map((r,i)=>(
+              <div key={"post-cache-"+i} style={{background:"white",border:"1px solid var(--border)",borderRadius:8,padding:"0.65rem 0.85rem"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem"}}>{r.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem"}}>{r.d}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="💸">Cost optimization is an engineering discipline, not an afterthought. The best GenAI engineers track cost per prompt, cost per feature, and cost per user — just like you'd track database query performance.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ═══════════════════════════════════════════
             PRACTICE CHALLENGES
             ═══════════════════════════════════════════ */}
 
@@ -1374,9 +1633,9 @@ Majority vote → 408 (4/5 agree) → high confidence`}</CB>
           <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>Real problems that require choosing the right combination of techniques</div>
         </div>
 
-        {/* ── Ch 10: Combining Techniques ── */}
-        <section id="pe10" style={{paddingTop:"1rem"}}>
-          <ChH num="10" title="Combining Techniques" sub="The decision flow — how to pick the right approach" color="var(--purple)"/>
+        {/* ── Ch 16: Combining Techniques ── */}
+        <section id="pe16" style={{paddingTop:"1rem"}}>
+          <ChH num="16" title="Combining Techniques" sub="The decision flow — how to pick the right approach" color="var(--purple)"/>
 
           <P>In practice, you'll rarely use just one technique. The best prompts <S>layer multiple techniques</S>. But how do you decide which to use?</P>
 
@@ -1417,9 +1676,9 @@ Majority vote → 408 (4/5 agree) → high confidence`}</CB>
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 11: Email Auto-Responder ── */}
-        <section id="pe11" style={{paddingTop:"2rem"}}>
-          <ChH num="11" title="Email Auto-Responder" sub="Classify, determine tone, draft response — all as JSON" color="var(--purple)"/>
+        {/* ── Ch 17: Email Auto-Responder ── */}
+        <section id="pe17" style={{paddingTop:"2rem"}}>
+          <ChH num="17" title="Email Auto-Responder" sub="Classify, determine tone, draft response — all as JSON" color="var(--purple)"/>
 
           <P><S>The scenario:</S> You're building an email auto-responder for a SaaS company. Incoming emails need to be classified, the right tone determined, and a draft response generated — all in one structured output.</P>
 
@@ -1471,9 +1730,9 @@ Expected output (JSON):
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 12: Meeting Notes Processor ── */}
-        <section id="pe12" style={{paddingTop:"2rem"}}>
-          <ChH num="12" title="Meeting Notes Processor" sub="Extract action items with owners and deadlines from transcripts" color="var(--purple)"/>
+        {/* ── Ch 18: Meeting Notes Processor ── */}
+        <section id="pe18" style={{paddingTop:"2rem"}}>
+          <ChH num="18" title="Meeting Notes Processor" sub="Extract action items with owners and deadlines from transcripts" color="var(--purple)"/>
 
           <P><S>The scenario:</S> Your company records all meetings. You need to automatically extract structured action items from messy, conversational transcripts.</P>
 
@@ -1526,9 +1785,9 @@ Expected output:
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 13: Code Doc Generator ── */}
-        <section id="pe13" style={{paddingTop:"2rem"}}>
-          <ChH num="13" title="Code Documentation Generator" sub="Docstring + usage examples + edge cases from raw code" color="var(--purple)"/>
+        {/* ── Ch 19: Code Doc Generator ── */}
+        <section id="pe19" style={{paddingTop:"2rem"}}>
+          <ChH num="19" title="Code Documentation Generator" sub="Docstring + usage examples + edge cases from raw code" color="var(--purple)"/>
 
           <P><S>The scenario:</S> Your team has hundreds of undocumented Python functions. You need to auto-generate comprehensive documentation: docstring, usage examples, and edge cases.</P>
 
@@ -1565,9 +1824,9 @@ Expected output:
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 14: Product Comparison Tool ── */}
-        <section id="pe14" style={{paddingTop:"2rem"}}>
-          <ChH num="14" title="Product Comparison Tool" sub="Structured comparison across specific criteria" color="var(--purple)"/>
+        {/* ── Ch 20: Product Comparison Tool ── */}
+        <section id="pe20" style={{paddingTop:"2rem"}}>
+          <ChH num="20" title="Product Comparison Tool" sub="Structured comparison across specific criteria" color="var(--purple)"/>
 
           <P><S>The scenario:</S> Your e-commerce platform needs to auto-generate product comparisons. Given two product descriptions, produce a structured comparison across specific criteria.</P>
 
@@ -1601,9 +1860,9 @@ Expected output:
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 15: Content Moderator ── */}
-        <section id="pe15" style={{paddingTop:"2rem"}}>
-          <ChH num="15" title="Content Moderator" sub="Classify user content for safety with confidence scores" color="var(--purple)"/>
+        {/* ── Ch 21: Content Moderator ── */}
+        <section id="pe21" style={{paddingTop:"2rem"}}>
+          <ChH num="21" title="Content Moderator" sub="Classify user content for safety with confidence scores" color="var(--purple)"/>
 
           <P><S>The scenario:</S> Your platform has user-generated content. You need an automated moderation system that classifies content, explains its reasoning, and provides confidence scores — all while being resistant to prompt injection.</P>
 
@@ -1651,9 +1910,9 @@ Expected output:
           <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>The skills that separate prompt tinkering from prompt engineering</div>
         </div>
 
-        {/* ── Ch 16: Prompt Evaluation ── */}
-        <section id="pe16" style={{paddingTop:"1rem"}}>
-          <ChH num="16" title="Prompt Evaluation" sub="Systematically measure prompt quality" color="var(--orange)"/>
+        {/* ── Ch 22: Prompt Evaluation ── */}
+        <section id="pe22" style={{paddingTop:"1rem"}}>
+          <ChH num="22" title="Prompt Evaluation" sub="Systematically measure prompt quality" color="var(--orange)"/>
 
           <P>How do you know if Prompt A is better than Prompt B? Not by running it once and "feeling" the output is better. You need <S color="var(--orange)">systematic evaluation</S> — the same rigor you'd apply to testing code.</P>
 
@@ -1696,9 +1955,9 @@ Expected output:
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 17: Iteration Methodology ── */}
-        <section id="pe17" style={{paddingTop:"2rem"}}>
-          <ChH num="17" title="Iteration Methodology" sub="The professional prompt development workflow" color="var(--orange)"/>
+        {/* ── Ch 23: Iteration Methodology ── */}
+        <section id="pe23" style={{paddingTop:"2rem"}}>
+          <ChH num="23" title="Iteration Methodology" sub="The professional prompt development workflow" color="var(--orange)"/>
 
           <P>Professional prompt engineering follows a <S>systematic iteration cycle</S>, not random trial and error:</P>
 
@@ -1746,9 +2005,9 @@ Expected output:
           <NotebookDemoLink />
         </section>
 
-        {/* ── Ch 18: Building a Prompt Library ── */}
-        <section id="pe18" style={{paddingTop:"2rem"}}>
-          <ChH num="18" title="Building a Prompt Library" sub="Reusable, tested, versioned prompt templates" color="var(--orange)"/>
+        {/* ── Ch 24: Building a Prompt Library ── */}
+        <section id="pe24" style={{paddingTop:"2rem"}}>
+          <ChH num="24" title="Building a Prompt Library" sub="Reusable, tested, versioned prompt templates" color="var(--orange)"/>
 
           <P>Professional teams don't start from scratch every time. They maintain a <S color="var(--orange)">prompt library</S> — a collection of tested, versioned prompt templates that anyone on the team can use.</P>
 
@@ -1758,27 +2017,35 @@ Expected output:
             <div style={{color:"#F97316",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Prompt Template Structure</div>
             <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",lineHeight:1.9}}>
               {[
-                {field:"name",value:"\"email_classifier_v2.1\"",color:"#60A5FA"},
-                {field:"description",value:"\"Classifies support emails into 5 categories\"",color:"#94A3B8"},
-                {field:"system_prompt",value:"\"You are a support email classifier...\"",color:"#10B981"},
-                {field:"user_template",value:"\"Classify this email: {email_text}\"",color:"#FBBF24"},
-                {field:"model",value:"\"gpt-4o-mini\"",color:"#94A3B8"},
-                {field:"temperature",value:"0.1",color:"#94A3B8"},
-                {field:"expected_output",value:"{\"category\": \"...\", \"urgency\": \"...\"}",color:"#A78BFA"},
-                {field:"test_cases",value:"[20 labeled examples]",color:"#EC4899"},
-                {field:"accuracy",value:"\"94% on test set (v2.0 was 87%)\"",color:"#10B981"},
-                {field:"known_limitations",value:"\"Struggles with mixed billing+technical\"",color:"#EF4444"},
-                {field:"version_history",value:"\"v1.0: zero-shot, v2.0: +few-shot, v2.1: +negative\"",color:"#F97316"},
+                {field:"template_id",value:"\"email-classifier\"",color:"#60A5FA"},
+                {field:"description",value:"\"Classifies support emails into category + priority\"",color:"#60A5FA"},
+                {field:"versions",value:"[each version stores full prompts + what happened]",color:"#94A3B8"},
+                {field:"  ├── v1",value:"",color:"#94A3B8"},
+                {field:"  │   system_prompt",value:"\"You classify support emails.\"",color:"#10B981"},
+                {field:"  │   user_template",value:"\"Classify this email: {email}\"",color:"#10B981"},
+                {field:"  │   result",value:"\"70% — model invented its own categories\"",color:"#FBBF24"},
+                {field:"  │   fix",value:"\"Define explicit categories\"",color:"#F97316"},
+                {field:"  ├── v2",value:"",color:"#94A3B8"},
+                {field:"  │   system_prompt",value:"\"You classify into: BILLING, TECHNICAL...\"",color:"#10B981"},
+                {field:"  │   user_template",value:"(same)",color:"#10B981"},
+                {field:"  │   result",value:"\"85% — priority still inconsistent\"",color:"#FBBF24"},
+                {field:"  │   fix",value:"\"Add priority guidelines\"",color:"#F97316"},
+                {field:"  └── v3",value:"",color:"#94A3B8"},
+                {field:"      system_prompt",value:"(+ priority guidelines added)",color:"#10B981"},
+                {field:"      user_template",value:"(+ few-shot examples added)",color:"#10B981"},
+                {field:"      result",value:"\"94% — solid across all categories\"",color:"#FBBF24"},
+                {field:"      fix",value:"\"Multi-category emails still weak\"",color:"#F97316"},
+                {field:"known_weaknesses",value:"[\"Sarcasm\", \"Multi-issue emails\", \"Non-English\"]",color:"#EF4444"},
               ].map((f,i)=>(
                 <div key={i} style={{display:"flex",gap:8}}>
-                  <span style={{color:f.color,width:160,flexShrink:0}}>{f.field}:</span>
+                  <span style={{color:f.color,width:220,flexShrink:0}}>{f.value === "" ? f.field : `${f.field}:`}</span>
                   <span style={{color:"#6B7280"}}>{f.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <Callout color="var(--orange)" icon="💼"><S>This is what separates a GenAI engineer from someone who "uses ChatGPT":</S> You build, test, version, and maintain prompt templates as production artifacts — with the same rigor you'd apply to code. Your prompt library is a core asset of your team.</Callout>
+          <Callout color="var(--orange)" icon="💼">Your prompt library stores the prompts and their evolution story — what you tried, what broke, what you fixed. Test cases live in your test notebook. Model and temperature are runtime config. Keep the template lean, version it like code.</Callout>
           <NotebookDemoLink />
         </section>
 
