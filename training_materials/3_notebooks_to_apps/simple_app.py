@@ -1,6 +1,10 @@
 import streamlit as st
 from openai import OpenAI
 
+from dotenv import load_dotenv
+import os
+load_dotenv(override=True)
+
 client = OpenAI()
 st.title("My GenAI App")
 
