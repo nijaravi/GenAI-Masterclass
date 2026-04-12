@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG — Retrieval Augmented Generation (Part 1) — GenAI Decoded by Nij</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--sidebar-bg:#FFFFFF;--card-bg:#FFFFFF;--border:#E8E5E0;--border-light:#F0EDE8;--text:#2D2B28;--text-secondary:#6B6560;--text-muted:#9C9690;--accent:#1A6B4E;--accent-light:#E8F5EE;--accent-hover:#15573F;--build-color:#B45309;--build-bg:#FEF3C7;--build-border:#FCD34D;--work-color:#1A6B4E;--work-bg:#E8F5EE;--work-border:#6EE7B7;--info-color:#1E6091;--info-bg:#EFF6FF;--info-border:#93C5FD;--purple:#6D28D9;--purple-bg:#F3F0FF;--orange:#C2410C;--orange-bg:#FFF7ED;--red:#B91C1C;--red-bg:#FEF2F2;--demo-bg:#1A1D27;--demo-border:#2E3240;--demo-text:#E2E8F0;--sidebar-w:260px;}
+*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.7;}::selection{background:#1A6B4E33;}pre{white-space:pre-wrap;word-wrap:break-word;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);overflow-y:auto;z-index:50;padding:0.75rem 0;scrollbar-width:thin;}.sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px;}
+.sidebar-logo{padding:0 1rem 0.85rem;border-bottom:1px solid var(--border);margin-bottom:0.5rem;}.sidebar-logo h2{font-family:'Libre Baskerville',serif;font-size:0.92rem;color:var(--text);line-height:1.35;}.sidebar-logo p{font-size:0.72rem;color:var(--accent);font-weight:600;margin-top:2px;}
+.sidebar-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text-muted);padding:8px 9px 2px;margin-top:4px;}
+.sidebar-item{display:block;padding:5px 9px;border-radius:7px;text-decoration:none;font-size:0.8rem;color:var(--text-secondary);transition:all 0.15s;cursor:pointer;margin-bottom:1px;border:1px solid transparent;}.sidebar-item:hover{background:var(--bg);color:var(--text);}.sidebar-item.active{background:var(--accent-light);color:var(--accent);font-weight:600;border-color:#6EE7B733;}
+.sidebar-item .num{display:inline-block;width:20px;height:20px;border-radius:5px;text-align:center;line-height:20px;font-size:0.66rem;font-weight:700;margin-right:7px;}.sidebar-item .sub{font-size:0.66rem;color:var(--text-muted);display:block;}
+.main{margin-left:var(--sidebar-w);min-height:100vh;}.content{max-width:760px;margin:0 auto;padding:2rem 2.5rem 4rem;}
+@media(max-width:900px){.sidebar{display:none;}.main{margin-left:0;}.content{padding:1.5rem 1rem 3rem;}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef}=React;
+
+// ── HELPERS ──
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function Callout({children,color="var(--accent)",icon="💡"}){
+  const bgC=color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":"var(--accent-light)";
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}><span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span><div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div></div>);
+}
+function ChH({num,title,sub,color="var(--accent)"}){return(<div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"ch"+num}><div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}><span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span></div><h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3><div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div></div>);}
+function SH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+function NotebookDemoLink(){
+  return(
+    <div style={{marginTop:"2rem",paddingTop:"1.25rem",borderTop:"1px solid var(--border-light)"}}>
+      <div
+        role="note"
+        style={{
+          display:"inline-flex",
+          alignItems:"center",
+          gap:10,
+          padding:"8px 20px",
+          borderRadius:9999,
+          background:"#FFF8F0",
+          border:"1px solid #E8C9A8",
+          color:"#7C2D12",
+          fontWeight:700,
+          fontSize:"0.88rem",
+          fontFamily:"'DM Sans',sans-serif",
+          boxShadow:"0 1px 2px rgba(124,45,18,0.08)",
+          cursor:"default",
+          userSelect:"none",
+        }}
+      >
+        <span style={{fontSize:"1.1rem",lineHeight:1}} aria-hidden>📓</span>
+        Hands-on in live notebook demo
+      </div>
+    </div>
+  );
+}
+
+// ── INTERACTIVE: RAG Pipeline Demo ──
+function RAGPipelineDemo(){
+  const[step,setStep]=useState(0);
+  const steps=[
+    {num:0,title:"User asks a question",icon:"❓",color:"#60A5FA",desc:"The user types: 'What is the TechStore return policy for electronics?'",detail:"This question can't be answered from the LLM's training data — it's company-specific, private information."},
+    {num:1,title:"Query gets embedded",icon:"🔢",color:"#A78BFA",desc:"The question is converted into a vector (array of numbers) using an embedding model.",detail:"Same embedding model used for the documents. The query vector now lives in the same mathematical space as all document vectors."},
+    {num:2,title:"Vector search (retrieval)",icon:"🔍",color:"#FBBF24",desc:"The query vector is compared against all document chunk vectors. Top-K most similar chunks are returned.",detail:"Cosine similarity or dot product measures how 'close' the query is to each chunk. Closest chunks = most relevant content."},
+    {num:3,title:"Context assembly",icon:"📋",color:"#F97316",desc:"Retrieved chunks are assembled into a prompt alongside the original question.",detail:"The prompt tells the LLM: 'Answer this question using ONLY the following context. If the answer isn't in the context, say so.'"},
+    {num:4,title:"LLM generates answer",icon:"🤖",color:"#10B981",desc:"The LLM reads the context + question and generates a grounded answer.",detail:"Because the answer is based on retrieved documents (not training data), it's accurate, up-to-date, and verifiable."},
+  ];
+  const s=steps[step];
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The RAG Pipeline — Step by Step</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each step to see what happens.</div>
+      {/* Pipeline steps */}
+      <div style={{display:"flex",gap:0,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {steps.map((st,i)=>(
+          <React.Fragment key={i}>
+            <button onClick={()=>setStep(i)} style={{padding:"8px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.78rem",fontWeight:600,background:step===i?st.color:"#252833",color:step===i?"#111":"#94A3B8",transition:"all 0.2s"}}>{st.icon} {st.title}</button>
+            {i<steps.length-1&&<span style={{color:"#4B5563",alignSelf:"center",margin:"0 2px"}}>→</span>}
+          </React.Fragment>
+        ))}
+      </div>
+      {/* Detail */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid "+s.color+"33"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <span style={{fontSize:"1.5rem"}}>{s.icon}</span>
+          <span style={{color:s.color,fontWeight:700,fontSize:"1rem"}}>{s.title}</span>
+        </div>
+        <div style={{color:"#E2E8F0",fontSize:"0.92rem",lineHeight:1.7,marginBottom:8}}>{s.desc}</div>
+        <div style={{color:"#94A3B8",fontSize:"0.82rem",lineHeight:1.6,padding:"8px 12px",background:"#1A1D2788",borderRadius:6}}>{s.detail}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── INTERACTIVE: Embedding Search Demo ──
+function EmbeddingSearchDemo(){
+  const[query,setQuery]=useState(0);
+  const queries=[
+    {text:"Can I return a laptop after 20 days?",matches:[
+      {chunk:"Electronics have a shorter return window of 15 days and must include original packaging.",score:0.92,relevant:true},
+      {chunk:"Standard items can be returned within 30 days of purchase with original receipt.",score:0.78,relevant:false},
+      {chunk:"Holiday purchases between Nov 15 and Dec 31 have extended return until Jan 31.",score:0.45,relevant:false},
+    ]},
+    {text:"What if my package arrived broken?",matches:[
+      {chunk:"Damaged items must be reported within 48 hours of delivery. Include photos of damage.",score:0.95,relevant:true},
+      {chunk:"Standard items can be returned within 30 days of purchase with original receipt.",score:0.38,relevant:false},
+      {chunk:"Gift cards are non-refundable under any circumstances.",score:0.12,relevant:false},
+    ]},
+    {text:"Are gift cards refundable?",matches:[
+      {chunk:"Gift cards are non-refundable under any circumstances.",score:0.97,relevant:true},
+      {chunk:"Software products are non-refundable once activated.",score:0.72,relevant:false},
+      {chunk:"Damaged items must be reported within 48 hours of delivery.",score:0.15,relevant:false},
+    ]},
+  ];
+  const q=queries[query];
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Similarity Search in Action</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click a query to see which chunks match and their similarity scores.</div>
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {queries.map((qr,i)=>(
+          <button key={i} onClick={()=>setQuery(i)} style={{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.78rem",fontWeight:600,background:query===i?"#FBBF24":"#252833",color:query===i?"#111":"#94A3B8"}}>{qr.text}</button>
+        ))}
+      </div>
+      {/* Query */}
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #60A5FA33",marginBottom:10}}>
+        <div style={{color:"#60A5FA",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>QUERY (embedded as vector)</div>
+        <div style={{color:"#E2E8F0",fontSize:"0.92rem"}}>{q.text}</div>
+      </div>
+      {/* Results */}
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {q.matches.map((m,i)=>(
+          <div key={i} style={{background:"#12141C",borderRadius:8,padding:"0.75rem 1rem",border:"1px solid "+(m.relevant?"#10B98133":"#2E3240"),display:"flex",gap:12,alignItems:"center"}}>
+            <div style={{textAlign:"center",flexShrink:0,width:55}}>
+              <div style={{color:m.score>0.8?"#10B981":m.score>0.5?"#FBBF24":"#6B7280",fontFamily:"'JetBrains Mono'",fontSize:"1rem",fontWeight:700}}>{m.score.toFixed(2)}</div>
+              <div style={{fontSize:"0.6rem",color:"#6B7280"}}>similarity</div>
+            </div>
+            <div style={{height:8,width:4,borderRadius:2,background:m.relevant?"#10B981":"#2E3240",flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{color:m.relevant?"#E2E8F0":"#6B7280",fontSize:"0.82rem",lineHeight:1.5}}>{m.chunk}</div>
+              {m.relevant&&<div style={{color:"#10B981",fontSize:"0.68rem",marginTop:3,fontWeight:600}}>✓ Most relevant — this chunk answers the question</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── INTERACTIVE: RAG Prompt Assembly Demo ──
+function RAGPromptDemo(){
+  const[showFull,setShowFull]=useState(false);
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>How the RAG Prompt is Assembled</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>The retrieved chunks become the context in a carefully structured prompt.</div>
+      <button onClick={()=>setShowFull(!showFull)} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:showFull?"#10B981":"#252833",color:showFull?"#111":"#94A3B8",marginBottom:"1rem"}}>{showFull?"Hide":"Show"} assembled prompt</button>
+      {showFull&&(
+        <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+          <pre style={{color:"#E2E8F0",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.8,margin:0,whiteSpace:"pre-wrap"}}>{`System: You are a helpful assistant. Answer questions using ONLY
+the provided context. If the answer is not in the context,
+say "I don't have that information in my knowledge base."
+Do NOT use your general knowledge.
+
+---
+CONTEXT (retrieved from vector database):
+
+`}<span style={{color:"#10B981"}}>{`[Chunk 1, score: 0.92]
+Electronics have a shorter return window of 15 days and must
+include original packaging.
+
+[Chunk 2, score: 0.78]
+Standard items can be returned within 30 days of purchase
+with the original receipt.`}</span>{`
+
+---
+USER QUESTION: Can I return a laptop after 20 days?
+
+---
+Answer based on the context above:`}</pre>
+          <div style={{marginTop:10,padding:"0.5rem 0.75rem",background:"#10B98112",borderRadius:6,border:"1px solid #10B98133"}}>
+            <span style={{color:"#10B981",fontSize:"0.78rem",fontWeight:600}}>LLM Answer: "Based on the return policy, electronics (which includes laptops) have a 15-day return window. Since 20 days exceeds this window, the laptop cannot be returned under the standard policy."</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CHAPTERS ──
+const CHAPTERS=[
+  {id:"intro",num:"",title:"Overview",sub:"",group:""},
+  {id:"ch1",num:"1",title:"Why RAG Exists",sub:"The three problems it solves",group:"foundation"},
+  {id:"ch2",num:"2",title:"RAG Architecture",sub:"The complete pipeline",group:"foundation"},
+  {id:"ch3",num:"3",title:"RAG vs Alternatives",sub:"When to use which approach",group:"foundation"},
+  {id:"ch4",num:"4",title:"Reading & Parsing Documents",sub:"Getting raw text out of different file formats",group:"documents"},
+  {id:"ch5",num:"5",title:"Chunking Strategies",sub:"How you split documents changes what you retrieve",group:"documents"},
+  {id:"ch6",num:"6",title:"Embeddings for Search",sub:"Converting text to searchable vectors",group:"retrieval"},
+  {id:"ch7",num:"7",title:"Vector Databases",sub:"Storing and searching embeddings",group:"retrieval"},
+  {id:"ch8",num:"8",title:"Retrieval Strategies",sub:"Top-K, MMR, context window",group:"retrieval"},
+  {id:"ch9",num:"9",title:"Building the RAG Prompt",sub:"Context assembly and grounding",group:"generation"},
+  {id:"ch10",num:"10",title:"Common Failures",sub:"What goes wrong and how to debug",group:"generation"},
+];
+
+function Sidebar({active,onNav}){
+  return(
+    <div className="sidebar">
+      <div className="sidebar-logo"><h2>GenAI Decoded</h2><p>by Nij</p></div>
+      <div style={{padding:"0.25rem 0.75rem"}}>
+        <a className={"sidebar-item"+(active==="intro"?" active":"")} onClick={()=>onNav("intro")}>Overview</a>
+        <div className="sidebar-label" style={{color:"var(--info-color)"}}>Foundation</div>
+        {CHAPTERS.filter(c=>c.group==="foundation").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
+        <div className="sidebar-label" style={{color:"var(--build-color)"}}>Document Processing</div>
+        {CHAPTERS.filter(c=>c.group==="documents").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--build-bg)",color:"var(--build-color)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
+        <div className="sidebar-label" style={{color:"var(--purple)"}}>Embeddings & Retrieval</div>
+        {CHAPTERS.filter(c=>c.group==="retrieval").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--purple-bg)",color:"var(--purple)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
+        <div className="sidebar-label" style={{color:"var(--accent)"}}>Generation & Debugging</div>
+        {CHAPTERS.filter(c=>c.group==="generation").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--accent-light)",color:"var(--accent)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
+      </div>
+    </div>
+  );
+}
+
+// ── APP ──
+function App(){
+  const[active,setActive]=useState("intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+
+  return(<div><Sidebar active={active} onNav={onNav}/><div className="main"><div className="content">
+
+{/* ── OVERVIEW ── */}
+<section id="intro" style={{paddingTop:"1rem"}}>
+  <h1 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2.4rem",color:"var(--text)",fontWeight:700,lineHeight:1.3,marginBottom:8}}>RAG — Retrieval Augmented Generation</h1>
+  <div style={{color:"var(--info-color)",fontSize:"1.1rem",fontStyle:"italic",marginBottom:"1.5rem"}}>Connect LLMs to your own data — Part 1: Foundations</div>
+
+  <P>LLMs are powerful, but they have three fundamental limitations: they <S color="var(--red)">hallucinate</S> facts, their knowledge has a <S color="var(--red)">cutoff date</S>, and they can't access <S color="var(--red)">your private data</S>. RAG solves all three by giving the LLM access to external documents at query time.</P>
+
+  <P>This is the <S>most important pattern in production GenAI</S>. Nearly every enterprise GenAI application uses RAG — customer support bots, internal knowledge bases, document Q&A, research assistants. If you learn one thing beyond prompting, make it RAG.</P>
+
+  <div style={{display:"flex",gap:14,marginTop:"1.5rem",flexWrap:"wrap"}}>
+    {[
+      {title:"Foundation",chapters:"1–3",desc:"Why RAG exists, the pipeline, when to use it",color:"var(--info-color)",bg:"var(--info-bg)"},
+      {title:"Document Processing",chapters:"4–5",desc:"Reading & parsing documents, then chunking",color:"var(--build-color)",bg:"var(--build-bg)"},
+      {title:"Embeddings & Retrieval",chapters:"6–8",desc:"Vector search, databases, retrieval strategies",color:"var(--purple)",bg:"var(--purple-bg)"},
+      {title:"Generation & Debugging",chapters:"9–10",desc:"Prompt assembly, failures, debugging",color:"var(--accent)",bg:"var(--accent-light)"},
+    ].map((g,i)=>(
+      <div key={i} style={{flex:1,minWidth:160,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+g.color+"33",borderLeft:"4px solid "+g.color}}>
+        <div style={{color:g.color,fontWeight:700,fontSize:"0.85rem"}}>{g.title}</div>
+        <div style={{color:"var(--text-muted)",fontSize:"0.72rem",marginTop:2}}>Ch {g.chapters}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.78rem",marginTop:4}}>{g.desc}</div>
+      </div>
+    ))}
+  </div>
+</section>
+
+{/* ── CH 1: Why RAG ── */}
+<section id="ch1" style={{paddingTop:"2rem"}}>
+  <ChH num="1" title="Why RAG Exists" sub="The three problems LLMs can't solve alone" color="var(--info-color)"/>
+
+  <P>You already know LLMs generate text one token at a time from patterns learned during training. But this creates three problems no amount of prompting can fix:</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+    {[
+      {problem:"Hallucination",desc:"Ask 'What is TechStore's return policy?' and the model invents a plausible-sounding but completely fake answer. It has no way to say 'I don't know' by default — it always generates something.",icon:"🎭",color:"var(--red)"},
+      {problem:"Knowledge Cutoff",desc:"The model's training data has a fixed end date. It can't answer about events, products, or changes after that date. 'What were our Q3 2025 results?' — the model simply doesn't have this information.",icon:"📅",color:"var(--orange)"},
+      {problem:"No Access to Private Data",desc:"Your company's internal docs, policies, customer data, code repos — none of this was in the training data. The model can't answer questions about YOUR specific business.",icon:"🔒",color:"var(--purple)"},
+    ].map((p,i)=>(
+      <div key={i} style={{background:"white",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid "+p.color+"33",borderLeft:"4px solid "+p.color,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <span style={{fontSize:"1.3rem",flexShrink:0}}>{p.icon}</span>
+        <div><div style={{fontWeight:700,fontSize:"0.95rem",color:p.color,marginBottom:2}}>{p.problem}</div><div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>{p.desc}</div></div>
+      </div>
+    ))}
+  </div>
+
+  <Callout color="var(--info-color)" icon="🔑"><S>RAG solves all three</S> by retrieving relevant documents at query time and injecting them into the prompt. The LLM doesn't need to "know" the answer — it reads the answer from your documents and generates a response based on that context.</Callout>
+
+  <P>You already practiced the core technique in Prompt Engineering Chapter 13 (Grounding with Reference Text). RAG automates the process: instead of you manually pasting context into the prompt, a <S>retrieval system</S> finds the right documents automatically.</P>
+</section>
+
+{/* ── CH 2: RAG Architecture ── */}
+<section id="ch2" style={{paddingTop:"2rem"}}>
+  <ChH num="2" title="RAG Architecture" sub="The complete pipeline from document to answer" color="var(--info-color)"/>
+
+  <P>RAG has two phases: an <S color="var(--build-color)">offline phase</S> (process documents once, store them) and an <S color="var(--info-color)">online phase</S> (user asks, system retrieves, LLM answers).</P>
+
+  {/* Offline phase */}
+  <SH>Phase 1: Indexing (Offline — Run Once)</SH>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"var(--build-color)",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:10}}>OFFLINE — PROCESS YOUR DOCUMENTS</div>
+    <div style={{display:"flex",gap:0,alignItems:"stretch",flexWrap:"wrap"}}>
+      {[
+        {step:"Load",desc:"Read PDFs, text files, markdown, web pages",color:"#60A5FA",icon:"📄"},
+        {step:"Chunk",desc:"Split into smaller pieces (500-1000 tokens each)",color:"#A78BFA",icon:"✂️"},
+        {step:"Embed",desc:"Convert each chunk to a vector using embedding model",color:"#FBBF24",icon:"🔢"},
+        {step:"Store",desc:"Save vectors + original text in a vector database",color:"#10B981",icon:"💾"},
+      ].map((s,i)=>(
+        <div key={i} style={{flex:1,minWidth:130,background:"#12141C",borderRadius:i===0?"10px 0 0 10px":i===3?"0 10px 10px 0":0,border:"1px solid #2E3240",padding:"0.85rem",borderRight:i<3?"none":"1px solid #2E3240",position:"relative"}}>
+          <div style={{fontSize:"1.1rem",marginBottom:4}}>{s.icon}</div>
+          <div style={{color:s.color,fontWeight:700,fontSize:"0.85rem",marginBottom:4}}>{s.step}</div>
+          <div style={{color:"#6B7280",fontSize:"0.72rem",lineHeight:1.5}}>{s.desc}</div>
+          {i<3&&<div style={{position:"absolute",right:-8,top:"50%",transform:"translateY(-50%)",zIndex:2,color:"#4B5563",fontSize:"1rem"}}>→</div>}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {/* Online phase */}
+  <SH>Phase 2: Query (Online — Every User Question)</SH>
+
+  <P>Click through each step to see the online pipeline in action:</P>
+
+  <RAGPipelineDemo/>
+</section>
+
+{/* ── CH 3: RAG vs Alternatives ── */}
+<section id="ch3" style={{paddingTop:"2rem"}}>
+  <ChH num="3" title="RAG vs Alternatives" sub="When to use RAG, fine-tuning, or just prompting" color="var(--info-color)"/>
+
+  <P>RAG isn't the only way to give an LLM new knowledge. Here's when to use each approach:</P>
+
+  <div style={{background:"white",borderRadius:10,padding:"1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0",overflowX:"auto"}}>
+    <div style={{display:"grid",gridTemplateColumns:"130px 1fr 1fr 1fr",gap:0,fontSize:"0.82rem"}}>
+      <div style={{padding:"8px",fontWeight:700,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}></div>
+      <div style={{padding:"8px",fontWeight:700,color:"var(--accent)",borderBottom:"2px solid var(--border)",background:"var(--bg)",textAlign:"center"}}>Prompt Engineering</div>
+      <div style={{padding:"8px",fontWeight:700,color:"var(--info-color)",borderBottom:"2px solid var(--border)",background:"var(--bg)",textAlign:"center"}}>RAG</div>
+      <div style={{padding:"8px",fontWeight:700,color:"var(--purple)",borderBottom:"2px solid var(--border)",background:"var(--bg)",textAlign:"center"}}>Fine-tuning</div>
+      {[
+        ["Best for","Tasks the model already knows how to do","Answering from your specific documents","Teaching the model a new style or behavior"],
+        ["Knowledge","Model's training data only","External docs at query time","Baked into model weights"],
+        ["Data freshness","Stale (training cutoff)","Always current (just update docs)","Stale (re-train needed)"],
+        ["Setup cost","Zero","Medium (pipeline + vector DB)","High (GPU, training data, time)"],
+        ["Per-query cost","Low","Medium (embedding + retrieval + generation)","Low (after training)"],
+        ["Example","'Summarize this text'","'What does our HR policy say about PTO?'","'Write in our brand voice'"],
+      ].map(([label,...vals],i)=>(
+        <React.Fragment key={i}>
+          <div style={{padding:"8px",fontWeight:600,borderBottom:"1px solid var(--border-light)"}}>{label}</div>
+          {vals.map((v,j)=>(<div key={j} style={{padding:"8px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>{v}</div>))}
+        </React.Fragment>
+      ))}
+    </div>
+  </div>
+
+  <Callout icon="🔑"><S>The 80/20 rule:</S> Prompt engineering handles 70% of use cases. RAG handles the next 25%. Fine-tuning handles the remaining 5%. Start with prompting, add RAG when you need external knowledge, fine-tune only when you need to change the model's behavior.</Callout>
+</section>
+
+{/* ── CH 4: Reading & Parsing Documents ── */}
+<section id="ch4" style={{paddingTop:"2rem"}}>
+  <ChH num="4" title="Reading & Parsing Documents" sub="Getting raw text out of different file formats" color="var(--build-color)"/>
+
+  <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.12rem",color:"var(--text)",fontWeight:700,margin:"0.35rem 0 0.65rem"}}>The Goal: Get Your Documents Into a Vector Database</div>
+  <P>Before we start processing documents, let&apos;s understand where they&apos;re going. The end goal of everything in this section (loading, chunking, embedding) is to get your documents into a <S>vector database</S> — a special database that lets you search by meaning, not just keywords.</P>
+
+  <div style={{background:"white",borderRadius:10,padding:"1rem 1.15rem",border:"1px solid var(--border)",margin:"1rem 0"}}>
+    <div style={{fontWeight:700,fontSize:"1rem",marginBottom:10,color:"var(--text)"}}>What is a Vector Database?</div>
+    <p style={{margin:"0 0 0.85rem",fontSize:"0.95rem",color:"var(--text)",lineHeight:1.75}}>A regular database stores rows and columns — you search with exact queries like <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem",background:"var(--bg)",padding:"2px 6px",borderRadius:4}}>WHERE name = &apos;John&apos;</span>. A vector database stores numbers that represent meaning — you search with questions like <S>&quot;find documents similar to this question.&quot;</S></p>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,fontSize:"0.86rem"}}>
+      <div style={{background:"var(--bg)",borderRadius:8,padding:"0.75rem 0.85rem",border:"1px solid var(--border-light)"}}>
+        <div style={{fontWeight:700,color:"var(--build-color)",marginBottom:8}}>Regular Database</div>
+        <ul style={{margin:0,paddingLeft:18,color:"var(--text-secondary)",lineHeight:1.65}}>
+          <li><strong style={{color:"var(--text)"}}>Stores:</strong> text, numbers, dates</li>
+          <li><strong style={{color:"var(--text)"}}>Search:</strong> exact match (WHERE price &gt; 100)</li>
+          <li><strong style={{color:"var(--text)"}}>Finds:</strong> rows that match your filter exactly</li>
+        </ul>
+      </div>
+      <div style={{background:"var(--bg)",borderRadius:8,padding:"0.75rem 0.85rem",border:"1px solid var(--border-light)"}}>
+        <div style={{fontWeight:700,color:"var(--accent)",marginBottom:8}}>Vector Database</div>
+        <ul style={{margin:0,paddingLeft:18,color:"var(--text-secondary)",lineHeight:1.65}}>
+          <li><strong style={{color:"var(--text)"}}>Stores:</strong> embeddings (arrays of numbers that capture meaning)</li>
+          <li><strong style={{color:"var(--text)"}}>Search:</strong> similarity (find the closest vectors to my query)</li>
+          <li><strong style={{color:"var(--text)"}}>Finds:</strong> documents that are semantically similar to your question</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"var(--build-color)",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:10}}>WHERE YOU&apos;RE HEADED — INDEXING PIPELINE</div>
+    <div style={{display:"flex",gap:0,alignItems:"stretch",flexWrap:"wrap"}}>
+      {[
+        {step:"Your Documents",desc:"Source files & corpora",color:"#94A3B8",icon:"📚"},
+        {step:"Load",desc:"Parse into clean text",color:"#60A5FA",icon:"📄"},
+        {step:"Chunk",desc:"Split into retrievable units",color:"#A78BFA",icon:"✂️"},
+        {step:"Embed",desc:"Vectors from an embedding model",color:"#FBBF24",icon:"🔢"},
+        {step:"Store in Vector DB",desc:"Persist for similarity search",color:"#10B981",icon:"💾"},
+        {step:"Ready for search",desc:"Query-time retrieval",color:"#34D399",icon:"🔎"},
+      ].map((s,i)=>(
+        <div key={i} style={{flex:"1 1 88px",minWidth:88,maxWidth:150,background:"#12141C",borderRadius:i===0?"10px 0 0 10px":i===5?"0 10px 10px 0":0,border:"1px solid #2E3240",padding:"0.75rem 0.45rem",borderRight:i<5?"none":"1px solid #2E3240",position:"relative"}}>
+          <div style={{fontSize:"1rem",marginBottom:4,textAlign:"center"}}>{s.icon}</div>
+          <div style={{color:s.color,fontWeight:700,fontSize:"0.78rem",marginBottom:4,textAlign:"center",lineHeight:1.25}}>{s.step}</div>
+          <div style={{color:"#6B7280",fontSize:"0.65rem",lineHeight:1.45,textAlign:"center"}}>{s.desc}</div>
+          {i<5&&<div style={{position:"absolute",right:-7,top:"50%",transform:"translateY(-50%)",zIndex:2,color:"#4B5563",fontSize:"0.95rem"}}>→</div>}
+        </div>
+      ))}
+    </div>
+    <div style={{color:"#9CA3AF",fontSize:"0.78rem",marginTop:12,lineHeight:1.55}}>Chapters 4–7 cover each of these steps. We&apos;ll start with loading.</div>
+  </div>
+
+  <P>Before chunking and embedding, you need to actually <S>read</S> your documents. This sounds trivial but it's where many RAG projects struggle — different formats need different parsers.</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+    {[
+      {format:"Plain Text (.txt, .md)",parser:"Built-in Python — just open() and read()",difficulty:"Easy",color:"#10B981"},
+      {format:"PDF",parser:"PyPDF2, pdfplumber, or unstructured. Tables and multi-column layouts are hard.",difficulty:"Medium",color:"#FBBF24"},
+      {format:"Word (.docx)",parser:"python-docx. Handles text, headers, and basic tables.",difficulty:"Medium",color:"#FBBF24"},
+      {format:"HTML / Web pages",parser:"BeautifulSoup or trafilatura. Need to strip navigation, ads, boilerplate.",difficulty:"Medium",color:"#FBBF24"},
+      {format:"CSV / Structured data",parser:"pandas. Each row can become a chunk, or group rows by a column.",difficulty:"Easy",color:"#10B981"},
+      {format:"Images / Scanned PDFs",parser:"OCR (Tesseract) or Vision models (GPT-4o). Expensive and slow.",difficulty:"Hard",color:"#EF4444"},
+    ].map((f,i)=>(
+      <div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+        <span style={{color:f.color,fontWeight:700,fontSize:"0.78rem",width:55,flexShrink:0}}>{f.difficulty}</span>
+        <div style={{flex:1}}><span style={{fontWeight:700,fontSize:"0.9rem"}}>{f.format}</span><span style={{color:"var(--text-muted)",fontSize:"0.82rem",marginLeft:8}}>— {f.parser}</span></div>
+      </div>
+    ))}
+  </div>
+
+  <Callout color="var(--build-color)" icon="⚠️"><S>PDF is the hardest format.</S> A PDF is designed for printing, not for data extraction. Tables get mangled, multi-column layouts confuse parsers, headers/footers repeat on every page. Always inspect your parsed output before embedding — garbage in, garbage out.</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 5: Chunking ── */}
+<section id="ch5" style={{paddingTop:"2rem"}}>
+  <ChH num="5" title="Chunking Strategies" sub="How you split documents changes what you retrieve" color="var(--build-color)"/>
+
+  <P>After reading a document into Python, you need to split it into smaller pieces. Why? Because embedding models have token limits (~8K tokens), and you want each chunk to be about <S>one coherent topic</S> so retrieval is precise.</P>
+
+  <P>The way you chunk <S color="var(--red)">directly affects retrieval quality</S>. Bad chunking means irrelevant chunks and bad answers. Naive fixed-size splitting is the usual beginner mistake; production RAG uses LangChain&apos;s recursive splitter.</P>
+
+  <SH>The Naive Approach: Fixed-Size Chunking</SH>
+
+  <P>Splitting every <S>N</S> characters is easy to code — and easy to get wrong. A rigid window does not care about sentences or paragraphs:</P>
+
+  <CB>{`Chunk 1: "...return window of 15 days and must include"
+Chunk 2: "original packaging. Software products are..."`}</CB>
+
+  <Callout color="var(--red)" icon="✂️"><S>The sentence &ldquo;must include original packaging&rdquo; got split across two chunks.</S> If the LLM retrieves Chunk 1, it gets an incomplete fact.</Callout>
+
+  <SH>The Production Approach: LangChain RecursiveCharacterTextSplitter</SH>
+
+  <P>This is what production RAG systems use. It tries to split at the best boundary available, in this order:</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0",padding:"1rem 1.15rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+    {[
+      {sep:"\\n\\n",label:"paragraph boundaries (best)",n:1},
+      {sep:"\\n",label:"line breaks",n:2},
+      {sep:". ",label:"sentence endings",n:3},
+      {sep:" ",label:"word boundaries (last resort)",n:4},
+    ].map((row)=>(
+      <div key={row.n} style={{display:"flex",gap:12,alignItems:"baseline",fontSize:"0.88rem"}}>
+        <span style={{color:"var(--build-color)",fontWeight:700,fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",width:22,flexShrink:0}}>{row.n}.</span>
+        <div><span style={{fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",color:"var(--text)"}}>&ldquo;{row.sep}&rdquo;</span> <span style={{color:"var(--text-secondary)"}}>— {row.label}</span></div>
+      </div>
+    ))}
+  </div>
+
+  <P>It always finds the nearest clean boundary. No mid-sentence cuts.</P>
+
+  <CB>{`from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50,
+    separators=["\\n\\n", "\\n", ". ", " ", ""],
+)
+
+chunks = splitter.split_text(document_text)`}</CB>
+
+  <Callout color="var(--accent)" icon="✓"><S>3 lines of code.</S> Handles every edge case. This is what every production RAG system uses — don&apos;t write your own chunker.</Callout>
+
+  <SH>Chunk Overlap — Why It Matters</SH>
+
+  <P>When you split text, important context can be lost at the boundary. <S>Overlap</S> means each chunk shares some text with the next — like reading with your finger keeping your place:</P>
+
+  <CB>{`Without overlap:
+  Chunk 1: "...return window of 15 days and must include"
+  Chunk 2: "original packaging. Software products are..."
+  
+  ← "15 days and must include original packaging" is SPLIT
+     across two chunks. Neither chunk has the full sentence.
+
+With 50-char overlap:
+  Chunk 1: "...return window of 15 days and must include original packaging."
+  Chunk 2: "must include original packaging. Software products are..."
+  
+  ← Both chunks have "must include original packaging"
+     The full sentence is preserved in at least one chunk.`}</CB>
+
+  <Callout color="var(--build-color)" icon="🎯"><S>Practical defaults:</S> <span style={{fontFamily:"'JetBrains Mono'",fontSize:"0.86rem"}}>chunk_size=500</span>, <span style={{fontFamily:"'JetBrains Mono'",fontSize:"0.86rem"}}>chunk_overlap=50</span>, using <span style={{fontFamily:"'JetBrains Mono'",fontSize:"0.86rem"}}>RecursiveCharacterTextSplitter</span>. Works well for most documents. Adjust <span style={{fontFamily:"'JetBrains Mono'",fontSize:"0.86rem"}}>chunk_size</span> for your embedding model&apos;s token limit and your retrieval needs.</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 6: Embeddings for Search ── */}
+<section id="ch6" style={{paddingTop:"2rem"}}>
+  <ChH num="6" title="Embeddings for Search" sub="How text becomes searchable vectors" color="var(--purple)"/>
+
+  <P>You learned about embeddings in Section 1 — vectors that capture meaning. In RAG, we use embeddings for <S color="var(--purple)">search</S>: convert both the document chunks AND the user's query into vectors, then find the closest matches.</P>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#6B7280",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>How Embedding-Based Search Works</div>
+    <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",lineHeight:1.9,color:"#94A3B8"}}>
+      <div>1. <span style={{color:"#60A5FA"}}>Document chunk</span> → embedding model → <span style={{color:"#60A5FA"}}>[0.12, -0.45, 0.78, ...]</span> (stored once)</div>
+      <div>2. <span style={{color:"#FBBF24"}}>User query</span>    → embedding model → <span style={{color:"#FBBF24"}}>[0.15, -0.42, 0.81, ...]</span> (computed at query time)</div>
+      <div>3. <span style={{color:"#10B981"}}>Similarity</span>    → cosine(query_vec, chunk_vec) → <span style={{color:"#10B981"}}>0.94</span> (high = relevant)</div>
+    </div>
+  </div>
+
+  <P><S>The key insight:</S> "Can I return a laptop after 20 days?" and "Electronics have a 15-day return window" use completely different words — but their embedding vectors are close because they're about the <S>same concept</S>. This is why embedding search beats keyword search.</P>
+
+  <SH>Common Embedding Models</SH>
+
+  <div style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",margin:"1rem 0"}}>
+    {[
+      {model:"text-embedding-3-small",provider:"OpenAI",dims:1536,cost:"$0.02/1M tokens",notes:"Good balance of quality and cost. Default choice.",color:"#10B981"},
+      {model:"text-embedding-3-large",provider:"OpenAI",dims:3072,cost:"$0.13/1M tokens",notes:"Higher quality, higher cost. Use for critical applications.",color:"#60A5FA"},
+      {model:"all-MiniLM-L6-v2",provider:"Open-source",dims:384,cost:"Free (run locally)",notes:"Runs on your machine. Good enough for prototyping.",color:"#A78BFA"},
+    ].map((m,i)=>(
+      <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"8px 0",borderBottom:i<2?"1px solid var(--border-light)":"none"}}>
+        <span style={{color:m.color,fontWeight:700,fontSize:"0.82rem",fontFamily:"'JetBrains Mono'",width:210,flexShrink:0}}>{m.model}</span>
+        <div><div style={{fontSize:"0.82rem"}}>{m.notes}</div><div style={{color:"var(--text-muted)",fontSize:"0.72rem"}}>{m.dims} dimensions • {m.cost}</div></div>
+      </div>
+    ))}
+  </div>
+
+  <Callout icon="⚠️"><S>Critical rule:</S> You must use the <S>same embedding model</S> for documents AND queries. If you embed documents with text-embedding-3-small, you must embed queries with text-embedding-3-small. Mixing models produces meaningless similarity scores.</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 7: Vector Databases ── */}
+<section id="ch7" style={{paddingTop:"2rem"}}>
+  <ChH num="7" title="Vector Databases" sub="Storing and searching embeddings efficiently" color="var(--purple)"/>
+
+  <P>A vector database is a specialized database built for <S>storing vectors and finding the closest matches quickly</S>. Regular databases search by exact match ("WHERE id = 5"). Vector databases search by similarity ("find the 5 vectors closest to this one").</P>
+
+  <SH>Why Not Just a Regular Database?</SH>
+
+  <P>You could store embeddings in PostgreSQL as arrays and compute cosine similarity with SQL. For 1,000 documents, that works. For 1,000,000 documents, it's unacceptably slow — you'd be comparing the query vector against every single stored vector.</P>
+
+  <P>Vector databases use <S>approximate nearest neighbor (ANN)</S> algorithms that build indexes for fast search — finding the top 10 closest vectors out of millions in milliseconds.</P>
+
+  <SH>Similarity Metrics</SH>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    {[
+      {metric:"Cosine Similarity",desc:"Measures the angle between two vectors. Ignores magnitude, focuses on direction. Most common for text.",range:"0 to 1 (1 = identical)",color:"#10B981"},
+      {metric:"Dot Product",desc:"Measures both direction and magnitude. Faster to compute. OpenAI recommends this for their embeddings.",range:"-∞ to +∞",color:"#60A5FA"},
+      {metric:"Euclidean Distance",desc:"Measures straight-line distance between vectors. Less common for text, more for images.",range:"0 to ∞ (0 = identical)",color:"#A78BFA"},
+    ].map((m,i)=>(
+      <div key={i} style={{flex:1,minWidth:200,background:"white",borderRadius:10,padding:"1rem",border:"1px solid "+m.color+"33",borderLeft:"4px solid "+m.color}}>
+        <div style={{color:m.color,fontWeight:700,fontSize:"0.9rem",marginBottom:4}}>{m.metric}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",marginBottom:4}}>{m.desc}</div>
+        <div style={{color:"var(--text-muted)",fontSize:"0.75rem",fontFamily:"'JetBrains Mono'"}}>Range: {m.range}</div>
+      </div>
+    ))}
+  </div>
+
+  <Callout color="var(--purple)" icon="🎯"><S>For this course:</S> We'll use <S>ChromaDB</S> — it's free, runs locally, requires zero setup, and is perfect for learning. In Part 2, we'll compare it against production options (Pinecone, pgvector, Weaviate).</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 8: Retrieval Strategies ── */}
+<section id="ch8" style={{paddingTop:"2rem"}}>
+  <ChH num="8" title="Retrieval Strategies" sub="How to find the right chunks" color="var(--purple)"/>
+
+  <P>Retrieval is the <S>make-or-break step</S> in RAG. If you retrieve the wrong chunks, the LLM generates a wrong answer — no matter how good your prompt is.</P>
+
+  <P>Try different queries below to see how similarity search works:</P>
+
+  <EmbeddingSearchDemo/>
+
+  <SH>Top-K Retrieval</SH>
+
+  <P>The simplest strategy: retrieve the K most similar chunks. But how many?</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:6,margin:"1rem 0"}}>
+    {[
+      {k:"K = 1–2",use:"Simple factual questions with clear answers",risk:"Might miss context spread across multiple chunks"},
+      {k:"K = 3–5",use:"Most questions — good balance of relevance and context",risk:"Default starting point"},
+      {k:"K = 8–10",use:"Complex questions requiring information from multiple sections",risk:"May include irrelevant chunks that dilute quality"},
+      {k:"K = 15+",use:"Broad research queries, summarization",risk:"Risk exceeding context window, high token cost"},
+    ].map((r,i)=>(
+      <div key={i} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
+        <span style={{color:"var(--purple)",fontWeight:700,fontSize:"0.85rem",fontFamily:"'JetBrains Mono'",width:65,flexShrink:0}}>{r.k}</span>
+        <div><span style={{fontSize:"0.88rem"}}>{r.use}</span> <span style={{color:"var(--text-muted)",fontSize:"0.78rem"}}>— {r.risk}</span></div>
+      </div>
+    ))}
+  </div>
+
+  <SH>MMR — Maximum Marginal Relevance</SH>
+
+  <P>Problem with pure Top-K: if your top 5 chunks all say roughly the same thing (because they're from similar sections), you waste context window space on redundant information.</P>
+
+  <P><S color="var(--purple)">MMR</S> solves this by balancing <S>relevance</S> (how similar to the query) with <S>diversity</S> (how different from chunks already selected). It picks the first chunk by relevance, then each subsequent chunk must be both relevant AND different from previous picks.</P>
+
+  <SH>Context Window Management</SH>
+
+  <P>Retrieved chunks must fit within the LLM's context window alongside the system prompt, user question, and expected response. A simple formula:</P>
+
+  <CB>{`Available for context = context_window - system_prompt - user_query - expected_response
+
+Example (gpt-4o-mini, 128K context):
+  System prompt:     ~200 tokens
+  User question:     ~50 tokens
+  Expected response: ~500 tokens
+  Available:         128,000 - 750 = ~127,250 tokens for retrieved chunks
+
+  That's plenty. But with gpt-3.5-turbo (4K context):
+  Available:         4,000 - 750 = ~3,250 tokens = only 3-4 chunks!`}</CB>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 9: RAG Prompt ── */}
+<section id="ch9" style={{paddingTop:"2rem"}}>
+  <ChH num="9" title="Building the RAG Prompt" sub="Assembling context + question into an effective prompt" color="var(--accent)"/>
+
+  <P>This is where RAG meets prompt engineering. You need to combine the retrieved chunks with the user's question in a way that <S>grounds</S> the LLM's response in the provided context.</P>
+
+  <P>You already learned this technique in Prompt Engineering Chapter 13 (Grounding). Here it's applied with retrieved context instead of manually pasted text.</P>
+
+  <RAGPromptDemo/>
+
+  <SH>The RAG Prompt Template</SH>
+
+  <CB>{`# The template every RAG system uses:
+
+system_prompt = """You are a helpful assistant. Answer questions
+using ONLY the provided context. If the answer is not in the
+context, say "I don't have that information."
+Do NOT use your general knowledge."""
+
+user_prompt = f"""
+Context (retrieved from knowledge base):
+---
+{retrieved_chunks_text}
+---
+
+Question: {user_question}
+"""
+
+# The grounding instruction ("ONLY the provided context") is critical.
+# Without it, the LLM will mix retrieved context with its training data,
+# and you can't tell which parts are from your documents vs hallucinated.`}</CB>
+
+  <Callout icon="🔗"><S>Connection:</S> This is the same grounding pattern from Prompt Engineering Chapter 13 — but now the context is <S>automatically retrieved</S> from a vector database instead of manually pasted. The prompting technique is identical.</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── CH 10: Common Failures ── */}
+<section id="ch10" style={{paddingTop:"2rem"}}>
+  <ChH num="10" title="Common Failures" sub="What goes wrong in RAG and how to debug it" color="var(--accent)"/>
+
+  <P>When a RAG system gives a bad answer, the problem is in one of <S>three places</S>. Knowing which one to fix saves hours of debugging:</P>
+
+  <div style={{display:"flex",flexDirection:"column",gap:12,margin:"1rem 0"}}>
+    {[
+      {stage:"📄 Document Processing",problem:"Bad parsing or chunking",symptoms:["Answer is partially correct but missing key details","Important information was split across chunk boundaries","Tables or lists lost their structure during parsing"],fixes:["Inspect your parsed documents — are they clean?","Increase chunk overlap","Try recursive or semantic chunking instead of fixed-size","Check PDF parsing output for mangled tables"],color:"var(--build-color)"},
+      {stage:"🔍 Retrieval",problem:"Wrong chunks retrieved",symptoms:["Retrieved chunks are topically related but don't contain the answer","The correct chunk exists but wasn't retrieved (it's in the DB but too far from the query)","Query uses different terminology than the documents"],fixes:["Try the query manually — what chunks come back?","Increase K (retrieve more chunks)","Try MMR for diversity","Consider query transformation (rewrite the query)"],color:"var(--purple)"},
+      {stage:"🤖 Generation",problem:"LLM ignores or misinterprets context",symptoms:["The right chunks were retrieved but the answer is still wrong","The LLM mixed retrieved context with its own knowledge","The answer contradicts the provided context"],fixes:["Strengthen grounding instructions in the system prompt","Add 'If not in context, say I don't know'","Reduce temperature to 0 for factual responses","Use a more capable model (gpt-4o vs mini)"],color:"var(--accent)"},
+    ].map((s,i)=>(
+      <div key={i} style={{background:"white",borderRadius:12,border:"1px solid "+s.color+"33",overflow:"hidden"}}>
+        <div style={{background:s.color+"10",padding:"0.85rem 1.1rem",borderBottom:"1px solid "+s.color+"22"}}>
+          <span style={{fontWeight:700,fontSize:"0.95rem",color:s.color}}>{s.stage}</span>
+          <span style={{color:"var(--text-secondary)",fontSize:"0.85rem",marginLeft:8}}>— {s.problem}</span>
+        </div>
+        <div style={{padding:"0.85rem 1.1rem",display:"flex",gap:20,flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:220}}>
+            <div style={{color:"var(--red)",fontWeight:700,fontSize:"0.75rem",letterSpacing:0.5,marginBottom:6}}>SYMPTOMS</div>
+            {s.symptoms.map((sym,j)=>(<div key={j} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"2px 0"}}>• {sym}</div>))}
+          </div>
+          <div style={{flex:1,minWidth:220}}>
+            <div style={{color:"#10B981",fontWeight:700,fontSize:"0.75rem",letterSpacing:0.5,marginBottom:6}}>FIXES</div>
+            {s.fixes.map((fix,j)=>(<div key={j} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"2px 0"}}>✓ {fix}</div>))}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <Callout color="var(--accent)" icon="🔍"><S>The debugging workflow:</S> When a RAG system gives a bad answer — (1) Check what chunks were retrieved. If wrong chunks → retrieval problem. (2) If right chunks but wrong answer → generation problem. (3) If the right information isn't in any chunk → document processing problem. Always debug from retrieval first.</Callout>
+  <NotebookDemoLink/>
+</section>
+
+{/* ── COMPLETION ── */}
+<div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
+  <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>RAG Part 1 Complete</div>
+  <div style={{color:"var(--text-muted)",fontSize:"0.92rem"}}>You now understand the complete RAG pipeline — from documents to answers. Part 2 covers advanced retrieval patterns, evaluation, and production infrastructure.</div>
+  <div style={{color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → RAG Part 2: Advanced Patterns & Production</div>
+</div>
+
+  </div></div></div>);
+}
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>

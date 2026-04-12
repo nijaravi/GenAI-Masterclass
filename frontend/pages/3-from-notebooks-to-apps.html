@@ -405,6 +405,15 @@ const CHAPTERS = [
   {id:"ch6",num:"6",title:"Build: Streamlit App",sub:"Web UI for your LLM",group:"building"},
 ];
 
+const PRACTICE_ASSIGNMENTS = [
+  {title:"Get Your API Keys",desc:"Set up accounts and API keys for OpenAI and Anthropic. Both have free tiers to get started. Store keys in environment variables — never hardcode them.",diff:"Starter",border:"var(--accent)",pillBg:"var(--accent-light)",pillColor:"var(--accent)"},
+  {title:"Rebuild the CLI Tool from Scratch",desc:"Don't copy ask.py — build it yourself. Start with the simplest version (accept a question, print the answer), then add features one by one: error handling, streaming, model selection, cost tracking. Compare your version with the provided one.",diff:"Core",border:"var(--info-color)",pillBg:"var(--info-bg)",pillColor:"var(--info-color)"},
+  {title:"Rebuild the Streamlit App from Scratch",desc:"Build the chat app yourself, then extend it beyond what we built: add conversation history that persists, a system prompt editor in the sidebar, and a model selection dropdown. Make it feel like a real product.",diff:"Core",border:"var(--info-color)",pillBg:"var(--info-bg)",pillColor:"var(--info-color)"},
+  {title:"Build: \"Resume Reviewer\" App",desc:"Build a second Streamlit app from scratch. It should: let the user upload a resume (PDF or text), send it to the LLM with a system prompt that acts as a hiring manager, and display structured feedback on strengths, weaknesses, and suggestions. This tests everything — file handling, system prompts, structured output.",diff:"Challenge",border:"var(--build-color)",pillBg:"var(--build-bg)",pillColor:"var(--build-color)"},
+  {title:"Read the OpenAI API Docs",desc:"Read the official OpenAI documentation thoroughly — specifically the chat completions, embeddings, and models sections. You'll be using these APIs every day. Understanding the docs is as important as writing code.",diff:"Reading",border:"var(--purple)",pillBg:"var(--purple-bg)",pillColor:"var(--purple)"},
+  {title:"Start Your GitHub Portfolio",desc:"Create a repo called 'genai-projects' and push everything from this section — your CLI tool, Streamlit app, and Resume Reviewer. From this point forward, every project goes here. Clean README, clear code, proper .gitignore. This repo becomes your portfolio for job applications.",diff:"Career",border:"var(--accent)",pillBg:"var(--accent-light)",pillColor:"var(--accent)"},
+];
+
 function Sidebar({active,onNav}) {
   return (
     <div className="sidebar">
@@ -428,6 +437,22 @@ function Sidebar({active,onNav}) {
             <span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span>
           </a>
         ))}
+        <div
+          className="sidebar-label"
+          style={{
+            color:"var(--build-color)",
+            cursor:"pointer",
+            userSelect:"none",
+            borderRadius:7,
+            padding:"8px 9px 8px",
+            marginTop:4,
+            background:active==="practice"?"var(--build-bg)":"transparent",
+          }}
+          onClick={()=>onNav("practice")}
+          onKeyDown={(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onNav("practice");}}}
+          role="button"
+          tabIndex={0}
+        >Practice Assignments</div>
       </div>
     </div>
   );
@@ -439,6 +464,16 @@ function Sidebar({active,onNav}) {
 function App() {
   const [active, setActive] = useState("intro");
   const onNav = (id) => { setActive(id); const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
+
+  useEffect(()=>{
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const t = setTimeout(()=>{
+      const el = document.getElementById(hash);
+      if (el) { setActive(hash); el.scrollIntoView({behavior:"auto",block:"start"}); }
+    }, 0);
+    return ()=>clearTimeout(t);
+  }, []);
 
   return (
     <div>
@@ -744,11 +779,68 @@ if prompt := st.chat_input("Ask anything..."):
   </div>
 </section>
 
+{/* ── PRACTICE ASSIGNMENTS ── */}
+<div id="practice" style={{padding:"3rem 0 1.5rem",borderTop:"2px solid var(--build-border)",marginTop:"3rem",scrollMarginTop:"0.75rem"}}>
+  <div style={{color:"var(--build-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Practice Assignments</div>
+  <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.8rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Now Build It Yourself</h2>
+  <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic",marginBottom:"1.25rem"}}>The only way to learn is to build — these assignments test everything from this section</div>
+
+  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+    {PRACTICE_ASSIGNMENTS.map((a,i) => (
+      <div
+        key={i}
+        style={{
+          background:"white",
+          border:"1px solid var(--border)",
+          borderRadius:10,
+          borderLeft:"4px solid "+a.border,
+          padding:"0.85rem 1rem",
+        }}
+      >
+        <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+          <div
+            style={{
+              width:32,
+              height:32,
+              borderRadius:"50%",
+              background:a.pillBg,
+              color:a.pillColor,
+              fontWeight:700,
+              fontSize:"0.82rem",
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              flexShrink:0,
+            }}
+          >{i+1}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{fontWeight:700,fontSize:"0.95rem",color:"var(--text)"}}>{a.title}</div>
+              <span style={{
+                fontSize:"0.66rem",
+                fontWeight:700,
+                letterSpacing:0.4,
+                textTransform:"uppercase",
+                padding:"3px 8px",
+                borderRadius:999,
+                background:a.pillBg,
+                color:a.pillColor,
+                border:"1px solid var(--border-light)",
+              }}>{a.diff}</span>
+            </div>
+            <div style={{color:"var(--text-secondary)",fontSize:"0.88rem",lineHeight:1.65}}>{a.desc}</div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
 {/* ── COMPLETION ── */}
 <div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
   <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>Section 3 Complete</div>
   <div style={{color:"var(--text-muted)",fontSize:"0.92rem"}}>You've gone from notebook experiments to real applications — with error handling, streaming, multi-provider support, and two working apps.</div>
-  <div style={{color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → RAG (Retrieval Augmented Generation)</div>
+  <a href="./4-rag-part1.html" style={{display:"inline-block",color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8,textDecoration:"none"}}>Next → RAG (Retrieval Augmented Generation) ↗</a>
 </div>
 
       </div></div>

@@ -6,7 +6,7 @@
 <title>GenAI Decoded by Nij</title>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;--info:#1E6091;--work-bg:#E8F5EE;--work-border:#6EE7B7;}
+  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;--info:#1E6091;--rag:#6D28D9;--work-bg:#E8F5EE;--work-border:#6EE7B7;}
   *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
   .wrap{max-width:960px;margin:0 auto;padding:2.25rem 1.25rem 3rem}
   h1{font-family:'Libre Baskerville',serif;font-size:2.2rem;margin:0 0 .75rem;line-height:1.2}
@@ -30,6 +30,7 @@
   .build{border-left:4px solid var(--build)} .build .tag{color:var(--build)}
   .work{border-left:4px solid var(--work)} .work .tag{color:var(--work)}
   .info{border-left:4px solid var(--info)} .info .tag{color:var(--info)}
+  .rag{border-left:4px solid var(--rag)} .rag .tag{color:var(--rag)}
 </style>
 </head>
 <body>
@@ -44,20 +45,25 @@
 
     <p class="module-hint">Choose a module to continue learning.</p>
     <div class="grid">
-      <a class="card build" href="./pages/how-llms-work.html">
+      <a class="card build" href="./pages/1-how-llms-work.html">
         <div class="tag">Section 1</div>
         <div class="title">How LLMs Actually Work</div>
         <div class="desc">Training to inference: tokenizer, embeddings, attention, feed-forward, generation, and sampling.</div>
       </a>
-      <a class="card work" href="./pages/prompt-engineering.html">
+      <a class="card work" href="./pages/2-prompt-engineering.html">
         <div class="tag">Section 2</div>
         <div class="title">Prompt Engineering</div>
         <div class="desc">Core techniques, production patterns, practice challenges, and methodology for professional prompting.</div>
       </a>
-      <a class="card info" href="./pages/from-notebooks-to-apps.html">
+      <a class="card info" href="./pages/3-from-notebooks-to-apps.html">
         <div class="tag">Section 3</div>
         <div class="title">From Notebooks to Apps</div>
         <div class="desc">Move from experiments to production-ready workflows, app architecture, and deployment thinking.</div>
+      </a>
+      <a class="card rag" href="./pages/4-rag-part1.html">
+        <div class="tag">Section 4</div>
+        <div class="title">RAG — Retrieval Augmented Generation (Part 1)</div>
+        <div class="desc">Why RAG, reading &amp; parsing documents, chunking, embeddings, vector search, grounded prompts, and common failure modes.</div>
       </a>
     </div>
   </div>

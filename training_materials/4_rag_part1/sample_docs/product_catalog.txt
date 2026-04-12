@@ -1,0 +1,39 @@
+TechStore Product Catalog — Q1 2025
+
+Category: Laptops
+
+ProMax 15 — $1,299
+Our flagship laptop. 15.6-inch 4K OLED display, Intel i9-14900H processor, 32GB RAM, 1TB NVMe SSD. Battery life up to 12 hours. Weight: 4.2 lbs. Includes 1-year premium warranty. Best for: professional users, video editing, software development.
+
+CloudBook Air — $699
+Ultra-portable for everyday use. 13.3-inch FHD display, Intel i5-1335U processor, 16GB RAM, 512GB SSD. Battery life up to 15 hours. Weight: 2.4 lbs. Includes 1-year standard warranty. Best for: students, light productivity, travel.
+
+WorkStation Pro 17 — $2,199
+The powerhouse. 17-inch 4K display, Intel Xeon W processor, 64GB ECC RAM, 2TB NVMe SSD, NVIDIA RTX 4080 GPU. Weight: 6.1 lbs. Includes 3-year premium warranty with on-site service. Best for: machine learning, 3D rendering, CAD.
+
+Category: Accessories
+
+UltraDock Pro — $249
+USB-C docking station with dual 4K display output, 100W power delivery, 2x USB-A 3.0, 1x USB-C, Ethernet, SD card reader. Compatible with all laptops featuring USB-C. Includes 2-year warranty.
+
+ErgoKey Wireless Keyboard — $89
+Mechanical keyboard with Cherry MX Brown switches. Bluetooth 5.0 and USB-C wired mode. Backlit keys with adjustable brightness. Compatible with Windows, Mac, and Linux. Battery life: 200 hours. Includes 1-year warranty.
+
+ProMouse X1 — $59
+Ergonomic wireless mouse. 8000 DPI optical sensor, 6 programmable buttons. Bluetooth and USB receiver dual-mode. Battery life: 300 hours on a single AA battery. Compatible with all operating systems.
+
+Category: Monitors
+
+ClearView 27 4K — $449
+27-inch IPS display, 3840x2160 resolution, 60Hz refresh rate, 99% sRGB color accuracy. USB-C with 65W power delivery (charges your laptop while connected). VESA mount compatible. Includes 3-year warranty. Best for: photo editing, document work, programming.
+
+UltraWide 34 QHD — $599
+34-inch curved ultrawide display, 3440x1440 resolution, 144Hz refresh rate. HDMI 2.1 and DisplayPort 1.4. Height adjustable stand with tilt and swivel. Includes 3-year warranty. Best for: multitasking, gaming, video editing.
+
+Category: Software
+
+TechGuard Antivirus — $49/year
+Real-time protection against malware, ransomware, and phishing. Covers up to 5 devices. Includes VPN with unlimited data. Automatic updates. Available for Windows and Mac.
+
+CloudBackup Pro — $79/year
+Automatic cloud backup with unlimited storage. File versioning keeps the last 30 versions. Military-grade AES-256 encryption. Desktop and mobile apps. Restore any file or your entire system from the cloud.
