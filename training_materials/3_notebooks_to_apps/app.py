@@ -11,6 +11,9 @@ import streamlit as st
 import json
 from datetime import datetime
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
+load_dotenv(override=True)
 
 # ============================================================
 # PAGE CONFIG
