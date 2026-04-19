@@ -7,6 +7,10 @@ import time
 from openai import OpenAI
 from openai import RateLimitError, APITimeoutError
 
+from dotenv import load_dotenv
+import os
+load_dotenv(override=True)
+
 client = OpenAI()
 
 # Pricing per 1M tokens (USD)
@@ -102,4 +106,4 @@ def cli_v3(model="gpt-4o-mini", stream=True):
 
 if __name__ == "__main__":
     print("Streaming mode enabled 🚀")
-    cli_v3()
+    cli_v3(stream=False)

@@ -208,8 +208,8 @@ const CHAPTERS=[
   {id:"ch4",num:"4",title:"Reading & Parsing Documents",sub:"Getting raw text out of different file formats",group:"documents"},
   {id:"ch5",num:"5",title:"Chunking Strategies",sub:"How you split documents changes what you retrieve",group:"documents"},
   {id:"ch6",num:"6",title:"Embeddings for Search",sub:"Converting text to searchable vectors",group:"retrieval"},
-  {id:"ch7",num:"7",title:"Vector Databases",sub:"Storing and searching embeddings",group:"retrieval"},
-  {id:"ch8",num:"8",title:"Retrieval Strategies",sub:"Top-K, MMR, context window",group:"retrieval"},
+  {id:"ch7",num:"7",title:"Vector Databases",sub:"What they are and how they work",group:"retrieval"},
+  {id:"ch8",num:"8",title:"ChromaDB Deep Dive",sub:"Collections, search, filtering, and more",group:"retrieval"},
   {id:"ch9",num:"9",title:"Building the RAG Prompt",sub:"Context assembly and grounding",group:"generation"},
   {id:"ch10",num:"10",title:"Common Failures",sub:"What goes wrong and how to debug",group:"generation"},
 ];
@@ -253,7 +253,7 @@ function App(){
     {[
       {title:"Foundation",chapters:"1–3",desc:"Why RAG exists, the pipeline, when to use it",color:"var(--info-color)",bg:"var(--info-bg)"},
       {title:"Document Processing",chapters:"4–5",desc:"Reading & parsing documents, then chunking",color:"var(--build-color)",bg:"var(--build-bg)"},
-      {title:"Embeddings & Retrieval",chapters:"6–8",desc:"Vector search, databases, retrieval strategies",color:"var(--purple)",bg:"var(--purple-bg)"},
+      {title:"Embeddings & Retrieval",chapters:"6–8",desc:"Vector search, vector DB concepts, ChromaDB hands-on",color:"var(--purple)",bg:"var(--purple-bg)"},
       {title:"Generation & Debugging",chapters:"9–10",desc:"Prompt assembly, failures, debugging",color:"var(--accent)",bg:"var(--accent-light)"},
     ].map((g,i)=>(
       <div key={i} style={{flex:1,minWidth:160,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+g.color+"33",borderLeft:"4px solid "+g.color}}>
@@ -537,9 +537,10 @@ With 50-char overlap:
   <NotebookDemoLink/>
 </section>
 
-{/* ── CH 7: Vector Databases ── */}
+
+{/* ── CH 7: Vector Databases (conceptual) ── */}
 <section id="ch7" style={{paddingTop:"2rem"}}>
-  <ChH num="7" title="Vector Databases" sub="Storing and searching embeddings efficiently" color="var(--purple)"/>
+  <ChH num="7" title="Vector Databases" sub="What they are and how they work" color="var(--purple)"/>
 
   <P>A vector database is a specialized database built for <S>storing vectors and finding the closest matches quickly</S>. Regular databases search by exact match ("WHERE id = 5"). Vector databases search by similarity ("find the 5 vectors closest to this one").</P>
 
@@ -565,23 +566,160 @@ With 50-char overlap:
     ))}
   </div>
 
-  <Callout color="var(--purple)" icon="🎯"><S>For this course:</S> We'll use <S>ChromaDB</S> — it's free, runs locally, requires zero setup, and is perfect for learning. In Part 2, we'll compare it against production options (Pinecone, pgvector, Weaviate).</Callout>
+  <SH>How Vector Search Stays Fast (HNSW)</SH>
+
+  <P>At millions of chunks, comparing your query against <S>every</S> stored vector is too slow. Production vector databases use graph-based ANN indexes. A common choice is <S>HNSW</S> (Hierarchical Navigable Small World): similar vectors are linked so search can &ldquo;hop&rdquo; toward neighbors instead of scanning the full set.</P>
+
+  <P><strong>The airport analogy:</strong> To fly from Dubai to a small town in Norway, you don&apos;t evaluate every airport. You route through hubs (Dubai → London → Oslo → …). HNSW builds a similar network in embedding space — start near a hub, hop to nearby vectors, and zoom in on the closest matches in milliseconds instead of seconds.</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    {[
+      {t:"Brute force",d:"Compare the query against every stored vector — accurate but slow (seconds at large scale).",c:"#EF4444"},
+      {t:"HNSW index",d:"Navigate the graph; check a small subset — fast (milliseconds). Top results are almost always what you need for RAG.",c:"#10B981"},
+      {t:"Trade-off",d:"HNSW is approximate: it might rarely miss the single closest vector but still returns excellent top-K lists. For RAG, that is usually ideal.",c:"#FBBF24"},
+    ].map((x,i)=>(
+      <div key={i} style={{flex:"1 1 200px",background:"white",borderRadius:10,padding:"1rem",border:"1px solid "+x.c+"33",borderLeft:"4px solid "+x.c}}>
+        <div style={{color:x.c,fontWeight:700,fontSize:"0.88rem",marginBottom:6}}>{x.t}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.6}}>{x.d}</div>
+      </div>
+    ))}
+  </div>
+
+  <P>Now that you understand the concepts, let&apos;s get hands-on with <S>ChromaDB</S> — a lightweight vector database perfect for learning. The same ideas transfer to Pinecone, Weaviate, pgvector, and the rest.</P>
+
   <NotebookDemoLink/>
 </section>
 
-{/* ── CH 8: Retrieval Strategies ── */}
+{/* ── CH 8: ChromaDB Deep Dive ── */}
 <section id="ch8" style={{paddingTop:"2rem"}}>
-  <ChH num="8" title="Retrieval Strategies" sub="How to find the right chunks" color="var(--purple)"/>
+  <ChH num="8" title="ChromaDB Deep Dive" sub="Hands-on with a real vector database" color="var(--purple)"/>
 
-  <P>Retrieval is the <S>make-or-break step</S> in RAG. If you retrieve the wrong chunks, the LLM generates a wrong answer — no matter how good your prompt is.</P>
+  <Callout color="var(--purple)" icon="🎯"><S>For this course:</S> We use <S>ChromaDB</S> — it&apos;s free, runs locally, and needs no server setup. Perfect for learning; Part 2 compares production options.</Callout>
 
-  <P>Try different queries below to see how similarity search works:</P>
+  <P>Retrieval is the <S>make-or-break step</S> in RAG. We&apos;ll go deep on ChromaDB because the concepts transfer to every vector database. Once you understand collections, CRUD, and queries here — Pinecone, Weaviate, and pgvector all work the same way with different syntax.</P>
+
+  <SH>Architecture Overview</SH>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#94A3B8",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>ChromaDB Architecture</div>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",lineHeight:1.85,margin:0,whiteSpace:"pre-wrap"}}>{`Client (your Python code)
+    │
+    ▼
+Collection ("techstore_docs")
+    │
+    ├── Documents (the original chunk text)
+    ├── Embeddings (vectors — one per document)
+    ├── Metadata (source file, chunk index, date, etc.)
+    └── IDs (unique identifier per entry)`}</pre>
+  </div>
+
+  <P>A <S>collection</S> is like a table in a regular database. It holds your documents, their embeddings, and any metadata you attach. You can have multiple collections — one for HR docs, one for product docs, one for support tickets.</P>
+
+  <SH>Storage Modes</SH>
+
+  <div style={{display:"flex",gap:14,flexWrap:"wrap",margin:"1rem 0"}}>
+    <div style={{flex:1,minWidth:260}}>
+      <div style={{fontWeight:700,fontSize:"0.95rem",color:"var(--text)",marginBottom:8}}>In-Memory (for development)</div>
+      <CB>{`import chromadb
+client = chromadb.Client()  # data lives in RAM, gone when script ends`}</CB>
+      <p style={{color:"var(--text-secondary)",fontSize:"0.92rem",lineHeight:1.75,margin:"0.5rem 0 0"}}>Fast, zero setup. Use for prototyping and notebooks.</p>
+    </div>
+    <div style={{flex:1,minWidth:260}}>
+      <div style={{fontWeight:700,fontSize:"0.95rem",color:"var(--text)",marginBottom:8}}>Persistent (for production)</div>
+      <CB>{`import chromadb
+client = chromadb.PersistentClient(path="./chroma_db")  # saved to disk`}</CB>
+      <p style={{color:"var(--text-secondary)",fontSize:"0.92rem",lineHeight:1.75,margin:"0.5rem 0 0"}}>Data survives restarts. Use for applications. The path is just a folder on your machine.</p>
+    </div>
+  </div>
+
+  <SH>Creating a Collection</SH>
+
+  <CB>{`collection = client.create_collection(
+    name="techstore_docs",
+    metadata={"hnsw:space": "cosine"}  # similarity metric
+)`}</CB>
+
+  <ul style={{margin:"0.75rem 0 0",paddingLeft:20,color:"var(--text-secondary)",fontSize:"0.92rem",lineHeight:1.75}}>
+    <li><S style={{color:"var(--text)"}}>name</S> — unique identifier, like a table name.</li>
+    <li><S style={{color:"var(--text)"}}>metadata</S> — collection-level config. <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>hnsw:space</span> sets the similarity metric: <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>&quot;cosine&quot;</span>, <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>&quot;l2&quot;</span>, or <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>&quot;ip&quot;</span>. Cosine is the usual choice for text.</li>
+  </ul>
+
+  <P>You can also open or remove collections:</P>
+
+  <CB>{`# Get existing collection (doesn't create new)
+collection = client.get_collection("techstore_docs")
+
+# Get or create (safe for re-runs)
+collection = client.get_or_create_collection("techstore_docs")
+
+# Delete
+client.delete_collection("techstore_docs")`}</CB>
+
+  <SH>Adding Data</SH>
+
+  <P>The full <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>add</span> pattern ties IDs, text, vectors, and metadata together:</P>
+
+  <CB>{`collection.add(
+    ids=["doc1_chunk0", "doc1_chunk1", "doc2_chunk0"],     # unique IDs (required)
+    documents=["chunk text here...", "more text...", "..."], # original text (optional but recommended)
+    embeddings=[[0.12, -0.45, ...], [0.34, 0.56, ...], ...], # vectors (required)
+    metadatas=[                                               # metadata (optional but very useful)
+        {"source": "return_policy.txt", "chunk_index": 0, "category": "policy"},
+        {"source": "return_policy.txt", "chunk_index": 1, "category": "policy"},
+        {"source": "employee_handbook.txt", "chunk_index": 0, "category": "hr"},
+    ]
+)`}</CB>
+
+  <ul style={{margin:"0.75rem 0 0",paddingLeft:20,color:"var(--text-secondary)",fontSize:"0.92rem",lineHeight:1.75}}>
+    <li><S style={{color:"var(--text)"}}>ids</S> — required; must be unique. Use a naming convention like <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>{`{filename}_chunk_{index}`}</span>.</li>
+    <li><S style={{color:"var(--text)"}}>documents</S> — the original text. Store it so search results include the passage without a separate lookup.</li>
+    <li><S style={{color:"var(--text)"}}>embeddings</S> — vectors you computed with your embedding model before adding.</li>
+    <li><S style={{color:"var(--text)"}}>metadatas</S> — key-value pairs per entry. Enables filtered search (e.g. only HR documents).</li>
+  </ul>
+
+  <Callout color="var(--accent)" icon="📌"><S>Always store the original text as <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.86rem"}}>documents</span>.</S> Without it, you&apos;d get matching IDs and scores but would need another store to recover what the text actually said.</Callout>
+
+  <SH>Querying / Searching</SH>
+
+  <CB>{`results = collection.query(
+    query_embeddings=[query_vector],    # your question, embedded
+    n_results=3,                         # how many results to return (Top-K)
+    include=["documents", "metadatas", "distances"],  # what to return
+)`}</CB>
+
+  <P>ChromaDB returns a dict-shaped structure like this:</P>
+
+  <CB>{`results = {
+    "ids": [["doc1_chunk2", "doc2_chunk0", "doc1_chunk5"]],
+    "documents": [["chunk text...", "more text...", "..."]],
+    "metadatas": [[{"source": "return_policy.txt"}, ...]],
+    "distances": [[0.12, 0.25, 0.38]],  # lower = more similar (for cosine)
+}`}</CB>
+
+  <P><S>Important:</S> ChromaDB returns <S>distances</S>, not similarities. For cosine space, <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>similarity ≈ 1 - distance</span>. So distance <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>0.12</span> means similarity about <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>0.88</span> — very relevant.</P>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#A78BFA",fontSize:"0.65rem",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Query → results</div>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.82,margin:0,whiteSpace:"pre-wrap"}}>{`Query: "Can I return a laptop?"
+         │
+    embed query → [0.15, -0.42, 0.81, ...]
+         │
+    compare against all stored vectors
+         │
+    return top 3 closest matches:
+
+    [0.08] return_policy.txt  → "Electronics have a 15-day return window..."
+    [0.21] return_policy.txt  → "Standard items may be returned within 30 days..."
+    [0.45] product_catalog.txt → "ProMax 15 — $1,299. Our flagship laptop..."`}</pre>
+  </div>
+
+  <P>Try different queries below to see how similarity search ranks chunks:</P>
 
   <EmbeddingSearchDemo/>
 
-  <SH>Top-K Retrieval</SH>
+  <SH>How Many Chunks to Retrieve? (Top-K)</SH>
 
-  <P>The simplest strategy: retrieve the K most similar chunks. But how many?</P>
+  <P>In ChromaDB, <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.84rem"}}>n_results</span> is your K — the number of chunks to pull into the prompt. How many should you use?</P>
 
   <div style={{display:"flex",flexDirection:"column",gap:6,margin:"1rem 0"}}>
     {[
@@ -597,15 +735,43 @@ With 50-char overlap:
     ))}
   </div>
 
+  <SH>Filtered Search (Metadata Queries)</SH>
+
+  <CB>{`# Only search within a specific document
+results = collection.query(
+    query_embeddings=[query_vector],
+    n_results=3,
+    where={"source": "employee_handbook.txt"}  # metadata filter
+)
+
+# Filter with conditions
+results = collection.query(
+    query_embeddings=[query_vector],
+    n_results=3,
+    where={"category": {"$eq": "policy"}}  # equals
+)
+
+# Multiple conditions
+results = collection.query(
+    query_embeddings=[query_vector],
+    n_results=3,
+    where={"$and": [
+        {"source": "return_policy.txt"},
+        {"chunk_index": {"$gte": 2}}      # chunk index >= 2
+    ]}
+)`}</CB>
+
+  <P>Metadata filtering happens <S>before</S> vector search: ChromaDB narrows to rows that match your filter, then searches only within those. That is usually much faster than retrieving everything and filtering afterward.</P>
+
   <SH>MMR — Maximum Marginal Relevance</SH>
 
-  <P>Problem with pure Top-K: if your top 5 chunks all say roughly the same thing (because they're from similar sections), you waste context window space on redundant information.</P>
+  <P>Problem with pure Top-K: if your top 5 chunks all say roughly the same thing (because they&apos;re from similar sections), you waste context window space on redundant information.</P>
 
-  <P><S color="var(--purple)">MMR</S> solves this by balancing <S>relevance</S> (how similar to the query) with <S>diversity</S> (how different from chunks already selected). It picks the first chunk by relevance, then each subsequent chunk must be both relevant AND different from previous picks.</P>
+  <P><S color="var(--purple)">MMR</S> balances <S>relevance</S> (similarity to the query) with <S>diversity</S> (difference from chunks already selected). It picks the first chunk by relevance, then each subsequent chunk must be both relevant and different from previous picks.</P>
 
   <SH>Context Window Management</SH>
 
-  <P>Retrieved chunks must fit within the LLM's context window alongside the system prompt, user question, and expected response. A simple formula:</P>
+  <P>Retrieved chunks must fit within the LLM&apos;s context window alongside the system prompt, user question, and expected response. A simple formula:</P>
 
   <CB>{`Available for context = context_window - system_prompt - user_query - expected_response
 
@@ -617,6 +783,25 @@ Example (gpt-4o-mini, 128K context):
 
   That's plenty. But with gpt-3.5-turbo (4K context):
   Available:         4,000 - 750 = ~3,250 tokens = only 3-4 chunks!`}</CB>
+
+  <SH>Other Operations</SH>
+
+  <CB>{`# Count entries
+collection.count()  # → 42
+
+# Get specific entries by ID
+collection.get(ids=["doc1_chunk0", "doc1_chunk2"])
+
+# Update an entry
+collection.update(ids=["doc1_chunk0"], documents=["updated text..."])
+
+# Delete entries
+collection.delete(ids=["doc1_chunk0"])
+
+# Delete by filter
+collection.delete(where={"source": "old_document.txt"})`}</CB>
+
+  <Callout color="var(--purple)" icon="🔗">Every vector database has the same concepts: collections, documents, embeddings, metadata, filtered search. The API differs but the mental model is identical. In Part 2, we&apos;ll compare production options.</Callout>
   <NotebookDemoLink/>
 </section>
 

@@ -17,7 +17,9 @@ import sys
 import os
 import time
 from openai import OpenAI, RateLimitError, APITimeoutError, BadRequestError
-
+from dotenv import load_dotenv
+import os
+load_dotenv(override=True)
 
 # ============================================================
 # CONFIG
@@ -151,6 +153,11 @@ def main():
         stdin_data = sys.stdin.read().strip()
         if stdin_data:
             prompt = f"{prompt}\n\n{stdin_data}" if prompt else stdin_data
+            print("**********************")
+            print(stdin_data)
+            print("-----------------")
+            print(prompt)
+            print("-----------------")
     
     if not prompt:
         parser.print_help()
