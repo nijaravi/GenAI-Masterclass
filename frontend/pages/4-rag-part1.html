@@ -23,7 +23,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useRef}=React;
+const{useState,useEffect,useRef,useId}=React;
 
 // ── HELPERS ──
 function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
@@ -153,6 +153,121 @@ function EmbeddingSearchDemo(){
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── INTERACTIVE: Similarity metrics (2D vectors) ──
+function vecDot(a,b){return a[0]*b[0]+a[1]*b[1];}
+function vecLen(v){return Math.hypot(v[0],v[1]);}
+function cosineSim2D(a,b){
+  const la=vecLen(a),lb=vecLen(b);
+  if(la<1e-9||lb<1e-9)return 0;
+  const c=vecDot(a,b)/(la*lb);
+  return Math.max(-1,Math.min(1,c));
+}
+function euclid2D(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
+
+const SIM_PRESETS=[
+  {id:0,label:"Same topic, different length",a:[2,2],b:[5,5],note:"Cosine = 1.0 (perfect match). Both point the same way — like our short vs long Hadoop chunks. Euclidean says 4.24 (far apart) — the wrong answer for text search."},
+  {id:1,label:"Similar topics",a:[3,4],b:[4,3],note:"High cosine — these vectors are about related topics. Like 'Hadoop architecture' vs 'Hadoop cluster setup'."},
+  {id:2,label:"Unrelated topics",a:[4,0],b:[0,4],note:"Cosine = 0. These vectors share nothing in common. Like 'Hadoop' vs 'cooking recipes' — completely unrelated."},
+  {id:3,label:"Opposite meanings",a:[3,4],b:[-3,-4],note:"Cosine = −1. Opposite direction. Rarely happens with text embeddings, but conceptually: 'happy' vs 'miserable'."},
+  {id:4,label:"Same length, different topic",a:[4,1],b:[1,4],note:"Same length vectors but different directions. Euclidean = 4.24 (same as Preset 1!). But cosine correctly shows 0.47 — only partially related. Euclidean can't tell 'same topic, different length' from 'different topic, same length'."},
+];
+
+function SimilarityMetricsDemo(){
+  const uid=useId().replace(/:/g,"");
+  const[preset,setPreset]=useState(0);
+  const p=SIM_PRESETS[preset];
+  const a=p.a,b=p.b;
+  const dot=vecDot(a,b);
+  const cos=cosineSim2D(a,b);
+  const euc=euclid2D(a,b);
+  const cx=140,cy=140,scale=16,rArc=44;
+  const toPx=(v)=>[cx+v[0]*scale,cy-v[1]*scale];
+  const [ax,ay]=toPx(a),[bx,by]=toPx(b);
+  const la=vecLen(a),lb=vecLen(b);
+  const angleA=Math.atan2(-a[1],a[0]);
+  const angleB=Math.atan2(-b[1],b[0]);
+  let delta=angleB-angleA;
+  while(delta>Math.PI)delta-=2*Math.PI;
+  while(delta<-Math.PI)delta+=2*Math.PI;
+  const largeArc=Math.abs(delta)>Math.PI?1:0;
+  const sweep=delta>0?1:0;
+  const axArc=cx+rArc*Math.cos(angleA),ayArc=cy+rArc*Math.sin(angleA);
+  const bxArc=cx+rArc*Math.cos(angleB),byArc=cy+rArc*Math.sin(angleB);
+  const arcSpan=Math.hypot(axArc-bxArc,ayArc-byArc);
+  const showArc=arcSpan>4;
+  const deg=(Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI).toFixed(1);
+  const cosColor=cos>0.65?"#10B981":cos>-0.25?"#FBBF24":"#F87171";
+  const dotNorm=Math.min(1,Math.max(0,(dot+35)/80));
+  const dotColor=dot>12?"#10B981":dot>-5?"#FBBF24":"#F87171";
+  const eucClose=1/(1+euc*0.22);
+  const eucColor=euc<3?"#10B981":euc<7?"#FBBF24":"#F87171";
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.5rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#A78BFA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.12rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Similarity Metrics in 2D</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1rem"}}>Drag isn&apos;t needed — use the presets. Watch all three metrics update together (2D stands in for high-dimensional embeddings).</div>
+      <div style={{display:"flex",gap:8,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {SIM_PRESETS.map((pr)=>(
+          <button key={pr.id} type="button" onClick={()=>setPreset(pr.id)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.72rem",fontWeight:600,background:preset===pr.id?"#A78BFA":"#252833",color:preset===pr.id?"#111":"#94A3B8",transition:"all 0.15s"}}>{pr.label}</button>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"stretch"}}>
+        <div style={{flex:"1 1 300px",minWidth:260}}>
+          <svg width="100%" height="280" viewBox="0 0 280 280" style={{display:"block",maxWidth:320}} aria-label="Two vectors on a coordinate grid">
+            <rect x="0" y="0" width="280" height="280" fill="#12141C" rx="10"/>
+            {[...Array(11)].map((_,i)=>{
+              const v=-1+i;
+              const x=cx+v*scale;
+              const y=cy-v*scale;
+              return(
+                <React.Fragment key={"g"+i}>
+                  <line x1={x} y1={20} x2={x} y2={260} stroke="#2E3240" strokeWidth={v===0?1.2:0.5}/>
+                  <line x1={20} y1={y} x2={260} y2={y} stroke="#2E3240" strokeWidth={v===0?1.2:0.5}/>
+                </React.Fragment>
+              );
+            })}
+            <text x={cx+4} y={22} fill="#64748B" fontSize="10" fontFamily="'JetBrains Mono',monospace">y</text>
+            <text x={252} y={cy-6} fill="#64748B" fontSize="10" fontFamily="'JetBrains Mono',monospace">x</text>
+            <defs>
+              <marker id={uid+"-mb"} markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#60A5FA"/></marker>
+              <marker id={uid+"-mo"} markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#F97316"/></marker>
+            </defs>
+            {showArc&&<path d={`M ${axArc} ${ayArc} A ${rArc} ${rArc} 0 ${largeArc} ${sweep} ${bxArc} ${byArc}`} fill="none" stroke="#475569" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.85"/>}
+            <text x={showArc?(axArc+bxArc)/2+8:cx+52} y={showArc?(ayArc+byArc)/2-6:cy-88} fill="#94A3B8" fontSize="10" fontFamily="'DM Sans',sans-serif">∠ {deg}°</text>
+            <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="#60A5FA" strokeWidth="2.5" markerEnd={"url(#"+uid+"-mb)"}/>
+            <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#F97316" strokeWidth="2.5" markerEnd={"url(#"+uid+"-mo)"}/>
+            <text x={ax+(ax>cx?8:-52)} y={ay+(ay<cy?-6:16)} fill="#60A5FA" fontSize="11" fontFamily="'JetBrains Mono',monospace">A [{a[0]}, {a[1]}]</text>
+            <text x={bx+(bx>cx?8:-52)} y={by+(by<cy?-6:16)} fill="#F97316" fontSize="11" fontFamily="'JetBrains Mono',monospace">B [{b[0]}, {b[1]}]</text>
+          </svg>
+        </div>
+        <div style={{flex:"0 1 240px",minWidth:200,display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #2E3240"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,marginBottom:4}}>COSINE SIMILARITY</div>
+            <div style={{color:cosColor,fontFamily:"'JetBrains Mono',monospace",fontSize:"1.35rem",fontWeight:700}}>{cos.toFixed(3)}</div>
+            <div style={{height:6,borderRadius:3,background:"#2E3240",marginTop:6,overflow:"hidden"}}><div style={{width:(cos+1)/2*100+"%",height:"100%",background:cosColor,borderRadius:3}}/></div>
+            <div style={{color:"#64748B",fontSize:"0.7rem",marginTop:4}}>−1 opposite … 1 identical direction</div>
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #2E3240"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,marginBottom:4}}>DOT PRODUCT</div>
+            <div style={{color:dotColor,fontFamily:"'JetBrains Mono',monospace",fontSize:"1.35rem",fontWeight:700}}>{dot.toFixed(2)}</div>
+            <div style={{height:6,borderRadius:3,background:"#2E3240",marginTop:6,overflow:"hidden"}}><div style={{width:dotNorm*100+"%",height:"100%",background:dotColor,borderRadius:3}}/></div>
+            <div style={{color:"#64748B",fontSize:"0.7rem",marginTop:4}}>Angle × lengths (unbounded)</div>
+          </div>
+          <div style={{background:"#12141C",borderRadius:10,padding:"0.75rem 1rem",border:"1px solid #2E3240"}}>
+            <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,marginBottom:4}}>EUCLIDEAN DISTANCE</div>
+            <div style={{color:eucColor,fontFamily:"'JetBrains Mono',monospace",fontSize:"1.35rem",fontWeight:700}}>{euc.toFixed(2)}</div>
+            <div style={{height:6,borderRadius:3,background:"#2E3240",marginTop:6,overflow:"hidden"}}><div style={{width:eucClose*100+"%",height:"100%",background:eucColor,borderRadius:3}}/></div>
+            <div style={{color:"#64748B",fontSize:"0.7rem",marginTop:4}}>Lower = tips closer (unlike cosine)</div>
+          </div>
+        </div>
+      </div>
+      <div style={{marginTop:"1rem",padding:"0.85rem 1rem",background:"#12141C",borderRadius:8,border:"1px solid #334155"}}>
+        <div style={{color:"#E2E8F0",fontSize:"0.88rem",lineHeight:1.65}}><S color="#A78BFA">Teaching point:</S> {p.note}</div>
       </div>
     </div>
   );
@@ -552,19 +667,98 @@ With 50-char overlap:
 
   <SH>Similarity Metrics</SH>
 
-  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
-    {[
-      {metric:"Cosine Similarity",desc:"Measures the angle between two vectors. Ignores magnitude, focuses on direction. Most common for text.",range:"0 to 1 (1 = identical)",color:"#10B981"},
-      {metric:"Dot Product",desc:"Measures both direction and magnitude. Faster to compute. OpenAI recommends this for their embeddings.",range:"-∞ to +∞",color:"#60A5FA"},
-      {metric:"Euclidean Distance",desc:"Measures straight-line distance between vectors. Less common for text, more for images.",range:"0 to ∞ (0 = identical)",color:"#A78BFA"},
-    ].map((m,i)=>(
-      <div key={i} style={{flex:1,minWidth:200,background:"white",borderRadius:10,padding:"1rem",border:"1px solid "+m.color+"33",borderLeft:"4px solid "+m.color}}>
-        <div style={{color:m.color,fontWeight:700,fontSize:"0.9rem",marginBottom:4}}>{m.metric}</div>
-        <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",marginBottom:4}}>{m.desc}</div>
-        <div style={{color:"var(--text-muted)",fontSize:"0.75rem",fontFamily:"'JetBrains Mono'"}}>Range: {m.range}</div>
-      </div>
-    ))}
+  <P>When you search a vector database, it needs to measure how &ldquo;close&rdquo; your query vector is to each stored vector. There are three common ways to do that — and the difference matters.</P>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.15rem 1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#94A3B8",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>SAME TOPIC, DIFFERENT LENGTH</div>
+    <CB>{`Consider two chunks about the same topic (Hadoop):
+
+Short: "Hadoop is a distributed framework."
+Long:  "Hadoop is an open-source distributed computing framework designed
+        for processing and storing large datasets across clusters of
+        commodity hardware using MapReduce."
+
+Both are about Hadoop. Both point in the same "direction" in vector space.
+But the longer text produces a vector with larger magnitude (longer arrow).`}</CB>
   </div>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#94A3B8",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>SAME DIRECTION, DIFFERENT LENGTH (SCHEMATIC)</div>
+    <svg width="100%" height="140" viewBox="0 0 280 140" style={{display:"block",maxWidth:320}} aria-hidden>
+      <rect width="280" height="140" fill="#12141C" rx="8"/>
+      <text x="14" y="24" fill="#64748B" fontSize="10" fontFamily="'DM Sans',sans-serif">Angle ≈ 0° — tips far apart</text>
+      <defs>
+        <marker id="hadoopShort" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#60A5FA"/></marker>
+        <marker id="hadoopLong" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#F97316"/></marker>
+      </defs>
+      <line x1="40" y1="100" x2="95" y2="55" stroke="#60A5FA" strokeWidth="2.5" markerEnd="url(#hadoopShort)"/>
+      <line x1="40" y1="100" x2="210" y2="30" stroke="#F97316" strokeWidth="2.5" markerEnd="url(#hadoopLong)"/>
+      <text x="98" y="52" fill="#60A5FA" fontSize="10" fontWeight="600">short chunk</text>
+      <text x="168" y="28" fill="#F97316" fontSize="10" fontWeight="600">long chunk</text>
+      <circle cx="40" cy="100" r="3" fill="#94A3B8"/>
+      <text x="32" y="118" fill="#64748B" fontSize="9">origin</text>
+    </svg>
+  </div>
+
+  <P><S color="var(--purple)">Cosine similarity</S> — measures the <S>angle</S> between two vectors. Both chunks point in the &ldquo;Hadoop direction&rdquo; → the angle is tiny → cosine is high (≈0.95 in real embeddings). Cosine doesn&apos;t care that one arrow is longer. <S>Same topic = high score.</S> This is what you want for RAG.</P>
+
+  <P><S color="var(--purple)">Dot product</S> — multiplies <S>direction and length</S> together. The long chunk gets a much higher score than the short one, even though both are about Hadoop. That means dot product <S>prefers longer, more detailed content</S> — sometimes useful, but not when a short, precise chunk is just as valuable for retrieval.</P>
+
+  <P><S color="var(--purple)">Euclidean distance</S> — measures the straight-line <S>gap between the arrow tips</S>. Even when both arrows point the same way, the tips are far apart because one vector is longer. Euclidean treats that as &ldquo;different&rdquo; — which is the wrong signal for text search. It&apos;s more common for <S>images</S>, where literal distance in the embedding space often matters more.</P>
+
+  <div style={{background:"white",borderRadius:10,padding:"1rem 1.1rem",border:"1px solid var(--border)",margin:"1.25rem 0",overflowX:"auto"}}>
+    <div style={{fontWeight:700,fontSize:"0.95rem",color:"var(--text)",marginBottom:10}}>When to use which</div>
+    <div style={{display:"grid",gridTemplateColumns:"minmax(100px,1fr) minmax(110px,1fr) minmax(100px,1fr) minmax(88px,0.9fr)",gap:0,fontSize:"0.78rem"}}>
+      <div style={{padding:"8px",fontWeight:700,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>Metric</div>
+      <div style={{padding:"8px",fontWeight:700,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>Measures</div>
+      <div style={{padding:"8px",fontWeight:700,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>Best for</div>
+      <div style={{padding:"8px",fontWeight:700,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>For RAG?</div>
+      {[
+        ["Cosine similarity","Angle between vectors","Text search — same topic matches regardless of chunk length","✅ Yes — default"],
+        ["Dot product","Angle × length","When you want to prefer longer, richer content","⚠️ Sometimes"],
+        ["Euclidean distance","Gap between vector tips","Image / audio similarity","❌ Rarely for text"],
+      ].map(([m,meas,best,rag],i)=>(
+        <React.Fragment key={i}>
+          <div style={{padding:"8px",fontWeight:600,borderBottom:"1px solid var(--border-light)",color:"var(--purple)"}}>{m}</div>
+          <div style={{padding:"8px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>{meas}</div>
+          <div style={{padding:"8px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)"}}>{best}</div>
+          <div style={{padding:"8px",color:"var(--text-secondary)",borderBottom:"1px solid var(--border-light)",fontWeight:600}}>{rag}</div>
+        </React.Fragment>
+      ))}
+    </div>
+  </div>
+
+  <Callout color="var(--accent)" icon="🎯"><S>For RAG, use cosine similarity.</S> It answers &ldquo;are these about the same topic?&rdquo; without being fooled by text length. It&apos;s the default in ChromaDB and in most major vector databases for text.</Callout>
+
+  <SimilarityMetricsDemo/>
+
+  <div style={{background:"var(--bg)",borderRadius:8,padding:"0.65rem 1rem",border:"1px solid var(--border-light)",margin:"0.75rem 0 1rem"}}>
+    <span style={{fontSize:"0.72rem",fontWeight:700,color:"var(--text-muted)",letterSpacing:0.6}}>QUICK REFERENCE — RANGES</span>
+    <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",color:"var(--text-secondary)",marginTop:6,lineHeight:1.6}}>
+      <strong style={{color:"var(--text)"}}>Cosine:</strong> −1 to 1 (1 = identical direction) &nbsp;·&nbsp; <strong style={{color:"var(--text)"}}>Dot product:</strong> −∞ to +∞ &nbsp;·&nbsp; <strong style={{color:"var(--text)"}}>Euclidean:</strong> 0 to ∞ (0 = identical tips)
+    </div>
+  </div>
+
+  <details style={{margin:"1.25rem 0",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg)",padding:"0.5rem 1rem 1rem"}}>
+    <summary style={{cursor:"pointer",fontWeight:600,color:"var(--text-secondary)",fontSize:"0.92rem",padding:"0.35rem 0"}}>How the math works (click to expand)</summary>
+    <CB>{`Cosine Similarity:
+  dot(A, B) / (length(A) × length(B))
+  → measures the ANGLE between vectors
+  → ignores how long the vectors are
+  → range: -1 (opposite) to 1 (identical direction)
+
+Dot Product:
+  A[0]×B[0] + A[1]×B[1] + ... + A[n]×B[n]
+  → measures both angle AND length
+  → longer vectors get higher scores (when aligned)
+  → range: -∞ to +∞
+
+Euclidean Distance:
+  sqrt( (A[0]-B[0])² + (A[1]-B[1])² + ... )
+  → straight-line distance between vector tips
+  → lower = closer (opposite intuition vs cosine!)
+  → range: 0 (identical) to ∞`}</CB>
+  </details>
 
   <SH>How Vector Search Stays Fast (HNSW)</SH>
 
