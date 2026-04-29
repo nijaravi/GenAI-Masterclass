@@ -327,6 +327,7 @@ const CHAPTERS=[
   {id:"ch8",num:"8",title:"ChromaDB Deep Dive",sub:"Collections, search, filtering, and more",group:"retrieval"},
   {id:"ch9",num:"9",title:"Building the RAG Prompt",sub:"Context assembly and grounding",group:"generation"},
   {id:"ch10",num:"10",title:"Common Failures",sub:"What goes wrong and how to debug",group:"generation"},
+  {id:"ch11",num:"11",title:"Advanced Data Processing",sub:"Handling PDFs, images, tables, and scanned documents",group:"advanced"},
 ];
 
 function Sidebar({active,onNav}){
@@ -343,6 +344,8 @@ function Sidebar({active,onNav}){
         {CHAPTERS.filter(c=>c.group==="retrieval").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--purple-bg)",color:"var(--purple)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
         <div className="sidebar-label" style={{color:"var(--accent)"}}>Generation & Debugging</div>
         {CHAPTERS.filter(c=>c.group==="generation").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--accent-light)",color:"var(--accent)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
+        <div className="sidebar-label" style={{color:"var(--orange)"}}>Advanced</div>
+        {CHAPTERS.filter(c=>c.group==="advanced").map(c=>(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:"var(--orange-bg)",color:"var(--orange)"}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>))}
       </div>
     </div>
   );
@@ -1070,11 +1073,147 @@ Question: {user_question}
   <NotebookDemoLink/>
 </section>
 
+{/* ── CH 11: Advanced Data Processing ── */}
+<section id="ch11" style={{paddingTop:"2rem"}}>
+  <ChH num="11" title="Advanced Data Processing" sub="Handling PDFs, images, tables, and scanned documents" color="var(--orange)"/>
+
+  <P>In Chapter 4 we loaded plain text files with <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.86rem"}}>open().read()</span>. Real-world RAG systems deal with messier formats — PDFs with tables, scanned invoices, images with text, Word docs with formatting. Getting the text out cleanly is often the hardest part of the entire RAG pipeline.</P>
+
+  <Callout color="var(--build-color)" icon="⚠️"><S>Garbage in, garbage out.</S> If your PDF parser mangles a table or misses a paragraph, no amount of embedding or prompting will fix it. Always inspect your parsed output before embedding.</Callout>
+
+  <SH>PDFs — The Most Common and Most Painful</SH>
+
+  <P>A PDF stores drawing instructions (&ldquo;put this character at position x,y&rdquo;), not structured text. The parser has to reconstruct words, sentences, and paragraphs from character positions. That&apos;s why PDF extraction is unreliable.</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    {[
+      {title:"PyPDF2 / PyPDFLoader (Basic)",color:"#FBBF24",good:"Extracts text page by page",use:"Simple text-heavy PDFs (reports, articles)",bad:"Tables become garbled, multi-column layouts merge, headers/footers repeat",code:`from langchain_community.document_loaders import PyPDFLoader
+pages = PyPDFLoader("report.pdf").load()`},
+      {title:"pdfplumber (Better)",color:"#60A5FA",good:"Layout-aware; tables as separate lists",use:"PDFs with tables, forms, structured content",bad:"Still imperfect on very complex layouts",code:`import pdfplumber
+with pdfplumber.open("report.pdf") as pdf:
+    text = pdf.pages[0].extract_text()
+    tables = pdf.pages[0].extract_tables()`},
+      {title:"Unstructured / LlamaParse (Best)",color:"#10B981",good:"Detects structure — titles, paragraphs, tables, lists, images",use:"Complex documents, mixed content",bad:"Heavier setup / cost for hosted parsers",code:"from unstructured.partition.pdf import partition_pdf\nelements = partition_pdf(\"report.pdf\")\nfor el in elements:\n    print(f\"{el.category}: {el.text[:80]}\")"},
+    ].map((c,i)=>(
+      <div key={i} style={{flex:"1 1 240px",minWidth:220,background:"white",borderRadius:10,padding:"1rem 1.1rem",border:"1px solid "+c.color+"33",borderLeft:"4px solid "+c.color}}>
+        <div style={{color:c.color,fontWeight:700,fontSize:"0.92rem",marginBottom:8}}>{c.title}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:6}}><S style={{color:"var(--text)"}}>Good for:</S> {c.good}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:6}}><S style={{color:"var(--text)"}}>Best when:</S> {c.use}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:10}}><S style={{color:"var(--red)"}}>Watch out:</S> {c.bad}</div>
+        <CB>{c.code}</CB>
+      </div>
+    ))}
+  </div>
+
+  <SH>Scanned Documents — When There&apos;s No Text to Extract</SH>
+
+  <P>A scanned PDF is just an image wrapped in a PDF — there&apos;s no text layer. PyPDF2 returns empty strings. You need <S>OCR</S> (Optical Character Recognition) to turn pixels of text into actual characters.</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    <div style={{flex:1,minWidth:260,background:"white",borderRadius:10,padding:"1rem",border:"1px solid #10B98133",borderLeft:"4px solid #10B981"}}>
+      <div style={{color:"#10B981",fontWeight:700,fontSize:"0.9rem",marginBottom:8}}>Tesseract OCR (free, local)</div>
+      <ul style={{margin:0,paddingLeft:18,color:"var(--text-secondary)",fontSize:"0.86rem",lineHeight:1.65}}>
+        <li>Open-source OCR engine</li>
+        <li>Works well on clean scans; struggles with handwriting or poor quality</li>
+      </ul>
+      <CB>{`# pip install pytesseract Pillow
+import pytesseract
+from PIL import Image
+text = pytesseract.image_to_string(Image.open("scanned_page.png"))`}</CB>
+    </div>
+    <div style={{flex:1,minWidth:260,background:"white",borderRadius:10,padding:"1rem",border:"1px solid #60A5FA33",borderLeft:"4px solid #60A5FA"}}>
+      <div style={{color:"#60A5FA",fontWeight:700,fontSize:"0.9rem",marginBottom:8}}>Vision LLMs (better quality, costs money)</div>
+      <ul style={{margin:0,paddingLeft:18,color:"var(--text-secondary)",fontSize:"0.86rem",lineHeight:1.65}}>
+        <li>Send the image to GPT-4o or Claude and ask for structured text</li>
+        <li>Handles messy layouts and handwriting better than classical OCR</li>
+        <li>Use when OCR isn&apos;t good enough — watch token and image pricing</li>
+      </ul>
+      <CB>{`# Send image to GPT-4o for extraction
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+            {"type": "text", "text": "Extract all text from this document image. Preserve structure."}
+        ]
+    }]
+)`}</CB>
+    </div>
+  </div>
+
+  <Callout color="var(--info-color)" icon="🔎"><S>How to tell if a PDF is scanned:</S> Open it and try to select text with your mouse. If you can highlight individual words → it has a text layer (use PyPDF2 / pdfplumber). If you only get a whole-page image selection → it&apos;s scanned (use OCR or a vision LLM).</Callout>
+
+  <SH>Tables — The Biggest Data Loss in RAG</SH>
+
+  <P>Tables are where many RAG pipelines <S>silently fail</S>. A plain text extractor turns a neat grid into a run-on line of cell values. The LLM can&apos;t reconstruct the grid in its head, so answers drift or hallucinate.</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap",alignItems:"stretch"}}>
+    <div style={{flex:1,minWidth:220,background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)"}}>
+      <div style={{fontWeight:700,fontSize:"0.82rem",color:"var(--text)",marginBottom:8}}>What the PDF looks like</div>
+      <pre style={{margin:0,fontFamily:"'JetBrains Mono',monospace",fontSize:"0.72rem",lineHeight:1.55,color:"var(--text-secondary)",whiteSpace:"pre-wrap"}}>{`| Product      | Price  | Return Window |
+|-------------|--------|---------------|
+| ProMax 15   | $1,299 | 15 days       |
+| CloudBook   | $699   | 15 days       |`}</pre>
+    </div>
+    <div style={{flex:1,minWidth:220,background:"var(--red-bg)",borderRadius:10,padding:"1rem",border:"1px solid var(--red)33",borderLeft:"4px solid var(--red)"}}>
+      <div style={{fontWeight:700,fontSize:"0.82rem",color:"var(--red)",marginBottom:8}}>What PyPDF2 often extracts</div>
+      <pre style={{margin:0,fontFamily:"'JetBrains Mono',monospace",fontSize:"0.72rem",lineHeight:1.55,color:"var(--text-secondary)",whiteSpace:"pre-wrap"}}>{`Product Price Return Window ProMax 15 $1,299 15 days CloudBook $699 15 days`}</pre>
+      <div style={{color:"var(--red)",fontSize:"0.78rem",marginTop:8,fontWeight:600}}>Structure gone. Searching for &ldquo;ProMax 15 price&rdquo; won&apos;t retrieve a clean fact.</div>
+    </div>
+  </div>
+
+  <P><S>The fix — extract tables separately</S> and turn each row into a sentence the model can reason over:</P>
+
+  <CB>{`import pdfplumber
+with pdfplumber.open("catalog.pdf") as pdf:
+    for page in pdf.pages:
+        tables = page.extract_tables()
+        for table in tables:
+            headers = table[0]
+            for row in table[1:]:
+                entry = ", ".join(f"{h}: {v}" for h, v in zip(headers, row))
+                # → "Product: ProMax 15, Price: $1,299, Return Window: 15 days"`}</CB>
+
+  <Callout color="var(--accent)" icon="💡"><S>The trick:</S> Convert each table row into a readable sentence before embedding. <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem"}}>Product: ProMax 15, Price: $1,299, Return Window: 15 days</span> is something the LLM can use. A raw concatenated dump isn&apos;t.</Callout>
+
+  <SH>Images Inside Documents</SH>
+
+  <P>Some documents hide important facts in <S>images</S> — charts, diagrams, screenshots. Plain text extraction skips them entirely.</P>
+
+  <div style={{display:"flex",gap:12,margin:"1rem 0",flexWrap:"wrap"}}>
+    <div style={{flex:1,minWidth:240,background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid #60A5FA"}}>
+      <div style={{fontWeight:700,color:"#60A5FA",marginBottom:6}}>Option 1: Describe with a vision LLM</div>
+      <div style={{color:"var(--text-secondary)",fontSize:"0.86rem",lineHeight:1.65}}>Pull images out of the PDF, send each to GPT-4o (or similar), and store the returned description as its own chunk next to your text chunks. Strong for charts, diagrams, and screenshots with text.</div>
+    </div>
+    <div style={{flex:1,minWidth:240,background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid #94A3B8"}}>
+      <div style={{fontWeight:700,color:"#64748B",marginBottom:6}}>Option 2: Ignore images (sometimes OK)</div>
+      <div style={{color:"var(--text-secondary)",fontSize:"0.86rem",lineHeight:1.65}}>If images are decorative (logos, stock photos), skip them and index body text only. Fine when visuals are not the source of truth.</div>
+    </div>
+  </div>
+
+  <SH>Choosing a Path — Document Type</SH>
+
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.15rem 1.25rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <div style={{color:"#94A3B8",fontSize:"0.65rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>DECISION TREE</div>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{`What type of document?
+├── Plain text (.txt, .md, .csv) → open().read() — Chapter 4
+├── PDF with selectable text → PyPDF2 or pdfplumber
+│   └── Has tables? → pdfplumber + row-to-sentence conversion
+├── Scanned PDF / image → OCR (Tesseract) or Vision LLM (GPT-4o)
+├── Word (.docx) → python-docx
+└── HTML → BeautifulSoup + strip boilerplate`}</pre>
+  </div>
+
+  <Callout color="var(--orange)" icon="📌"><S>Data processing is unglamorous but critical.</S> In production RAG, teams often spend more time parsing and cleaning documents than on embeddings or prompts. Models are the easy part — <S>getting clean text into the pipeline</S> is the hard part.</Callout>
+  <NotebookDemoLink/>
+</section>
+
 {/* ── COMPLETION ── */}
 <div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
   <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>RAG Part 1 Complete</div>
   <div style={{color:"var(--text-muted)",fontSize:"0.92rem"}}>You now understand the complete RAG pipeline — from documents to answers. Part 2 covers advanced retrieval patterns, evaluation, and production infrastructure.</div>
-  <div style={{color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → RAG Part 2: Advanced Patterns & Production</div>
+  <a href="./5-rag-part2.html" style={{display:"inline-block",color:"var(--accent)",fontSize:"0.88rem",fontWeight:600,marginTop:8,textDecoration:"none"}}>Next → Section 5: RAG — Advanced &amp; Production</a>
 </div>
 
   </div></div></div>);

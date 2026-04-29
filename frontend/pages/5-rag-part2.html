@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG — Advanced &amp; Production — GenAI Decoded by Nij</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--sidebar-bg:#FFFFFF;--card-bg:#FFFFFF;--border:#E8E5E0;--border-light:#F0EDE8;--text:#2D2B28;--text-secondary:#6B6560;--text-muted:#9C9690;--accent:#1A6B4E;--accent-light:#E8F5EE;--accent-hover:#15573F;--build-color:#B45309;--build-bg:#FEF3C7;--build-border:#FCD34D;--work-color:#1A6B4E;--work-bg:#E8F5EE;--work-border:#6EE7B7;--info-color:#1E6091;--info-bg:#EFF6FF;--info-border:#93C5FD;--purple:#6D28D9;--purple-bg:#F3F0FF;--orange:#C2410C;--orange-bg:#FFF7ED;--red:#B91C1C;--red-bg:#FEF2F2;--demo-bg:#1A1D27;--demo-border:#2E3240;--demo-text:#E2E8F0;--sidebar-w:260px;}
+*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.7;}::selection{background:#1A6B4E33;}pre{white-space:pre-wrap;word-wrap:break-word;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);overflow-y:auto;z-index:50;padding:0.75rem 0;scrollbar-width:thin;}.sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px;}
+.sidebar-logo{padding:0 1rem 0.85rem;border-bottom:1px solid var(--border);margin-bottom:0.5rem;}.sidebar-logo h2{font-family:'Libre Baskerville',serif;font-size:0.92rem;color:var(--text);line-height:1.35;}.sidebar-logo p{font-size:0.72rem;color:var(--accent);font-weight:600;margin-top:2px;}
+.sidebar-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text-muted);padding:8px 9px 2px;margin-top:4px;}
+.sidebar-item{display:block;padding:5px 9px;border-radius:7px;text-decoration:none;font-size:0.8rem;color:var(--text-secondary);transition:all 0.15s;cursor:pointer;margin-bottom:1px;border:1px solid transparent;}.sidebar-item:hover{background:var(--bg);color:var(--text);}.sidebar-item.active{background:var(--accent-light);color:var(--accent);font-weight:600;border-color:#6EE7B733;}
+.sidebar-item .num{display:inline-block;width:22px;height:20px;border-radius:5px;text-align:center;line-height:20px;font-size:0.62rem;font-weight:700;margin-right:7px;}.sidebar-item .sub{font-size:0.66rem;color:var(--text-muted);display:block;}
+.main{margin-left:var(--sidebar-w);min-height:100vh;}.content{max-width:760px;margin:0 auto;padding:2rem 2.5rem 4rem;}
+@media(max-width:900px){.sidebar{display:none;}.main{margin-left:0;}.content{padding:1.5rem 1rem 3rem;}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function Callout({children,color="var(--accent)",icon="💡"}){
+  const bgC=color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":"var(--accent-light)";
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}><span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span><div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div></div>);
+}
+function ChH({num,title,sub,color="var(--accent)"}){return(<div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"ch"+num}><div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}><span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span></div><h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3><div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div></div>);}
+function SH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+
+function HybridSearchDemo(){
+  const [mode,setMode]=useState(0);
+  const labels=["Keyword (BM25)","Semantic (embeddings)","Hybrid (BM25 + Semantic)"];
+  const blocks=[
+`✅ Finds chunks containing exact words "ProMax" and "15"
+❌ Misses chunks about "laptop returns" that don't mention "ProMax"`,
+`✅ Finds chunks about "returning electronics" even without "ProMax"
+❌ Might rank generic "return policy" higher than the ProMax-specific chunk`,
+`✅ Finds exact matches AND meaning-based matches
+✅ ProMax-specific chunks rank highest (both signals agree)`,
+  ];
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#F97316",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:6}}>Query: &quot;ProMax 15 return policy&quot;</div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:"1rem"}}>
+        {labels.map((l,i)=>(<button key={i} type="button" onClick={()=>setMode(i)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.74rem",fontWeight:600,background:mode===i?"#F97316":"#252833",color:mode===i?"#111":"#94A3B8"}}>{l}</button>))}
+      </div>
+      <pre style={{margin:0,color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",lineHeight:1.75,whiteSpace:"pre-wrap",background:"#12141C",padding:"1rem",borderRadius:8,border:"1px solid #2E324033"}}>{blocks[mode]}</pre>
+    </div>
+  );
+}
+
+function HyDEFlowDemo(){
+  const [step,setStep]=useState(0);
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#A78BFA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"0.75rem"}}>Normal RAG vs HyDE</div>
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        <button type="button" onClick={()=>setStep(0)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.74rem",fontWeight:600,background:step===0?"#A78BFA":"#252833",color:step===0?"#111":"#94A3B8"}}>Normal RAG</button>
+        <button type="button" onClick={()=>setStep(1)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.74rem",fontWeight:600,background:step===1?"#A78BFA":"#252833",color:step===1?"#111":"#94A3B8"}}>HyDE</button>
+      </div>
+      {step===0 ? (
+        <pre style={{margin:0,color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",lineHeight:1.75,whiteSpace:"pre-wrap",background:"#12141C",padding:"1rem",borderRadius:8,border:"1px solid #2E3240"}}>{`"What is the return window?"
+    → embed question
+    → search
+    → [results]`}</pre>
+      ) : (
+        <pre style={{margin:0,color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.78rem",lineHeight:1.75,whiteSpace:"pre-wrap",background:"#12141C",padding:"1rem",borderRadius:8,border:"1px solid #A78BFA33"}}>{`"What is the return window?"
+    → LLM hypothetical answer (may be wrong — OK for search)
+    → embed fake answer → search → [results]
+    → real retrieved docs used for final answer`}</pre>
+      )}
+    </div>
+  );
+}
+
+function RerankDemo(){
+  const [show,setShow]=useState(false);
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"0.75rem"}}>Retrieve wide → re-rank narrow</div>
+      <div style={{background:"#12141C",borderRadius:8,padding:"0.85rem 1rem",marginBottom:10,border:"1px solid #2E3240"}}>
+        <div style={{color:"#94A3B8",fontSize:"0.72rem",marginBottom:6}}>Step 1: top 20 by embedding (~10ms)</div>
+        <div style={{color:"#CBD5E1",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem"}}>[chunk_a: 0.89, chunk_b: 0.87, chunk_c: 0.85, … chunk_t: 0.45]</div>
+      </div>
+      {!show ? (
+        <button type="button" onClick={()=>setShow(true)} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:"#FBBF24",color:"#111"}}>Run cross-encoder re-rank (~200ms)</button>
+      ) : (
+        <div style={{background:"#12141C",borderRadius:8,padding:"0.85rem 1rem",border:"1px solid #10B98133",marginTop:8}}>
+          <div style={{color:"#94A3B8",fontSize:"0.72rem",marginBottom:6}}>Step 2: chunk_c moved #3 → #1</div>
+          <div style={{color:"#86EFAC",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem"}}>[chunk_c: 0.95, chunk_a: 0.91, chunk_f: 0.88, chunk_b: 0.72, …]</div>
+          <div style={{color:"#94A3B8",fontSize:"0.72rem",marginTop:8}}>Step 3: keep top 5 → LLM</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvalFrameworkDemo(){
+  const [sel,setSel]=useState(null);
+  const nodes=[
+    {id:"cr",label:"Context Relevance",desc:"Question ↔ chunks: on-topic?"},
+    {id:"crr",label:"Context Recall",desc:"Ground truth ↔ chunks: everything needed retrieved?"},
+    {id:"f",label:"Faithfulness",desc:"Answer ↔ chunks: no hallucinated facts?"},
+    {id:"ar",label:"Answer Relevance",desc:"Answer ↔ question: actually addresses the ask?"},
+    {id:"c",label:"Correctness",desc:"Answer ↔ ground truth: end-to-end factual?"},
+  ];
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"0.75rem"}}>Evaluation touchpoints</div>
+      <div style={{color:"#94A3B8",fontSize:"0.8rem",marginBottom:"0.75rem"}}>Click a metric.</div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {nodes.map((n)=>(
+          <button key={n.id} type="button" onClick={()=>setSel(n.id)} style={{textAlign:"left",padding:"0.65rem 0.85rem",borderRadius:8,border:"1px solid "+(sel===n.id?"#10B98155":"#2E3240"),background:sel===n.id?"#122018":"#12141C",color:"#E2E8F0",cursor:"pointer",fontSize:"0.82rem"}}>
+            <strong style={{color:sel===n.id?"#34D399":"#94A3B8"}}>{n.label}</strong>
+            {sel===n.id && <div style={{color:"#CBD5E1",marginTop:6,fontSize:"0.78rem",lineHeight:1.55}}>{n.desc}</div>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DebugTreeDemo(){
+  const [open,setOpen]=useState({r:false,g:false,p:false});
+  const t=(k)=>setOpen((o)=>({...o,[k]:!o[k]}));
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#60A5FA",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"0.75rem"}}>Debug decision tree</div>
+      <button type="button" onClick={()=>t("r")} style={{display:"block",width:"100%",textAlign:"left",padding:"0.5rem 0.75rem",marginBottom:4,borderRadius:6,border:"1px solid #EF444433",background:"#12141C",color:"#FCA5A5",cursor:"pointer",fontSize:"0.8rem"}}>{open.r?"▼":"▶"} Context relevance LOW? → Retrieval</button>
+      {open.r && <div style={{padding:"0 0.75rem 0.75rem 1.25rem",color:"#CBD5E1",fontSize:"0.78rem"}}>Hybrid search, query transforms, chunking, embeddings.</div>}
+      <button type="button" onClick={()=>t("g")} style={{display:"block",width:"100%",textAlign:"left",padding:"0.5rem 0.75rem",marginBottom:4,borderRadius:6,border:"1px solid #FBBF2444",background:"#12141C",color:"#FDE68A",cursor:"pointer",fontSize:"0.8rem"}}>{open.g?"▼":"▶"} Faithfulness LOW? → Generation</button>
+      {open.g && <div style={{padding:"0 0.75rem 0.75rem 1.25rem",color:"#CBD5E1",fontSize:"0.78rem"}}>Grounding prompt, reduce noise (K / re-rank), temperature.</div>}
+      <button type="button" onClick={()=>t("p")} style={{display:"block",width:"100%",textAlign:"left",padding:"0.5rem 0.75rem",borderRadius:6,border:"1px solid #A78BFA44",background:"#12141C",color:"#C4B5FD",cursor:"pointer",fontSize:"0.8rem"}}>{open.p?"▼":"▶"} Answer relevance LOW? → Prompt / format</button>
+      {open.p && <div style={{padding:"0 0.75rem 0.75rem 1.25rem",color:"#CBD5E1",fontSize:"0.78rem"}}>RAG template + explicit answer format.</div>}
+    </div>
+  );
+}
+
+const CHAPTERS=[
+  {id:"intro",num:"",title:"Overview",sub:"",group:""},
+  {id:"ch11",num:"11",title:"Hybrid Search",sub:"BM25 + semantic",group:"adv"},
+  {id:"ch12",num:"12",title:"Query Transformation",sub:"Rewrite for retrieval",group:"adv"},
+  {id:"ch13",num:"13",title:"HyDE",sub:"Hypothetical embeddings",group:"adv"},
+  {id:"ch14",num:"14",title:"Re-ranking",sub:"Retrieve many, keep best",group:"adv"},
+  {id:"ch15",num:"15",title:"Multi-Query RAG",sub:"Sub-questions",group:"adv"},
+  {id:"ch16",num:"16",title:"Metadata Filtering",sub:"Narrow first",group:"prod"},
+  {id:"ch17",num:"17",title:"Parent-Child Retrieval",sub:"Search small, send big",group:"prod"},
+  {id:"ch18",num:"18",title:"Conversational RAG",sub:"Follow-ups",group:"prod"},
+  {id:"ch19",num:"19",title:"Multi-Document RAG",sub:"Collections",group:"prod"},
+  {id:"ch20",num:"20",title:"RAG Evaluation Framework",sub:"Metrics",group:"eval"},
+  {id:"ch21",num:"21",title:"RAGAS",sub:"Automated eval",group:"eval"},
+  {id:"ch22",num:"22",title:"Debugging RAG",sub:"Find the break",group:"eval"},
+  {id:"ch23",num:"23",title:"Vector DB Comparison",sub:"Production choice",group:"infra"},
+  {id:"ch24",num:"24",title:"Scaling RAG",sub:"Millions of docs",group:"infra"},
+  {id:"ch25",num:"25",title:"RAG in Production",sub:"Ops checklist",group:"infra"},
+];
+
+function Sidebar({active,onNav}){
+  const badge=(g)=>g==="adv"?{bg:"var(--orange-bg)",fg:"var(--orange)"}:g==="prod"?{bg:"var(--accent-light)",fg:"var(--accent)"}:g==="eval"?{bg:"var(--purple-bg)",fg:"var(--purple)"}:{bg:"var(--info-bg)",fg:"var(--info-color)"};
+  return(
+    <div className="sidebar">
+      <div className="sidebar-logo"><h2>GenAI Decoded</h2><p>by Nij</p></div>
+      <div style={{padding:"0.25rem 0.75rem"}}>
+        <a className={"sidebar-item"+(active==="intro"?" active":"")} onClick={()=>onNav("intro")}>Overview</a>
+        <div className="sidebar-label" style={{color:"var(--orange)"}}>Advanced Retrieval</div>
+        {CHAPTERS.filter(c=>c.group==="adv").map(c=>{const b=badge("adv");return(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:b.bg,color:b.fg}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>);})}
+        <div className="sidebar-label" style={{color:"var(--accent)"}}>Production Patterns</div>
+        {CHAPTERS.filter(c=>c.group==="prod").map(c=>{const b=badge("prod");return(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:b.bg,color:b.fg}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>);})}
+        <div className="sidebar-label" style={{color:"var(--purple)"}}>Evaluation</div>
+        {CHAPTERS.filter(c=>c.group==="eval").map(c=>{const b=badge("eval");return(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:b.bg,color:b.fg}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>);})}
+        <div className="sidebar-label" style={{color:"var(--info-color)"}}>Infrastructure</div>
+        {CHAPTERS.filter(c=>c.group==="infra").map(c=>{const b=badge("infra");return(<a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}><span className="num" style={{background:b.bg,color:b.fg}}>{c.num}</span><span><span style={{fontSize:"0.8rem"}}>{c.title}</span><span className="sub">{c.sub}</span></span></a>);})}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[active,setActive]=useState("intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+  return(<div><Sidebar active={active} onNav={onNav}/><div className="main"><div className="content">
+
+<section style={{paddingTop:"1rem"}} id="intro">
+  <h1 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2.35rem",color:"var(--text)",fontWeight:700,lineHeight:1.25,marginBottom:6}}>RAG — Advanced &amp; Production</h1>
+  <div style={{color:"var(--text-secondary)",fontSize:"1.08rem",fontStyle:"italic",marginBottom:"1.25rem"}}>Part 2: From working prototype to production-grade system</div>
+  <P>In Part 1 you built a working RAG pipeline — load, chunk, embed, store, retrieve, generate. It works. But &apos;works&apos; and &apos;works well in production&apos; are very different things.</P>
+  <P><S>Part 2 covers three gaps:</S></P>
+  <ul style={{margin:"0.5rem 0 1rem",paddingLeft:22,color:"var(--text-secondary)",fontSize:"1.02rem",lineHeight:1.75}}>
+    <li><strong style={{color:"var(--text)"}}>Retrieval quality</strong> — basic similarity search misses relevant chunks, returns redundancy, and struggles with poorly worded queries</li>
+    <li><strong style={{color:"var(--text)"}}>Production patterns</strong> — conversation history, multi-collection search, smart filtering</li>
+    <li><strong style={{color:"var(--text)"}}>Evaluation</strong> — is the system good? When it fails, where is the break?</li>
+  </ul>
+  <div style={{display:"flex",gap:14,marginTop:"1.25rem",flexWrap:"wrap"}}>
+    {[{t:"Advanced Retrieval",r:"Ch 11–15",d:"Hybrid, transforms, HyDE, re-rank, multi-query",c:"var(--orange)",bg:"var(--orange-bg)"},{t:"Production Patterns",r:"Ch 16–19",d:"Metadata, parent–child, conversational, multi-doc",c:"var(--accent)",bg:"var(--accent-light)"},{t:"Evaluation",r:"Ch 20–22",d:"Framework, RAGAS, debugging",c:"var(--purple)",bg:"var(--purple-bg)"},{t:"Infrastructure",r:"Ch 23–25",d:"Vector DBs, scaling, production",c:"var(--info-color)",bg:"var(--info-bg)"}].map((x,i)=>(<div key={i} style={{flex:1,minWidth:158,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+x.c+"33",borderLeft:"4px solid "+x.c}}><div style={{color:x.c,fontWeight:700,fontSize:"0.85rem"}}>{x.t}</div><div style={{color:"var(--text-muted)",fontSize:"0.72rem",marginTop:2}}>{x.r}</div><div style={{color:"var(--text-secondary)",fontSize:"0.78rem",marginTop:4}}>{x.d}</div></div>))}
+  </div>
+  <P style={{marginTop:"1.1rem",fontSize:"0.95rem",color:"var(--text-muted)"}}>Prerequisite: <a href="./4-rag-part1.html" style={{color:"var(--info-color)",fontWeight:600}}>Section 4 — RAG Part 1</a> (Chapters 1–11 there, including Advanced Data Processing).</P>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="11" title="Hybrid Search" sub="Combining keyword (BM25) + semantic search" color="var(--orange)"/>
+  <P>Semantic search finds meaning, but exact strings like &quot;ProMax 15&quot; can rank oddly. BM25 nails exact tokens. Hybrid merges and re-scores both signals.</P>
+  <HybridSearchDemo/>
+  <CB>{[
+"from langchain.retrievers import EnsembleRetriever",
+"from langchain_community.retrievers import BM25Retriever",
+"",
+"bm25 = BM25Retriever.from_texts(chunks)",
+"bm25.k = 5",
+"semantic = vectorstore.as_retriever(search_kwargs=dict(k=5))",
+"hybrid = EnsembleRetriever(retrievers=[bm25, semantic], weights=[0.4, 0.6])",
+  ].join("\n")}</CB>
+  <Callout color="var(--orange)" icon="⚖️">Start near <code>[0.3, 0.7]</code> favoring semantic; raise keyword weight for SKUs, IDs, and product codes.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="12" title="Query Transformation" sub="Rewriting queries for better retrieval" color="var(--orange)"/>
+  <P>Vague vs specific queries change retrieval completely. Transform before search.</P>
+  <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+    {[{t:"Query Rewriting",b:"LLM: make the question specific and search-friendly. Cost: +1 LLM call."},{t:"Step-Back Prompting",b:"Broad context first, then the specific question (e.g. electronics policy, then 20-day edge case)."}, {t:"Query Decomposition",b:"Split complex asks; search each. Ties to Multi-Query RAG (Ch 15)."}].map((c,i)=>(<div key={i} style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid var(--orange)"}}><div style={{fontWeight:700,color:"var(--orange)",marginBottom:6}}>{c.t}</div><div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>{c.b}</div></div>))}
+  </div>
+  <Callout color="var(--purple)" icon="🎯">Highest ROI fix: bad queries are the #1 retrieval failure mode.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="13" title="HyDE — Hypothetical Document Embeddings" sub="Generate a fake answer, search with that" color="var(--orange)"/>
+  <P>LLM writes a plausible passage in document tone; you embed that text for search — not the raw question.</P>
+  <HyDEFlowDemo/>
+  <Callout color="var(--red)" icon="⚠️">The hypothetical text may be wrong; it is only for retrieval. Final answers still come from real chunks.</Callout>
+  <P>✅ Short/vague queries, long docs. ❌ Already-specific queries or strict latency.</P>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="14" title="Re-ranking" sub="Retrieve many, then re-score with a smarter model" color="var(--orange)"/>
+  <P>Bi-encoder similarity is fast; cross-encoders / hosted rerankers read query+doc jointly and reorder.</P>
+  <RerankDemo/>
+  <CB>{[
+"from cohere import Client",
+"co = Client(api_key='...')",
+"results = co.rerank(",
+"    query='What is the electronics return policy?',",
+"    documents=[c.text for c in initial_results],",
+"    top_n=5,",
+"    model='rerank-english-v3.0',",
+")",
+  ].join("\n")}</CB>
+  <Callout color="var(--accent)" icon="⚡">Retrieve ~20, re-rank to ~5 — often the biggest quality jump for acceptable latency.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="15" title="Multi-Query RAG" sub="Break one question into sub-questions" color="var(--orange)"/>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{`Compare electronics vs software returns
+ → sub-queries per topic → merge + dedupe → LLM compares`}</pre>
+  </div>
+  <Callout color="var(--build-color)" icon="💰">Roughly 3–5× retrieval cost — reserve for complex, multi-evidence questions.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="16" title="Metadata Filtering" sub="Narrow your search before it starts" color="var(--accent)"/>
+  <P>Part 1 Chroma <code>where</code> filters scale to dates, RBAC, department, version.</P>
+  <CB>{[
+"metadatas = {",
+'  "source": "employee_handbook.txt",',
+'  "category": "hr",',
+'  "last_updated": "2025-03-01",',
+'  "access_level": "internal",',
+'  "version": "3.2",',
+"}",
+  ].join("\n")}</CB>
+  <Callout color="var(--accent)" icon="🔐">Metadata is how enterprises enforce who sees which chunks.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="17" title="Parent-Child Retrieval" sub="Search small, send big" color="var(--accent)"/>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",lineHeight:1.72,margin:0,whiteSpace:"pre-wrap"}}>{`Parent (full section) → child chunks indexed
+Match child → inject parent text into LLM context`}</pre>
+  </div>
+  <Callout color="var(--purple)" icon="📎">Use <code>ParentDocumentRetriever</code> in LangChain.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="18" title="Conversational RAG" sub="Handling follow-up questions with chat history" color="var(--accent)"/>
+  <P>Rewrite follow-ups with history <em>before</em> embedding search — the DB has no memory.</P>
+  <CB>{[
+"def rewrite_with_history(question, chat_history):",
+"    history_text = '\\n'.join(",
+"        f\"{m['role']}: {m['content']}\" for m in chat_history[-4:])",
+"    return ask(",
+"        f\"Given:\\n{history_text}\\n\\nRewrite as standalone: '{question}'\",",
+'        system_prompt="Output only the rewritten question."',
+"    )",
+  ].join("\n")}</CB>
+  <Callout color="var(--info-color)" icon="🔁">Search uses the rewritten string, generation uses full history.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="19" title="Multi-Document RAG" sub="Querying across different document collections" color="var(--accent)"/>
+  <P>One collection + metadata vs routed collections vs search-all + merge/rerank.</P>
+  <CB>{[
+"def route_query(question):",
+"    name = ask(",
+"        f\"Which collection answers: '{question}'?\\n\"",
+'        f"hr_policies | product_docs | support_tickets\\nName only.",',
+"        temperature=0,",
+"    )",
+"    return name.strip()",
+  ].join("\n")}</CB>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="20" title="RAG Evaluation Framework" sub="How to measure if your RAG is actually good" color="var(--purple)"/>
+  <SH>Layers</SH>
+  <ul style={{margin:"0.5rem 0",paddingLeft:20,color:"var(--text-secondary)",lineHeight:1.75}}>
+    <li>Retrieval: context relevance, context recall</li>
+    <li>Generation: faithfulness, answer relevance</li>
+    <li>End-to-end: correctness vs ground truth</li>
+  </ul>
+  <EvalFrameworkDemo/>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#94A3B8",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.72rem",lineHeight:1.7,margin:0}}>Question → Retrieval → Chunks → Generation → Answer</pre>
+  </div>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="21" title="RAGAS" sub="Automated RAG evaluation pipeline" color="var(--purple)"/>
+  <CB>{[
+"from ragas import evaluate",
+"from ragas.metrics import faithfulness, context_relevancy, answer_relevancy",
+"result = evaluate(dataset, metrics=[...])",
+  ].join("\n")}</CB>
+  <Callout color="var(--purple)" icon="📊">Budget 20–30+ labeled QA pairs to see real trends.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="22" title="Debugging RAG" sub="Is it a retrieval problem or a generation problem?" color="var(--purple)"/>
+  <P>Extend Part 1 Ch.10: pair metrics with fixes.</P>
+  <DebugTreeDemo/>
+  <Callout color="var(--accent)" icon="🔍">Print retrieved chunks first — right chunks ⇒ generation; missing ⇒ retrieval.</Callout>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="23" title="Vector DB Comparison" sub="Choosing the right database for production" color="var(--info-color)"/>
+  <div style={{background:"white",borderRadius:10,padding:"0.75rem",border:"1px solid var(--border)",overflowX:"auto",fontSize:"0.7rem"}}>
+    <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{["Feature","ChromaDB","Pinecone","pgvector","Weaviate","Qdrant"].map((h)=><th key={h} style={{textAlign:"left",padding:6,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>{h}</th>)}</tr></thead><tbody>
+      {[["Type","Embedded","Managed","PG ext","Self/cloud","Self/cloud"],["Setup","pip","API key","Postgres","Docker/cloud","Docker/cloud"],["Scale","~100K","Billions","Millions","Billions","Billions"],["Best for","Learn","No ops","On Postgres","Hybrid/MM","Perf"]].map((row,ri)=><tr key={ri}>{row.map((c,ci)=><td key={ci} style={{padding:6,borderBottom:"1px solid var(--border-light)",color:ci?"var(--text-secondary)":"var(--text)",fontWeight:ci?400:600}}>{c}</td>)}</tr>)}
+    </tbody></table>
+  </div>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginTop:10}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",margin:0,whiteSpace:"pre-wrap"}}>{`Prototype → Chroma
+On Postgres → pgvector
+Zero ops → Pinecone
+Hybrid / multi-modal → Weaviate
+Max perf → Qdrant`}</pre>
+  </div>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="24" title="Scaling RAG" sub="From thousands to millions of documents" color="var(--info-color)"/>
+  <P>Batch embed, parallelize, incremental updates with content hashes. Costs scale with tokens indexed + query volume; generation often dominates ongoing spend.</P>
+  <P>Watch index build time, p95 latency, sharding / hot vs cold corpora.</P>
+</section>
+
+<section style={{paddingTop:"2rem"}}><ChH num="25" title="RAG in Production" sub="Caching, monitoring, versioning" color="var(--info-color)"/>
+  <P>Cache hot queries + retrieved contexts. Monitor latency, scores, cost, cache hits, user feedback. Version indexed corpora and regression-test before cutover.</P>
+  <div style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",margin:"1rem 0"}}>
+    <pre style={{margin:0,fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",color:"var(--text-secondary)",whiteSpace:"pre-wrap"}}>{`☐ Vector DB failure handling
+☐ Rate limits
+☐ Input validation
+☐ Low-score fallback ("I don't know")
+☐ Query / retrieval / answer logs
+☐ Scheduled RAGAS
+☐ Cost dashboards`}</pre>
+  </div>
+</section>
+
+<div style={{marginTop:"3rem",padding:"1.75rem",background:"white",borderRadius:12,textAlign:"center",border:"1px solid var(--border)"}}>
+  <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.3rem",fontWeight:700,marginBottom:6}}>RAG Part 2 Complete</div>
+  <div style={{color:"var(--text-muted)",fontSize:"0.92rem",lineHeight:1.6}}>You now have the full toolkit — from basic retrieval to production-grade evaluation and infrastructure.</div>
+  <div style={{color:"var(--info-color)",fontSize:"0.88rem",fontWeight:600,marginTop:8}}>Next → Frameworks (LangChain &amp; LlamaIndex)</div>
+</div>
+
+  </div></div></div>);
+}
+
+ReactDOM.render(<App/>, document.getElementById("root"));
+</script>
+</body>
+</html>
