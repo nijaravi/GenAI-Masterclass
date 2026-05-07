@@ -32,7 +32,7 @@ def cli_v2(model="gpt-4o-mini"):
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=1000,
+                max_tokens=10,
                 timeout=30
             )
             

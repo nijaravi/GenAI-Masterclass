@@ -39,17 +39,17 @@ function HybridSearchDemo(){
   const [mode,setMode]=useState(0);
   const labels=["Keyword (BM25)","Semantic (embeddings)","Hybrid (BM25 + Semantic)"];
   const blocks=[
-`✅ Finds chunks containing exact words "ProMax" and "15"
-❌ Misses chunks about "laptop returns" that don't mention "ProMax"`,
-`✅ Finds chunks about "returning electronics" even without "ProMax"
-❌ Might rank generic "return policy" higher than the ProMax-specific chunk`,
+`✅ Finds exact string "Version 3.2" in handbook chunks
+❌ Misses chunks phrased as "updated policy document" without that exact text`,
+`✅ Finds policy chunks about employee handbook updates
+❌ Can rank generic "policy" chunks above exact "Version 3.2" matches`,
 `✅ Finds exact matches AND meaning-based matches
-✅ ProMax-specific chunks rank highest (both signals agree)`,
+✅ "Version 3.2" handbook chunk ranks highest (both signals agree)`,
   ];
   return(
     <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
       <div style={{color:"#F97316",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
-      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:6}}>Query: &quot;ProMax 15 return policy&quot;</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:6}}>Query: &quot;Version 3.2 employee handbook&quot;</div>
       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:"1rem"}}>
         {labels.map((l,i)=>(<button key={i} type="button" onClick={()=>setMode(i)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.74rem",fontWeight:600,background:mode===i?"#F97316":"#252833",color:mode===i?"#111":"#94A3B8"}}>{l}</button>))}
       </div>
@@ -210,7 +210,28 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="11" title="Hybrid Search" sub="Combining keyword (BM25) + semantic search" color="var(--orange)"/>
-  <P>Semantic search finds meaning, but exact strings like &quot;ProMax 15&quot; can rank oddly. BM25 nails exact tokens. Hybrid merges and re-scores both signals.</P>
+  <P>Semantic search is powerful for meaning, but it has a blind spot: exact identifiers. Strings like <code>SKU-7842</code>, <code>Version 3.2</code>, <code>$1,299</code>, and policy IDs are arbitrary text, so embedding models often treat them weakly.</P>
+  <P>BM25 is the opposite: it is weak on paraphrase but excellent at exact string matching. Search for <code>Version 3.2</code> and it finds the exact chunks containing those characters.</P>
+  <P>Neither alone is enough. Hybrid search combines both signals so exact IDs and semantic meaning can both influence ranking.</P>
+  <Callout color="var(--orange)" icon="📚">Think of a library: semantic search is a skilled librarian who understands topics; BM25 is the card catalog for exact ISBN lookups. You need both systems to search well.</Callout>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{[
+"Query: \"Version 3.2 employee handbook\"",
+"",
+"Keyword (BM25) search:",
+"  ✅ Finds: \"TechStore Employee Handbook - HR Policies, Version 3.2\"",
+"  ❌ Misses: \"Company policy document updated March 2025\"",
+"",
+"Semantic (embedding) search:",
+"  ✅ Finds: \"Company policy document updated March 2025\"",
+"  ❌ Can rank \"Version 3.2\" chunks lower",
+"",
+"Hybrid search:",
+"  ✅ Finds both exact-string and meaning matches",
+"  ✅ Exact version chunk rises when both signals agree",
+  ].join("\n")}</pre>
+  </div>
+  <P>Mechanically, hybrid runs BM25 and semantic retrieval independently, normalizes scores to a comparable range, then combines them with weights.</P>
   <HybridSearchDemo/>
   <CB>{[
 "from langchain.retrievers import EnsembleRetriever",
@@ -221,26 +242,52 @@ function App(){
 "semantic = vectorstore.as_retriever(search_kwargs=dict(k=5))",
 "hybrid = EnsembleRetriever(retrievers=[bm25, semantic], weights=[0.4, 0.6])",
   ].join("\n")}</CB>
+  <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+    {[{t:"Default for most queries",b:"[0.3 keyword, 0.7 semantic] - favor meaning and paraphrase handling."},{t:"Product/legal/spec docs",b:"[0.5, 0.5] - balance exact terms and semantic relevance."},{t:"Code/ID lookup workloads",b:"[0.7, 0.3] - favor exact identifiers and version strings."}].map((c,i)=>(<div key={i} style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid var(--orange)"}}><div style={{fontWeight:700,color:"var(--orange)",marginBottom:6}}>{c.t}</div><div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>{c.b}</div></div>))}
+  </div>
   <Callout color="var(--orange)" icon="⚖️">Start near <code>[0.3, 0.7]</code> favoring semantic; raise keyword weight for SKUs, IDs, and product codes.</Callout>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="12" title="Query Transformation" sub="Rewriting queries for better retrieval" color="var(--orange)"/>
-  <P>Vague vs specific queries change retrieval completely. Transform before search.</P>
-  <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
-    {[{t:"Query Rewriting",b:"LLM: make the question specific and search-friendly. Cost: +1 LLM call."},{t:"Step-Back Prompting",b:"Broad context first, then the specific question (e.g. electronics policy, then 20-day edge case)."}, {t:"Query Decomposition",b:"Split complex asks; search each. Ties to Multi-Query RAG (Ch 15)."}].map((c,i)=>(<div key={i} style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid var(--orange)"}}><div style={{fontWeight:700,color:"var(--orange)",marginBottom:6}}>{c.t}</div><div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>{c.b}</div></div>))}
+  <P>The #1 cause of weak RAG answers is bad user queries, not bad embeddings. Users type informal language; documents are written in formal policy language.</P>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{[
+"User query style                     Document style",
+"----------------                     --------------",
+"\"what's the deal with returns?\"      \"Standard items may be returned within 30 days...\"",
+"\"can I work from home?\"             \"Remote Work Policy: corporate employees may...\"",
+"\"time off stuff\"                    \"Paid Time Off (PTO): accrual rates and carry-over...\"",
+    ].join("\n")}</pre>
   </div>
-  <Callout color="var(--purple)" icon="🎯">Highest ROI fix: bad queries are the #1 retrieval failure mode.</Callout>
+  <P>Query transformation bridges this mismatch by rewriting the query <em>before</em> search.</P>
+  <div style={{display:"flex",flexDirection:"column",gap:10,margin:"1rem 0"}}>
+    {[{t:"Query Rewriting",b:"LLM rewrites casual asks into search-friendly document language. Example: \"time off stuff\" -> \"What is the PTO policy including accrual rates and carry-over limits?\" Cost: one cheap extra LLM call."},{t:"Step-Back Prompting",b:"Generate a broader context query first, then answer the specific edge case. Useful when one narrow query misses relevant policy context."}, {t:"Query Decomposition",b:"Split multi-part questions into sub-questions, search each, then merge evidence. Best for compare/contrast or multi-constraint asks."}].map((c,i)=>(<div key={i} style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",borderLeft:"4px solid var(--orange)"}}><div style={{fontWeight:700,color:"var(--orange)",marginBottom:6}}>{c.t}</div><div style={{color:"var(--text-secondary)",fontSize:"0.9rem"}}>{c.b}</div></div>))}
+  </div>
+  <Callout color="var(--purple)" icon="🎯">Highest ROI improvement: query transformation is usually cheaper and more effective than changing chunking or embedding models first.</Callout>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="13" title="HyDE — Hypothetical Document Embeddings" sub="Generate a fake answer, search with that" color="var(--orange)"/>
-  <P>LLM writes a plausible passage in document tone; you embed that text for search — not the raw question.</P>
+  <P><strong>Why:</strong> questions are short, documents are long. Question embeddings and paragraph embeddings can land in different regions of vector space even on the same topic.</P>
+  <P><strong>What:</strong> generate a hypothetical answer first, embed that, and search with it. You are matching statement-to-statement instead of question-to-statement.</P>
+  <P><strong>How:</strong> generate hypothetical text -> embed hypothesis -> retrieve real chunks -> answer only from real chunks. The hypothetical text is discarded after retrieval.</P>
   <HyDEFlowDemo/>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{[
+"Q: \"What happens if my order arrives damaged?\"",
+"1) Hypothesis: \"Report damage within 48 hours with photos...\" (may be wrong)",
+"2) Embed hypothesis, not original question",
+"3) Retrieve real damaged-item policy chunk",
+"4) Generate final answer from real chunk only",
+    ].join("\n")}</pre>
+  </div>
   <Callout color="var(--red)" icon="⚠️">The hypothetical text may be wrong; it is only for retrieval. Final answers still come from real chunks.</Callout>
   <P>✅ Short/vague queries, long docs. ❌ Already-specific queries or strict latency.</P>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="14" title="Re-ranking" sub="Retrieve many, then re-score with a smarter model" color="var(--orange)"/>
-  <P>Bi-encoder similarity is fast; cross-encoders / hosted rerankers read query+doc jointly and reorder.</P>
+  <P><strong>Why:</strong> embedding search compares query and chunk independently. It is fast, but can miss fine-grained relevance (for example, matching PTO generally vs specifically about unused PTO).</P>
+  <P><strong>What:</strong> two-stage retrieval - first retrieve broad candidates quickly, then score query+chunk jointly with a re-ranker.</P>
+  <P><strong>How:</strong> search top ~20 in milliseconds -> rerank top ~20 with deeper model -> keep top ~5 for the LLM.</P>
   <RerankDemo/>
   <CB>{[
 "from cohere import Client",
@@ -252,10 +299,21 @@ function App(){
 "    model='rerank-english-v3.0',",
 ")",
   ].join("\n")}</CB>
-  <Callout color="var(--accent)" icon="⚡">Retrieve ~20, re-rank to ~5 — often the biggest quality jump for acceptable latency.</Callout>
+  <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
+    <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{[
+"Example impact:",
+"Before rerank: unused-PTO chunk is #3",
+"After rerank:  unused-PTO chunk moves to #1",
+"Result: answer prompt starts with the most directly relevant evidence",
+    ].join("\n")}</pre>
+  </div>
+  <Callout color="var(--accent)" icon="⚡">Re-ranking is often the biggest quality jump after query transformation. Extra latency is usually worth it.</Callout>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="15" title="Multi-Query RAG" sub="Break one question into sub-questions" color="var(--orange)"/>
+  <P><strong>Why:</strong> one embedding vector points in one direction; compound questions often need evidence from multiple sections.</P>
+  <P><strong>What:</strong> decompose one complex ask into focused sub-questions, retrieve per sub-question, then merge and dedupe results.</P>
+  <P><strong>How:</strong> ask LLM for 2-3 sub-queries, run retrieval for each, combine top chunks, and pass balanced evidence to generation.</P>
   <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
     <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{`Compare electronics vs software returns
  → sub-queries per topic → merge + dedupe → LLM compares`}</pre>
@@ -264,7 +322,9 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="16" title="Metadata Filtering" sub="Narrow your search before it starts" color="var(--accent)"/>
-  <P>Part 1 Chroma <code>where</code> filters scale to dates, RBAC, department, version.</P>
+  <P><strong>Why:</strong> production corpora are not uniformly public or current. The same question should return different results for customers vs employees, or old vs current policy versions.</P>
+  <P><strong>What:</strong> apply filters <em>before</em> vector search to constrain candidates by access level, department, date, version, or region.</P>
+  <P><strong>How:</strong> define rich metadata schema during indexing and use <code>where</code> filters at query time; this improves both precision and latency.</P>
   <CB>{[
 "metadatas = {",
 '  "source": "employee_handbook.txt",',
@@ -278,6 +338,9 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="17" title="Parent-Child Retrieval" sub="Search small, send big" color="var(--accent)"/>
+  <P><strong>Why:</strong> small chunks retrieve precisely but lose context; large chunks preserve context but reduce retrieval precision.</P>
+  <P><strong>What:</strong> index small child chunks for matching, then return larger parent sections to the LLM for complete context.</P>
+  <P><strong>How:</strong> child hit identifies parent ID -> parent text is injected into prompt. You keep precision and context at the same time.</P>
   <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
     <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",lineHeight:1.72,margin:0,whiteSpace:"pre-wrap"}}>{`Parent (full section) → child chunks indexed
 Match child → inject parent text into LLM context`}</pre>
@@ -286,7 +349,9 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="18" title="Conversational RAG" sub="Handling follow-up questions with chat history" color="var(--accent)"/>
-  <P>Rewrite follow-ups with history <em>before</em> embedding search — the DB has no memory.</P>
+  <P><strong>Why:</strong> follow-up queries like &quot;What about electronics?&quot; are ambiguous without history. Vector DBs see only the current string and cannot infer prior turns.</P>
+  <P><strong>What:</strong> rewrite each follow-up into a standalone question using recent chat context.</P>
+  <P><strong>How:</strong> rewrite with last 2-3 exchanges, retrieve using rewritten query, then answer with both retrieved context and conversation context.</P>
   <CB>{[
 "def rewrite_with_history(question, chat_history):",
 "    history_text = '\\n'.join(",
@@ -300,7 +365,9 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="19" title="Multi-Document RAG" sub="Querying across different document collections" color="var(--accent)"/>
-  <P>One collection + metadata vs routed collections vs search-all + merge/rerank.</P>
+  <P><strong>Why:</strong> real organizations keep HR, legal, product, and support docs in separate domains with different owners and access rules.</P>
+  <P><strong>What:</strong> choose among three patterns: single collection + metadata, routed multi-collection search, or search-all + rerank.</P>
+  <P><strong>How:</strong> route query to likely collection, retrieve there first, and use fallback/merge strategies when domain overlap is high.</P>
   <CB>{[
 "def route_query(question):",
 "    name = ask(",
@@ -313,6 +380,9 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="20" title="RAG Evaluation Framework" sub="How to measure if your RAG is actually good" color="var(--purple)"/>
+  <P><strong>Why:</strong> &quot;it looks fine on a few questions&quot; is not a quality strategy. You need repeatable metrics to know where the pipeline fails.</P>
+  <P><strong>What:</strong> evaluate retrieval and generation separately: context relevance/recall, faithfulness, answer relevance, and end-to-end correctness.</P>
+  <P><strong>How:</strong> run a fixed evaluation set regularly, diagnose which stage failed, then target fixes (retrieval tuning vs prompt/model changes).</P>
   <SH>Layers</SH>
   <ul style={{margin:"0.5rem 0",paddingLeft:20,color:"var(--text-secondary)",lineHeight:1.75}}>
     <li>Retrieval: context relevance, context recall</li>
@@ -335,12 +405,16 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="22" title="Debugging RAG" sub="Is it a retrieval problem or a generation problem?" color="var(--purple)"/>
-  <P>Extend Part 1 Ch.10: pair metrics with fixes.</P>
+  <P><strong>Why:</strong> wrong answers can come from retrieval, generation, or ambiguous user intent. Fixing the wrong layer wastes time.</P>
+  <P><strong>Workflow:</strong> inspect retrieved chunks first, then generation behavior, then query ambiguity. Do not tune prompts until retrieval is verified.</P>
+  <P><strong>Rule of thumb:</strong> if right chunks are missing -> retrieval problem. If right chunks are present but answer is wrong -> generation problem.</P>
   <DebugTreeDemo/>
-  <Callout color="var(--accent)" icon="🔍">Print retrieved chunks first — right chunks ⇒ generation; missing ⇒ retrieval.</Callout>
+  <Callout color="var(--accent)" icon="🔍">90% rule: print retrieved chunks first. Missing evidence means retrieval bug; present evidence with wrong answer means generation bug.</Callout>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="23" title="Vector DB Comparison" sub="Choosing the right database for production" color="var(--info-color)"/>
+  <P>All vector databases do the same core job: store vectors and find nearest neighbors. Differences are mostly scale, hosting model, filtering capability, and operational cost.</P>
+  <P>The concepts you learned with Chroma (collections, metadata filters, similarity search) transfer directly - only API syntax and infrastructure trade-offs change.</P>
   <div style={{background:"white",borderRadius:10,padding:"0.75rem",border:"1px solid var(--border)",overflowX:"auto",fontSize:"0.7rem"}}>
     <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{["Feature","ChromaDB","Pinecone","pgvector","Weaviate","Qdrant"].map((h)=><th key={h} style={{textAlign:"left",padding:6,borderBottom:"2px solid var(--border)",background:"var(--bg)"}}>{h}</th>)}</tr></thead><tbody>
       {[["Type","Embedded","Managed","PG ext","Self/cloud","Self/cloud"],["Setup","pip","API key","Postgres","Docker/cloud","Docker/cloud"],["Scale","~100K","Billions","Millions","Billions","Billions"],["Best for","Learn","No ops","On Postgres","Hybrid/MM","Perf"]].map((row,ri)=><tr key={ri}>{row.map((c,ci)=><td key={ci} style={{padding:6,borderBottom:"1px solid var(--border-light)",color:ci?"var(--text-secondary)":"var(--text)",fontWeight:ci?400:600}}>{c}</td>)}</tr>)}
@@ -356,20 +430,29 @@ Max perf → Qdrant`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="24" title="Scaling RAG" sub="From thousands to millions of documents" color="var(--info-color)"/>
-  <P>Batch embed, parallelize, incremental updates with content hashes. Costs scale with tokens indexed + query volume; generation often dominates ongoing spend.</P>
-  <P>Watch index build time, p95 latency, sharding / hot vs cold corpora.</P>
+  <P>Batch embed, parallelize, and use incremental updates with content hashes. Costs scale with indexed tokens and query volume; generation often dominates ongoing spend.</P>
+  <P>Rough scale intuition: ~10K docs can run comfortably on local Chroma; ~100K docs usually need persistent server resources; 1M+ docs typically need sharding and managed vector infra.</P>
+  <P>Watch index build time, p95 latency, and hot/cold corpus design. Re-indexing large corpora can become a meaningful recurring cost.</P>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="25" title="RAG in Production" sub="Caching, monitoring, versioning" color="var(--info-color)"/>
-  <P>Cache hot queries + retrieved contexts. Monitor latency, scores, cost, cache hits, user feedback. Version indexed corpora and regression-test before cutover.</P>
+  <P>Production RAG needs resilience, uncertainty handling, and observability - not just good prompts.</P>
+  <P>Cache hot queries + contexts. Monitor latency, retrieval scores, cost, cache hit rate, and user feedback together. Version indexed corpora and regression-test before cutover.</P>
   <div style={{background:"white",borderRadius:10,padding:"1rem",border:"1px solid var(--border)",margin:"1rem 0"}}>
     <pre style={{margin:0,fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",color:"var(--text-secondary)",whiteSpace:"pre-wrap"}}>{`☐ Vector DB failure handling
+  Return a graceful "search temporarily unavailable" message instead of crashing.
 ☐ Rate limits
+  Protect upstream APIs with backoff/retry and user-facing fallback text.
 ☐ Input validation
+  Validate empty queries, extremely long inputs, and malformed metadata filters.
 ☐ Low-score fallback ("I don't know")
+  If all retrieval scores are weak, avoid confident hallucinated answers.
 ☐ Query / retrieval / answer logs
-☐ Scheduled RAGAS
-☐ Cost dashboards`}</pre>
+  Log enough detail to debug retrieval misses and answer failures quickly.
+☐ Scheduled eval checks
+  Run recurring quality checks on a fixed test set to catch regressions early.
+☐ Cost dashboards
+  Track embedding/search/generation spend by feature and team.`}</pre>
   </div>
 </section>
 

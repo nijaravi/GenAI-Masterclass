@@ -6,7 +6,7 @@
 from openai import OpenAI
 
 from dotenv import load_dotenv
-import os
+# import os
 load_dotenv(override=True)
 
 # Initialize client (make sure OPENAI_API_KEY is set in env)
@@ -21,6 +21,7 @@ def cli_v1():
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": question}]
+        max_tokens=200,
     )
 
     print("\nResponse:\n")

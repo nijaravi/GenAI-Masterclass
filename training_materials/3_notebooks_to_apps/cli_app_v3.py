@@ -9,6 +9,8 @@ from openai import RateLimitError, APITimeoutError
 
 from dotenv import load_dotenv
 import os
+
+from sqlalchemy import true
 load_dotenv(override=True)
 
 client = OpenAI()
@@ -64,14 +66,14 @@ def cli_v2(question, model="gpt-4o-mini"):
     print("❌ Failed after retries.")
 
 
-def cli_v3(model="gpt-4o-mini", stream=True):
+def cli_v3(stream_mode, model="gpt-4o-mini", ):
     """Streaming CLI."""
     
     question = input("Ask your question: ")
     messages = [{"role": "user", "content": question}]
     
     try:
-        if stream:
+        if stream_mode:
             print("\nResponse:\n")
             
             response_stream = client.chat.completions.create(
@@ -106,4 +108,4 @@ def cli_v3(model="gpt-4o-mini", stream=True):
 
 if __name__ == "__main__":
     print("Streaming mode enabled 🚀")
-    cli_v3(stream=False)
+    cli_v3(stream_mode=False)
