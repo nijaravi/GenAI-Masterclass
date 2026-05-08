@@ -161,8 +161,7 @@ const CHAPTERS=[
   {id:"ch18",num:"18",title:"Conversational RAG",sub:"Follow-ups",group:"prod"},
   {id:"ch19",num:"19",title:"Multi-Document RAG",sub:"Collections",group:"prod"},
   {id:"ch20",num:"20",title:"RAG Evaluation Framework",sub:"Metrics",group:"eval"},
-  {id:"ch21",num:"21",title:"RAGAS",sub:"Automated eval",group:"eval"},
-  {id:"ch22",num:"22",title:"Debugging RAG",sub:"Find the break",group:"eval"},
+  {id:"ch21",num:"21",title:"Debugging RAG",sub:"Find the break",group:"eval"},
   {id:"ch23",num:"23",title:"Vector DB Comparison",sub:"Production choice",group:"infra"},
   {id:"ch24",num:"24",title:"Scaling RAG",sub:"Millions of docs",group:"infra"},
   {id:"ch25",num:"25",title:"RAG in Production",sub:"Ops checklist",group:"infra"},
@@ -204,7 +203,7 @@ function App(){
     <li><strong style={{color:"var(--text)"}}>Evaluation</strong> — is the system good? When it fails, where is the break?</li>
   </ul>
   <div style={{display:"flex",gap:14,marginTop:"1.25rem",flexWrap:"wrap"}}>
-    {[{t:"Advanced Retrieval",r:"Ch 11–15",d:"Hybrid, transforms, HyDE, re-rank, multi-query",c:"var(--orange)",bg:"var(--orange-bg)"},{t:"Production Patterns",r:"Ch 16–19",d:"Metadata, parent–child, conversational, multi-doc",c:"var(--accent)",bg:"var(--accent-light)"},{t:"Evaluation",r:"Ch 20–22",d:"Framework, RAGAS, debugging",c:"var(--purple)",bg:"var(--purple-bg)"},{t:"Infrastructure",r:"Ch 23–25",d:"Vector DBs, scaling, production",c:"var(--info-color)",bg:"var(--info-bg)"}].map((x,i)=>(<div key={i} style={{flex:1,minWidth:158,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+x.c+"33",borderLeft:"4px solid "+x.c}}><div style={{color:x.c,fontWeight:700,fontSize:"0.85rem"}}>{x.t}</div><div style={{color:"var(--text-muted)",fontSize:"0.72rem",marginTop:2}}>{x.r}</div><div style={{color:"var(--text-secondary)",fontSize:"0.78rem",marginTop:4}}>{x.d}</div></div>))}
+    {[{t:"Advanced Retrieval",r:"Ch 11–15",d:"Hybrid, transforms, HyDE, re-rank, multi-query",c:"var(--orange)",bg:"var(--orange-bg)"},{t:"Production Patterns",r:"Ch 16–19",d:"Metadata, parent–child, conversational, multi-doc",c:"var(--accent)",bg:"var(--accent-light)"},{t:"Evaluation",r:"Ch 20–21",d:"Framework and debugging",c:"var(--purple)",bg:"var(--purple-bg)"},{t:"Infrastructure",r:"Ch 23–25",d:"Vector DBs, scaling, production",c:"var(--info-color)",bg:"var(--info-bg)"}].map((x,i)=>(<div key={i} style={{flex:1,minWidth:158,background:"white",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid "+x.c+"33",borderLeft:"4px solid "+x.c}}><div style={{color:x.c,fontWeight:700,fontSize:"0.85rem"}}>{x.t}</div><div style={{color:"var(--text-muted)",fontSize:"0.72rem",marginTop:2}}>{x.r}</div><div style={{color:"var(--text-secondary)",fontSize:"0.78rem",marginTop:4}}>{x.d}</div></div>))}
   </div>
   <P style={{marginTop:"1.1rem",fontSize:"0.95rem",color:"var(--text-muted)"}}>Prerequisite: <a href="./4-rag-part1.html" style={{color:"var(--info-color)",fontWeight:600}}>Section 4 — RAG Part 1</a> (Chapters 1–11 there, including Advanced Data Processing).</P>
 </section>
@@ -267,9 +266,12 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="13" title="HyDE — Hypothetical Document Embeddings" sub="Generate a fake answer, search with that" color="var(--orange)"/>
-  <P><strong>Why:</strong> questions are short, documents are long. Question embeddings and paragraph embeddings can land in different regions of vector space even on the same topic.</P>
-  <P><strong>What:</strong> generate a hypothetical answer first, embed that, and search with it. You are matching statement-to-statement instead of question-to-statement.</P>
-  <P><strong>How:</strong> generate hypothetical text -> embed hypothesis -> retrieve real chunks -> answer only from real chunks. The hypothetical text is discarded after retrieval.</P>
+  <SH>The Question-Document Mismatch</SH>
+  <P>Questions are short, while documents are long and formal. Question embeddings and paragraph embeddings can land in different regions of vector space even when they describe the same policy.</P>
+  <SH>The Counterintuitive Idea</SH>
+  <P>Generate a hypothetical answer first, embed that text, and search with it. This makes retrieval statement-to-statement instead of question-to-statement.</P>
+  <SH>Step-By-Step Mechanics</SH>
+  <P>Generate hypothetical text -> embed the hypothesis -> retrieve real chunks -> answer from real chunks only. The hypothetical text is discarded after retrieval.</P>
   <HyDEFlowDemo/>
   <div style={{background:"#1A1D27",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
     <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.73rem",lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{[
@@ -285,9 +287,11 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="14" title="Re-ranking" sub="Retrieve many, then re-score with a smarter model" color="var(--orange)"/>
-  <P><strong>Why:</strong> embedding search compares query and chunk independently. It is fast, but can miss fine-grained relevance (for example, matching PTO generally vs specifically about unused PTO).</P>
-  <P><strong>What:</strong> two-stage retrieval - first retrieve broad candidates quickly, then score query+chunk jointly with a re-ranker.</P>
-  <P><strong>How:</strong> search top ~20 in milliseconds -> rerank top ~20 with deeper model -> keep top ~5 for the LLM.</P>
+  <SH>The Limitation Of Independent Embeddings</SH>
+  <P>Embedding search compares query and chunk independently. It is fast, but can miss fine-grained relevance (for example, matching PTO generally vs specifically about unused PTO).</P>
+  <SH>The Two-Stage Pattern</SH>
+  <P>Retrieve broad candidates quickly, then score query+chunk jointly with a re-ranker.</P>
+  <P>Typical flow: search top ~20 in milliseconds -> rerank top ~20 with deeper model -> keep top ~5 for generation.</P>
   <RerankDemo/>
   <CB>{[
 "from cohere import Client",
@@ -311,9 +315,11 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="15" title="Multi-Query RAG" sub="Break one question into sub-questions" color="var(--orange)"/>
-  <P><strong>Why:</strong> one embedding vector points in one direction; compound questions often need evidence from multiple sections.</P>
-  <P><strong>What:</strong> decompose one complex ask into focused sub-questions, retrieve per sub-question, then merge and dedupe results.</P>
-  <P><strong>How:</strong> ask LLM for 2-3 sub-queries, run retrieval for each, combine top chunks, and pass balanced evidence to generation.</P>
+  <SH>When Single Search Is Not Enough</SH>
+  <P>One embedding vector points in one direction; compound questions often need evidence from multiple sections.</P>
+  <SH>Breaking One Question Into Several</SH>
+  <P>Decompose one complex ask into focused sub-questions, retrieve per sub-question, then merge and dedupe results.</P>
+  <P>Practical flow: ask LLM for 2-3 sub-queries, run retrieval for each, combine top chunks, and pass balanced evidence to generation.</P>
   <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
     <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.76rem",lineHeight:1.75,margin:0,whiteSpace:"pre-wrap"}}>{`Compare electronics vs software returns
  → sub-queries per topic → merge + dedupe → LLM compares`}</pre>
@@ -322,9 +328,11 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="16" title="Metadata Filtering" sub="Narrow your search before it starts" color="var(--accent)"/>
-  <P><strong>Why:</strong> production corpora are not uniformly public or current. The same question should return different results for customers vs employees, or old vs current policy versions.</P>
-  <P><strong>What:</strong> apply filters <em>before</em> vector search to constrain candidates by access level, department, date, version, or region.</P>
-  <P><strong>How:</strong> define rich metadata schema during indexing and use <code>where</code> filters at query time; this improves both precision and latency.</P>
+  <SH>Beyond Basic Filtering</SH>
+  <P>Production corpora are not uniformly public or current. The same question often needs different results for customers vs employees, or current vs legacy policy versions.</P>
+  <SH>Filter First, Then Search</SH>
+  <P>Apply filters <em>before</em> vector search to constrain candidates by access level, department, date, version, or region.</P>
+  <P>Define rich metadata schema during indexing and use <code>where</code> filters at query time; this improves both precision and latency.</P>
   <CB>{[
 "metadatas = {",
 '  "source": "employee_handbook.txt",',
@@ -338,9 +346,11 @@ function App(){
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="17" title="Parent-Child Retrieval" sub="Search small, send big" color="var(--accent)"/>
-  <P><strong>Why:</strong> small chunks retrieve precisely but lose context; large chunks preserve context but reduce retrieval precision.</P>
-  <P><strong>What:</strong> index small child chunks for matching, then return larger parent sections to the LLM for complete context.</P>
-  <P><strong>How:</strong> child hit identifies parent ID -> parent text is injected into prompt. You keep precision and context at the same time.</P>
+  <SH>The Chunking Dilemma</SH>
+  <P>Small chunks retrieve precisely but lose context; large chunks preserve context but reduce retrieval precision.</P>
+  <SH>Search Small, Send Big</SH>
+  <P>Index small child chunks for matching, then return larger parent sections to the LLM for complete context.</P>
+  <P>Mechanically: child hit identifies parent ID -> parent text is injected into prompt, preserving both precision and context.</P>
   <div style={{background:"#1A1D27",borderRadius:10,padding:"1.1rem",border:"1px solid #2E3240",margin:"1rem 0"}}>
     <pre style={{color:"#E2E8F0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.74rem",lineHeight:1.72,margin:0,whiteSpace:"pre-wrap"}}>{`Parent (full section) → child chunks indexed
 Match child → inject parent text into LLM context`}</pre>
@@ -349,9 +359,11 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="18" title="Conversational RAG" sub="Handling follow-up questions with chat history" color="var(--accent)"/>
-  <P><strong>Why:</strong> follow-up queries like &quot;What about electronics?&quot; are ambiguous without history. Vector DBs see only the current string and cannot infer prior turns.</P>
-  <P><strong>What:</strong> rewrite each follow-up into a standalone question using recent chat context.</P>
-  <P><strong>How:</strong> rewrite with last 2-3 exchanges, retrieve using rewritten query, then answer with both retrieved context and conversation context.</P>
+  <SH>Why Follow-Ups Break Retrieval</SH>
+  <P>Follow-up queries like &quot;What about electronics?&quot; are ambiguous without history. Vector DBs see only the current string and cannot infer prior turns.</P>
+  <SH>Rewrite Before Search</SH>
+  <P>Rewrite each follow-up into a standalone question using recent chat context, then retrieve with the rewritten query.</P>
+  <P>Use the last 2-3 exchanges for rewrite context, then answer with both retrieved evidence and conversation context.</P>
   <CB>{[
 "def rewrite_with_history(question, chat_history):",
 "    history_text = '\\n'.join(",
@@ -365,9 +377,11 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="19" title="Multi-Document RAG" sub="Querying across different document collections" color="var(--accent)"/>
-  <P><strong>Why:</strong> real organizations keep HR, legal, product, and support docs in separate domains with different owners and access rules.</P>
-  <P><strong>What:</strong> choose among three patterns: single collection + metadata, routed multi-collection search, or search-all + rerank.</P>
-  <P><strong>How:</strong> route query to likely collection, retrieve there first, and use fallback/merge strategies when domain overlap is high.</P>
+  <SH>When One Collection Is Not Enough</SH>
+  <P>Real organizations keep HR, legal, product, and support docs in separate domains with different owners and access rules.</P>
+  <SH>Three Retrieval Patterns</SH>
+  <P>Choose among single collection + metadata, routed multi-collection search, or search-all + rerank.</P>
+  <P>A common flow is route query to likely collection, retrieve there first, and apply fallback/merge strategies when domain overlap is high.</P>
   <CB>{[
 "def route_query(question):",
 "    name = ask(",
@@ -380,9 +394,11 @@ Match child → inject parent text into LLM context`}</pre>
 </section>
 
 <section style={{paddingTop:"2rem"}}><ChH num="20" title="RAG Evaluation Framework" sub="How to measure if your RAG is actually good" color="var(--purple)"/>
-  <P><strong>Why:</strong> &quot;it looks fine on a few questions&quot; is not a quality strategy. You need repeatable metrics to know where the pipeline fails.</P>
-  <P><strong>What:</strong> evaluate retrieval and generation separately: context relevance/recall, faithfulness, answer relevance, and end-to-end correctness.</P>
-  <P><strong>How:</strong> run a fixed evaluation set regularly, diagnose which stage failed, then target fixes (retrieval tuning vs prompt/model changes).</P>
+  <SH>Moving Beyond “It Seems To Work”</SH>
+  <P>&quot;It looks fine on a few questions&quot; is not a quality strategy. You need repeatable metrics to know where the pipeline fails.</P>
+  <SH>What To Measure</SH>
+  <P>Evaluate retrieval and generation separately: context relevance/recall, faithfulness, answer relevance, and end-to-end correctness.</P>
+  <P>Run a fixed evaluation set regularly, identify failure stage, then target fixes (retrieval tuning vs prompt/model changes).</P>
   <SH>Layers</SH>
   <ul style={{margin:"0.5rem 0",paddingLeft:20,color:"var(--text-secondary)",lineHeight:1.75}}>
     <li>Retrieval: context relevance, context recall</li>
@@ -395,19 +411,12 @@ Match child → inject parent text into LLM context`}</pre>
   </div>
 </section>
 
-<section style={{paddingTop:"2rem"}}><ChH num="21" title="RAGAS" sub="Automated RAG evaluation pipeline" color="var(--purple)"/>
-  <CB>{[
-"from ragas import evaluate",
-"from ragas.metrics import faithfulness, context_relevancy, answer_relevancy",
-"result = evaluate(dataset, metrics=[...])",
-  ].join("\n")}</CB>
-  <Callout color="var(--purple)" icon="📊">Budget 20–30+ labeled QA pairs to see real trends.</Callout>
-</section>
-
-<section style={{paddingTop:"2rem"}}><ChH num="22" title="Debugging RAG" sub="Is it a retrieval problem or a generation problem?" color="var(--purple)"/>
-  <P><strong>Why:</strong> wrong answers can come from retrieval, generation, or ambiguous user intent. Fixing the wrong layer wastes time.</P>
-  <P><strong>Workflow:</strong> inspect retrieved chunks first, then generation behavior, then query ambiguity. Do not tune prompts until retrieval is verified.</P>
-  <P><strong>Rule of thumb:</strong> if right chunks are missing -> retrieval problem. If right chunks are present but answer is wrong -> generation problem.</P>
+<section style={{paddingTop:"2rem"}}><ChH num="21" title="Debugging RAG" sub="Is it a retrieval problem or a generation problem?" color="var(--purple)"/>
+  <SH>Why RAG Debugging Is Hard</SH>
+  <P>Wrong answers can come from retrieval, generation, or ambiguous user intent. Fixing the wrong layer wastes time.</P>
+  <SH>A Reliable Diagnostic Workflow</SH>
+  <P>Inspect retrieved chunks first, then generation behavior, then query ambiguity. Do not tune prompts until retrieval is verified.</P>
+  <P>If right chunks are missing, it is a retrieval issue. If right chunks are present but answer is wrong, it is a generation issue.</P>
   <DebugTreeDemo/>
   <Callout color="var(--accent)" icon="🔍">90% rule: print retrieved chunks first. Missing evidence means retrieval bug; present evidence with wrong answer means generation bug.</Callout>
 </section>
