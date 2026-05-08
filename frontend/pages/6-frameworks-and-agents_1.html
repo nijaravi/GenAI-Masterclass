@@ -15,18 +15,19 @@
     --border:#E8E5E0;
     --text:#2D2B28;
     --muted:#7A746E;
-    --accent:#1A6B4E;
+    --accent:#1A6B4E;            /* brand green for "by Nij" / overview */
     --accent-bg:#E8F5EE;
 
-    --g1:#B45309;
+    /* Group colors — matching screenshot 2 pattern (warm + green pair) */
+    --g1:#B45309;                 /* Foundations — amber/build */
     --g1-bg:#FEF3E8;
-    --g2:#1A6B4E;
+    --g2:#1A6B4E;                 /* LangChain — green/work */
     --g2-bg:#E8F5EE;
-    --g3:#1E6091;
+    --g3:#1E6091;                 /* LlamaIndex — info blue */
     --g3-bg:#E8F1F8;
-    --g4:#B91C1C;
+    --g4:#B91C1C;                 /* Agents — red, the centerpiece */
     --g4-bg:#FEF3F2;
-    --g5:#6D28D9;
+    --g5:#6D28D9;                 /* Production — purple */
     --g5-bg:#F3EBFE;
 
     --code-bg:#F5F2ED;
@@ -37,8 +38,10 @@
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);line-height:1.65;font-size:16px}
 
+  /* ============ LAYOUT ============ */
   .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
 
+  /* ============ SIDEBAR ============ */
   .sidebar{background:#fff;border-right:1px solid var(--border);padding:1.75rem 1.25rem 2rem;position:sticky;top:0;height:100vh;overflow-y:auto}
   .brand{margin-bottom:1.5rem}
   .brand-name{font-family:'Libre Baskerville',serif;font-size:1.15rem;font-weight:700;color:var(--text);margin:0}
@@ -64,12 +67,14 @@
   .nav-title{font-size:.86rem;font-weight:600;line-height:1.3;margin:0 0 1px}
   .nav-sub{font-size:.74rem;color:var(--muted);line-height:1.3}
 
-  .section-link{display:flex;justify-content:space-between;align-items:center;padding:.55rem .85rem;background:#fff;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text);font-size:.9rem;font-weight:600;margin-top:1.5rem}
+  .section-link{display:block;padding:.55rem .85rem;background:#fff;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text);font-size:.9rem;font-weight:600;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:center}
   .section-link:hover{background:#f5f2ed}
   .section-link .arrow{color:var(--muted)}
 
+  /* ============ MAIN CONTENT ============ */
   .main{padding:3rem 4rem 5rem;max-width:880px}
 
+  /* Hero */
   h1{font-family:'Libre Baskerville',serif;font-size:3rem;line-height:1.1;margin:0 0 .65rem;font-weight:700}
   .dek{font-family:'Libre Baskerville',serif;font-style:italic;font-size:1.25rem;color:var(--accent);margin:0 0 1.75rem;font-weight:400}
   .intro{font-size:1.05rem;line-height:1.7;margin:0 0 1.5rem;color:var(--text)}
@@ -77,9 +82,11 @@
   .accent-amber{color:var(--g1);font-weight:700}
   .accent-green{color:var(--g2);font-weight:700}
 
+  /* Hero callout */
   .hero-callout{background:#FEF7E0;border:1px solid #F4E5A8;border-radius:10px;padding:1.1rem 1.4rem;margin:1.5rem 0 2rem;display:flex;gap:.85rem;font-size:1rem;line-height:1.65}
   .hero-callout .icon{flex:0 0 24px;font-size:1.15rem}
 
+  /* Group preview cards */
   .group-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem;margin:0 0 2.5rem}
   .group-card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
   .group-card-header{padding:.85rem 1.15rem;color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:1rem;display:flex;align-items:center;gap:.55rem}
@@ -97,6 +104,7 @@
   .group-card.g5 .group-card-num{background:var(--g5-bg)}
   .group-card-title{font-weight:700;font-size:.95rem;color:var(--text)}
 
+  /* Chapter blocks */
   .chapter{padding-top:3rem;margin-top:1rem;border-top:1px solid var(--border)}
   .chapter:first-of-type{border-top:none;padding-top:1rem}
   .chapter-label{font-size:.72rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;margin:0 0 .55rem}
@@ -107,12 +115,14 @@
   .chapter ul, .chapter ol{margin:0 0 1.1rem;padding-left:1.5rem}
   .chapter li{margin-bottom:.45rem;line-height:1.65}
 
+  /* Color the chapter labels per group */
   .chapter.g1 .chapter-label{color:var(--g1)}
   .chapter.g2 .chapter-label{color:var(--g2)}
   .chapter.g3 .chapter-label{color:var(--g3)}
   .chapter.g4 .chapter-label{color:var(--g4)}
   .chapter.g5 .chapter-label{color:var(--g5)}
 
+  /* Group section divider banner */
   .group-divider{margin:4rem 0 0;padding:1.1rem 1.4rem;border-radius:10px;color:#fff;font-family:'Libre Baskerville',serif}
   .group-divider.g1{background:var(--g1)}
   .group-divider.g2{background:var(--g2)}
@@ -122,6 +132,7 @@
   .group-divider-num{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;opacity:.85;font-family:'DM Sans',sans-serif;font-weight:700;margin-bottom:.15rem}
   .group-divider-title{font-size:1.45rem;font-weight:700}
 
+  /* Callouts */
   .callout{padding:1rem 1.25rem;border-radius:8px;margin:1.25rem 0;border-left:3px solid;font-size:.97rem}
   .callout.why{background:#FEF7E0;border-color:var(--g1)}
   .callout.what{background:var(--g3-bg);border-color:var(--g3)}
@@ -133,33 +144,40 @@
   .callout p:last-child{margin-bottom:0}
   .callout ul:last-child, .callout ol:last-child{margin-bottom:0}
 
+  /* Analogy */
   .analogy{background:linear-gradient(135deg,#FEF7E0 0%,#fff 70%);border:1px solid #F4E5A8;border-radius:10px;padding:1rem 1.25rem;margin:1.25rem 0;font-style:italic;color:var(--text)}
   .analogy::before{content:"Analogy";font-style:normal;font-weight:700;font-size:.7rem;letter-spacing:1.4px;color:var(--g1);display:block;margin-bottom:.35rem;text-transform:uppercase}
 
+  /* Code */
   pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:1rem 1.15rem;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.55;margin:.85rem 0 1.25rem;color:var(--text)}
   code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px;color:var(--text)}
   pre code{background:transparent;padding:0;border:0}
   .chapter strong{font-weight:700}
 
+  /* Tables */
   table{width:100%;border-collapse:collapse;margin:1rem 0 1.4rem;font-size:.93rem}
   th,td{text-align:left;padding:.7rem .9rem;border-bottom:1px solid var(--border);vertical-align:top}
   th{background:#F5F2ED;font-weight:700;font-size:.75rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
   tr:last-child td{border-bottom:none}
 
+  /* Demo container */
   .demo{margin:1.4rem 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
   .demo-header{background:#F5F2ED;padding:.55rem 1.1rem;font-size:.7rem;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;color:var(--muted);border-bottom:1px solid var(--border)}
   .demo-body{padding:1.2rem 1.3rem}
 
+  /* Practice section */
   .practice{background:linear-gradient(135deg,#FEF7E0 0%,#fff 60%);border:1px solid var(--border);border-left:4px solid var(--g1);border-radius:12px;padding:1.5rem 1.75rem;margin:3rem 0 0}
   .practice h2{font-family:'Libre Baskerville',serif;font-size:1.6rem;margin:0 0 .65rem;color:var(--g1)}
   .practice ol{margin:.65rem 0 0;padding-left:1.4rem}
   .practice li{margin-bottom:.6rem;line-height:1.65}
 
+  /* Footer */
   .footer-nav{display:flex;justify-content:space-between;align-items:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border)}
   .footer-nav a{color:var(--accent);text-decoration:none;font-weight:600;font-size:.95rem}
   .footer-nav a:hover{text-decoration:underline}
   .footer-nav .home{color:var(--muted)}
 
+  /* ============ MOBILE ============ */
   @media (max-width:900px){
     .layout{grid-template-columns:1fr}
     .sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}
@@ -174,6 +192,7 @@
 <body>
 <div class="layout">
 
+  <!-- ============ SIDEBAR ============ -->
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-name">GenAI Decoded</div>
@@ -189,31 +208,28 @@
 
     <div class="nav-group-label g2">LangChain Deep Dive</div>
     <a href="#ch4" class="nav-item g2"><span class="nav-num">4</span><span class="nav-text"><div class="nav-title">Chains in Practice</div><div class="nav-sub">Sequential, parallel, routing</div></span></a>
-    <a href="#ch5" class="nav-item g2"><span class="nav-num">5</span><span class="nav-text"><div class="nav-title">Output Parsers</div><div class="nav-sub">Structured output, retries</div></span></a>
-    <a href="#ch6" class="nav-item g2"><span class="nav-num">6</span><span class="nav-text"><div class="nav-title">Memory</div><div class="nav-sub">Buffer, window, summary, vector</div></span></a>
-    <a href="#ch7" class="nav-item g2"><span class="nav-num">7</span><span class="nav-text"><div class="nav-title">Tools</div><div class="nav-sub">Giving the LLM hands</div></span></a>
-    <a href="#ch8" class="nav-item g2"><span class="nav-num">8</span><span class="nav-text"><div class="nav-title">Document Loaders &amp; Splitters</div><div class="nav-sub">LangChain ingestion</div></span></a>
-    <a href="#ch9" class="nav-item g2"><span class="nav-num">9</span><span class="nav-text"><div class="nav-title">Retrievers &amp; RAG in LangChain</div><div class="nav-sub">The LangChain RAG idiom</div></span></a>
-    <a href="#ch10" class="nav-item g2"><span class="nav-num">10</span><span class="nav-text"><div class="nav-title">Callbacks &amp; LangSmith</div><div class="nav-sub">Tracing &amp; observability</div></span></a>
+    <a href="#ch5" class="nav-item g2"><span class="nav-num">5</span><span class="nav-text"><div class="nav-title">Memory</div><div class="nav-sub">Buffer, window, summary, vector</div></span></a>
+    <a href="#ch6" class="nav-item g2"><span class="nav-num">6</span><span class="nav-text"><div class="nav-title">Tools</div><div class="nav-sub">Giving the LLM hands</div></span></a>
+    <a href="#ch7" class="nav-item g2"><span class="nav-num">7</span><span class="nav-text"><div class="nav-title">Callbacks &amp; LangSmith</div><div class="nav-sub">Tracing &amp; observability</div></span></a>
 
     <div class="nav-group-label g3">LlamaIndex Deep Dive</div>
-    <a href="#ch11" class="nav-item g3"><span class="nav-num">11</span><span class="nav-text"><div class="nav-title">Data Connectors</div><div class="nav-sub">300+ data sources</div></span></a>
-    <a href="#ch12" class="nav-item g3"><span class="nav-num">12</span><span class="nav-text"><div class="nav-title">Indices</div><div class="nav-sub">Beyond just vector search</div></span></a>
-    <a href="#ch13" class="nav-item g3"><span class="nav-num">13</span><span class="nav-text"><div class="nav-title">Query Engines &amp; Routers</div><div class="nav-sub">Multi-source retrieval</div></span></a>
+    <a href="#ch8" class="nav-item g3"><span class="nav-num">8</span><span class="nav-text"><div class="nav-title">Data Connectors</div><div class="nav-sub">300+ data sources</div></span></a>
+    <a href="#ch9" class="nav-item g3"><span class="nav-num">9</span><span class="nav-text"><div class="nav-title">Indices</div><div class="nav-sub">Beyond just vector search</div></span></a>
+    <a href="#ch10" class="nav-item g3"><span class="nav-num">10</span><span class="nav-text"><div class="nav-title">Query Engines &amp; Routers</div><div class="nav-sub">Multi-source retrieval</div></span></a>
 
     <div class="nav-group-label g4">Agents</div>
-    <a href="#ch14" class="nav-item g4"><span class="nav-num">14</span><span class="nav-text"><div class="nav-title">What Is an Agent?</div><div class="nav-sub">LLM in a loop with tools</div></span></a>
-    <a href="#ch15" class="nav-item g4"><span class="nav-num">15</span><span class="nav-text"><div class="nav-title">The ReAct Loop</div><div class="nav-sub">Thought → Action → Observation</div></span></a>
-    <a href="#ch16" class="nav-item g4"><span class="nav-num">16</span><span class="nav-text"><div class="nav-title">Building a Real Agent</div><div class="nav-sub">Three tools, one loop</div></span></a>
-    <a href="#ch17" class="nav-item g4"><span class="nav-num">17</span><span class="nav-text"><div class="nav-title">LangGraph</div><div class="nav-sub">State machines for agents</div></span></a>
+    <a href="#ch11" class="nav-item g4"><span class="nav-num">11</span><span class="nav-text"><div class="nav-title">What Is an Agent?</div><div class="nav-sub">LLM in a loop with tools</div></span></a>
+    <a href="#ch12" class="nav-item g4"><span class="nav-num">12</span><span class="nav-text"><div class="nav-title">The ReAct Loop</div><div class="nav-sub">Thought → Action → Observation</div></span></a>
+    <a href="#ch13" class="nav-item g4"><span class="nav-num">13</span><span class="nav-text"><div class="nav-title">Building a Real Agent</div><div class="nav-sub">Three tools, one loop</div></span></a>
 
     <div class="nav-group-label g5">Production &amp; Choice</div>
-    <a href="#ch18" class="nav-item g5"><span class="nav-num">18</span><span class="nav-text"><div class="nav-title">When to Use What</div><div class="nav-sub">Decision guide</div></span></a>
+    <a href="#ch14" class="nav-item g5"><span class="nav-num">14</span><span class="nav-text"><div class="nav-title">When to Use What</div><div class="nav-sub">Decision guide</div></span></a>
     <a href="#practice" class="nav-item g5"><span class="nav-num">★</span><span class="nav-text"><div class="nav-title">Practice Assignments</div><div class="nav-sub">Hands-on builds</div></span></a>
 
-    <a href="../index.html" class="section-link">← Back to home <span class="arrow">↗</span></a>
+    <a href="../index.html" class="section-link">7. RAG (Section 7) <span class="arrow">↗</span></a>
   </aside>
 
+  <!-- ============ MAIN CONTENT ============ -->
   <main class="main" id="top">
 
     <h1>LangChain, LlamaIndex &amp; Agents</h1>
@@ -225,7 +241,7 @@
 
     <div class="hero-callout">
       <div class="icon">🛠️</div>
-      <div><strong>What this section covers:</strong> The two dominant GenAI frameworks (<span class="accent-amber">LangChain</span> and <span class="accent-green">LlamaIndex</span>), how to compose them with LCEL, and the centerpiece of modern GenAI engineering — building <strong style="color:var(--g4)">agents</strong> that decide their own steps using tools, with a deep dive into <strong style="color:var(--g4)">LangGraph</strong> for production-grade workflows.</div>
+      <div><strong>What this section covers:</strong> The two dominant GenAI frameworks (<span class="accent-amber">LangChain</span> and <span class="accent-green">LlamaIndex</span>), how to compose them with LCEL, and the centerpiece of modern GenAI engineering — building <strong style="color:var(--g4)">agents</strong> that decide their own steps using tools.</div>
     </div>
 
     <div class="group-cards">
@@ -240,16 +256,16 @@
       <div class="group-card g4">
         <div class="group-card-header g4">🤖 Agents — The Centerpiece</div>
         <div class="group-card-body">
-          <div class="group-card-row"><span class="group-card-num">14</span><span class="group-card-title">What Is an Agent?</span></div>
-          <div class="group-card-row"><span class="group-card-num">15</span><span class="group-card-title">The ReAct Loop</span></div>
-          <div class="group-card-row"><span class="group-card-num">16</span><span class="group-card-title">Building a Real Agent</span></div>
-          <div class="group-card-row"><span class="group-card-num">17</span><span class="group-card-title">LangGraph — State Machines</span></div>
+          <div class="group-card-row"><span class="group-card-num">11</span><span class="group-card-title">What Is an Agent?</span></div>
+          <div class="group-card-row"><span class="group-card-num">12</span><span class="group-card-title">The ReAct Loop</span></div>
+          <div class="group-card-row"><span class="group-card-num">13</span><span class="group-card-title">Building a Real Agent</span></div>
         </div>
       </div>
     </div>
 
     <!-- ============ GROUP 1: FOUNDATIONS ============ -->
 
+    <!-- CHAPTER 1 -->
     <section class="chapter g1" id="ch1">
       <div class="chapter-label">Chapter 1</div>
       <h2>Why Frameworks Exist</h2>
@@ -285,6 +301,7 @@
       <p>This section is about embracing those abstractions — knowing what they give you, how to use them, and where each framework shines.</p>
     </section>
 
+    <!-- CHAPTER 2 -->
     <section class="chapter g1" id="ch2">
       <div class="chapter-label">Chapter 2</div>
       <h2>LangChain vs LlamaIndex — A Mental Model</h2>
@@ -321,6 +338,7 @@
       </div>
     </section>
 
+    <!-- CHAPTER 3 -->
     <section class="chapter g1" id="ch3">
       <div class="chapter-label">Chapter 3</div>
       <h2>LCEL — The Pipe Operator That Changed LangChain</h2>
@@ -369,10 +387,11 @@ result = chain.invoke({"text": "Hello, world"})</code></pre>
 
     <!-- ============ GROUP 2: LANGCHAIN ============ -->
     <div class="group-divider g2">
-      <div class="group-divider-num">PART 2 · 7 CHAPTERS</div>
+      <div class="group-divider-num">PART 2</div>
       <div class="group-divider-title">LangChain Deep Dive</div>
     </div>
 
+    <!-- CHAPTER 4 -->
     <section class="chapter g2" id="ch4">
       <div class="chapter-label">Chapter 4</div>
       <h2>Chains in Practice</h2>
@@ -425,94 +444,9 @@ router = (
       </div>
     </section>
 
-    <!-- NEW CHAPTER 5: OUTPUT PARSERS -->
+    <!-- CHAPTER 5 -->
     <section class="chapter g2" id="ch5">
       <div class="chapter-label">Chapter 5</div>
-      <h2>Output Parsers &amp; Structured Output</h2>
-      <p class="chapter-dek">From text strings to typed Python objects</p>
-
-      <p>In Section 2 you wrote prompts that asked the LLM to return JSON, then parsed it with <code>json.loads()</code> wrapped in a try/except. That works — until the model returns "Sure! Here's your JSON: {...}" with a preamble that breaks the parser, or hallucinates a field name, or forgets a closing brace.</p>
-
-      <p><strong>Output parsers</strong> are the LangChain abstraction that solves all of this at once. They handle the prompt instruction, the parsing, the validation, and the retry — composed cleanly into your chain.</p>
-
-      <div class="analogy">
-        Raw JSON parsing is like asking a colleague to fill out a form by emailing you a paragraph and you copy-pasting fields out by hand. Structured output is the form itself — typed fields, validation, "you missed a required field" errors. The model fills the form; you get a typed object back.
-      </div>
-
-      <h3>The simplest parser: StrOutputParser</h3>
-      <p>You've already used this one. It just extracts the message content from the model's response object.</p>
-      <pre><code>chain = prompt | llm | StrOutputParser()
-chain.invoke({...})  # returns a plain string</code></pre>
-
-      <h3>JSON output: JsonOutputParser</h3>
-      <p>Tells the model to return JSON and parses it into a Python dict. Handles preambles, code fences, and other common LLM quirks.</p>
-      <pre><code>from langchain_core.output_parsers import JsonOutputParser
-
-parser = JsonOutputParser()
-prompt = ChatPromptTemplate.from_template(
-    "Extract the person's name and age from: {text}\n\n"
-    "{format_instructions}"
-).partial(format_instructions=parser.get_format_instructions())
-
-chain = prompt | llm | parser
-result = chain.invoke({"text": "Sarah is 34 years old."})
-# {'name': 'Sarah', 'age': 34}</code></pre>
-
-      <h3>Typed output: PydanticOutputParser</h3>
-      <p>The production-grade pattern. Define a Pydantic model, the parser generates the format instructions, and you get back a validated typed object — not a dict.</p>
-      <pre><code>from pydantic import BaseModel, Field
-from langchain_core.output_parsers import PydanticOutputParser
-
-class Person(BaseModel):
-    name: str = Field(description="The person's full name")
-    age: int = Field(description="Age in years")
-    occupation: str = Field(description="Their job or role")
-
-parser = PydanticOutputParser(pydantic_object=Person)
-
-prompt = ChatPromptTemplate.from_template(
-    "Extract details from: {text}\n\n{format_instructions}"
-).partial(format_instructions=parser.get_format_instructions())
-
-chain = prompt | llm | parser
-person = chain.invoke({"text": "Sarah, 34, is a software engineer."})
-
-print(person.name)        # 'Sarah'
-print(person.age + 1)     # 35  ← it's a real int, not a string</code></pre>
-
-      <h3>The shortcut: with_structured_output()</h3>
-      <p>Modern LangChain wraps all of the above into one method on the model itself. Pass a Pydantic class, get a typed object back. No format instructions, no parser composition.</p>
-      <pre><code>structured_llm = llm.with_structured_output(Person)
-
-person = structured_llm.invoke("Sarah, 34, is a software engineer.")
-# Returns a Person instance directly</code></pre>
-
-      <div class="demo">
-        <div class="demo-header">Interactive · OutputParserDemo</div>
-        <div class="demo-body" id="parser-demo-root"></div>
-      </div>
-
-      <h3>Retry on parse failure</h3>
-      <p>Models occasionally return malformed output. <code>OutputFixingParser</code> catches a parse error and asks the model to fix it — a second LLM call that almost always succeeds.</p>
-      <pre><code>from langchain.output_parsers import OutputFixingParser
-
-robust_parser = OutputFixingParser.from_llm(parser=parser, llm=llm)
-chain = prompt | llm | robust_parser
-# If the first parse fails, the parser asks the model to fix its output</code></pre>
-
-      <div class="callout how">
-        <div class="callout-label">When to use which</div>
-        <ul>
-          <li><strong>StrOutputParser</strong> — text answers, summaries, creative writing</li>
-          <li><strong>JsonOutputParser</strong> — quick prototypes where dict access is fine</li>
-          <li><strong>PydanticOutputParser</strong> — production code where you want typed objects and validation</li>
-          <li><strong>with_structured_output()</strong> — most cases. The cleanest, most modern API.</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="chapter g2" id="ch6">
-      <div class="chapter-label">Chapter 6</div>
       <h2>Memory</h2>
       <p class="chapter-dek">Giving your chain a past</p>
 
@@ -569,8 +503,9 @@ chain_with_memory.invoke(
       </div>
     </section>
 
-    <section class="chapter g2" id="ch7">
-      <div class="chapter-label">Chapter 7</div>
+    <!-- CHAPTER 6 -->
+    <section class="chapter g2" id="ch6">
+      <div class="chapter-label">Chapter 6</div>
       <h2>Tools</h2>
       <p class="chapter-dek">Giving the LLM hands</p>
 
@@ -586,6 +521,7 @@ chain_with_memory.invoke(
 @tool
 def get_stock_price(ticker: str) -> str:
     """Get the current stock price for a ticker symbol like AAPL or TSLA."""
+    # In real life: call a market data API
     prices = {"AAPL": 224.50, "TSLA": 248.10, "GOOGL": 178.30}
     if ticker in prices:
         return f"{ticker} is trading at ${prices[ticker]}"
@@ -613,177 +549,16 @@ response = llm_with_tools.invoke("What's Apple trading at right now?")
           <li>LLM sees the result, responds again — final answer or another tool call</li>
           <li>Repeat until the LLM gives a final answer</li>
         </ol>
-        <p>This loop is what an <strong>agent</strong> is. We'll build one in Chapter 16.</p>
+        <p>This loop is what an <strong>agent</strong> is. We'll build one in Chapter 13.</p>
       </div>
 
       <h3>Tools you don't have to write</h3>
       <p>LangChain ships with hundreds of pre-built tools: web search (Tavily, DuckDuckGo, Google Serper), code execution (Python REPL), Wikipedia, Wolfram Alpha, SQL databases, file systems, shell commands. Most production agents use a mix of pre-built and custom tools.</p>
     </section>
 
-    <!-- NEW CHAPTER 8: DOCUMENT LOADERS -->
-    <section class="chapter g2" id="ch8">
-      <div class="chapter-label">Chapter 8</div>
-      <h2>Document Loaders &amp; Text Splitters</h2>
-      <p class="chapter-dek">LangChain's ingestion layer — you've seen the splitter before</p>
-
-      <p>In Section 4 you used <code>RecursiveCharacterTextSplitter</code> to chunk documents for RAG. That splitter <em>is</em> from LangChain — you just imported it directly without engaging with the rest of the framework. Now we close the loop: LangChain has a full ingestion layer (loaders + splitters + transformers) and it composes naturally with the chain pieces you've already learned.</p>
-
-      <h3>Document Loaders — getting data in</h3>
-      <p>LangChain has ~80 loaders (LlamaIndex has more, which we'll see in Chapter 11). Every loader returns a list of <code>Document</code> objects with <code>page_content</code> and <code>metadata</code>.</p>
-      <pre><code>from langchain_community.document_loaders import (
-    TextLoader,
-    PyPDFLoader,
-    WebBaseLoader,
-    DirectoryLoader,
-)
-
-# A single text file
-docs = TextLoader("./policy.txt").load()
-
-# A PDF — one Document per page, with page numbers in metadata
-docs = PyPDFLoader("./manual.pdf").load()
-
-# A web page — fetched and stripped of HTML
-docs = WebBaseLoader("https://example.com/article").load()
-
-# A whole directory, with a glob pattern
-docs = DirectoryLoader("./data", glob="**/*.md").load()</code></pre>
-
-      <h3>Text Splitters — chunking before embedding</h3>
-      <p>Same <code>RecursiveCharacterTextSplitter</code> from Section 4, now properly placed in the LangChain pipeline.</p>
-      <pre><code>from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,
-    chunk_overlap=50,
-    separators=["\n\n", "\n", ". ", " ", ""],  # tries each in order
-)
-
-chunks = splitter.split_documents(docs)
-print(f"{len(docs)} documents → {len(chunks)} chunks")</code></pre>
-
-      <h3>Specialized splitters for specialized content</h3>
-      <p>Code and Markdown have structure that generic splitters miss. LangChain ships dedicated splitters for both.</p>
-      <pre><code>from langchain_text_splitters import (
-    Language,
-    RecursiveCharacterTextSplitter,
-    MarkdownHeaderTextSplitter,
-)
-
-# Code-aware splitting (Python, JS, Java, etc.)
-python_splitter = RecursiveCharacterTextSplitter.from_language(
-    language=Language.PYTHON, chunk_size=300, chunk_overlap=30
-)
-
-# Markdown-aware splitting that respects headers
-md_splitter = MarkdownHeaderTextSplitter(
-    headers_to_split_on=[("#", "h1"), ("##", "h2"), ("###", "h3")]
-)
-chunks = md_splitter.split_text(markdown_document)
-# Each chunk's metadata carries its h1/h2/h3 context</code></pre>
-
-      <div class="callout how">
-        <div class="callout-label">A practical pipeline</div>
-        <p>The standard ingestion pattern in LangChain is three lines:</p>
-        <pre style="margin:0.5rem 0 0;background:#fff"><code>docs = DirectoryLoader("./data").load()
-chunks = splitter.split_documents(docs)
-vectorstore = Chroma.from_documents(chunks, embedding=embeddings)</code></pre>
-        <p style="margin-top:0.6rem">Loader → splitter → vector store. That's it. Once you have a vector store, you have a retriever — which is the next chapter.</p>
-      </div>
-    </section>
-
-    <!-- NEW CHAPTER 9: RETRIEVERS & RAG IN LANGCHAIN -->
-    <section class="chapter g2" id="ch9">
-      <div class="chapter-label">Chapter 9</div>
-      <h2>Retrievers &amp; RAG in LangChain</h2>
-      <p class="chapter-dek">The LangChain idiom for everything you built in Sections 4-5</p>
-
-      <p>You built RAG from scratch in Section 4 — chunking, embedding, ChromaDB queries, prompt assembly with retrieved context. That was 80+ lines of code. The same pipeline in LangChain is composable from primitives you've already met: a retriever, a prompt, and an LLM, joined with the <code>|</code> operator.</p>
-
-      <h3>What a retriever actually is</h3>
-      <p>A <strong>retriever</strong> is anything that takes a string query and returns a list of relevant <code>Document</code> objects. That's the entire interface. Vector stores expose this interface. So do BM25 indexers. So do hybrid search wrappers. So do custom Python functions you write yourself.</p>
-      <pre><code>from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-
-vectorstore = Chroma(
-    collection_name="techstore-docs",
-    embedding_function=OpenAIEmbeddings(model="text-embedding-3-small"),
-    persist_directory="./chroma_db"
-)
-
-# Turn the vector store into a retriever
-retriever = vectorstore.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 4}
-)
-
-# A retriever invocation looks just like any other Runnable
-docs = retriever.invoke("What's our return policy?")
-# Returns: List[Document]</code></pre>
-
-      <h3>The classic RAG chain</h3>
-      <p>Stuff retrieved documents into a prompt, generate an answer. The "stuff" pattern is the default for most RAG.</p>
-      <pre><code>from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
-
-# Step 1: prompt that takes context + input
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "Answer based ONLY on the context below.\n\nContext:\n{context}"),
-    ("human", "{input}"),
-])
-
-# Step 2: chain that stuffs docs into the prompt and generates
-combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-
-# Step 3: full RAG chain — retriever feeds combine_docs_chain
-rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
-
-# One call, full RAG flow
-result = rag_chain.invoke({"input": "What's our return policy?"})
-print(result["answer"])
-print(result["context"])  # the docs that were retrieved</code></pre>
-
-      <div class="demo">
-        <div class="demo-header">Interactive · RetrieverChainDemo</div>
-        <div class="demo-body" id="retriever-demo-root"></div>
-      </div>
-
-      <h3>History-aware retrieval (for chatbots)</h3>
-      <p>For multi-turn RAG ("tell me more about that," "what about the second one?"), the user's literal question often depends on prior context. LangChain's <code>create_history_aware_retriever</code> rewrites the question using the chat history before retrieving.</p>
-      <pre><code>from langchain.chains import create_history_aware_retriever
-
-contextualize_prompt = ChatPromptTemplate.from_messages([
-    ("system", "Given the chat history and latest question, "
-               "rewrite the question to be standalone."),
-    MessagesPlaceholder("chat_history"),
-    ("human", "{input}"),
-])
-
-history_aware_retriever = create_history_aware_retriever(
-    llm, retriever, contextualize_prompt
-)
-
-# Now multi-turn questions like "tell me more" get rewritten before retrieval</code></pre>
-
-      <h3>Beyond similarity: other retriever types</h3>
-      <p>LangChain ships several retriever variants you should know about:</p>
-      <ul>
-        <li><strong>MultiQueryRetriever</strong> — generates multiple variations of the query and merges results (covered in Section 5)</li>
-        <li><strong>ContextualCompressionRetriever</strong> — wraps a retriever with a re-ranker, returning a compressed/filtered set</li>
-        <li><strong>EnsembleRetriever</strong> — combines results from multiple retrievers (e.g., BM25 + vector for hybrid search)</li>
-        <li><strong>ParentDocumentRetriever</strong> — searches small chunks but returns their larger parent documents (the parent-child pattern from Section 5)</li>
-      </ul>
-
-      <div class="callout how">
-        <div class="callout-label">When to use LangChain RAG vs. LlamaIndex</div>
-        <p><strong>LangChain RAG</strong> when retrieval is one piece of a larger orchestration — the rest of your app is chains, tools, or agents that benefit from LCEL composition.</p>
-        <p><strong>LlamaIndex</strong> when retrieval <em>is</em> the app — you have many data sources, need fancy indices (tree, summary, keyword), or want connectors LangChain doesn't have.</p>
-        <p>You can also mix: build the retrieval layer with LlamaIndex, expose it as a LangChain retriever via the integration package, and orchestrate with LangChain.</p>
-      </div>
-    </section>
-
-    <section class="chapter g2" id="ch10">
-      <div class="chapter-label">Chapter 10</div>
+    <!-- CHAPTER 7 -->
+    <section class="chapter g2" id="ch7">
+      <div class="chapter-label">Chapter 7</div>
       <h2>Callbacks &amp; LangSmith</h2>
       <p class="chapter-dek">Seeing inside the box</p>
 
@@ -811,17 +586,6 @@ os.environ["LANGCHAIN_PROJECT"] = "my-rag-app"
         <li><strong>A/B testing</strong> — compare two prompt versions on the same inputs</li>
       </ul>
 
-      <h3>Custom callbacks — when you need more control</h3>
-      <p>LangSmith covers 90% of cases. For the rest — logging to your own backend, surfacing tokens to a UI, custom alerting — write a callback handler.</p>
-      <pre><code>from langchain_core.callbacks import BaseCallbackHandler
-
-class TokenLoggerHandler(BaseCallbackHandler):
-    def on_llm_end(self, response, **kwargs):
-        usage = response.llm_output.get("token_usage", {})
-        print(f"Tokens: {usage}")
-
-chain.invoke({"input": "..."}, config={"callbacks": [TokenLoggerHandler()]})</code></pre>
-
       <div class="callout how">
         <div class="callout-label">Production rule</div>
         <p>If your GenAI app is going anywhere near a real user, turn on tracing from day one. The cost of <em>not</em> having traces when something goes wrong in production is far higher than the cost of running them.</p>
@@ -830,12 +594,13 @@ chain.invoke({"input": "..."}, config={"callbacks": [TokenLoggerHandler()]})</co
 
     <!-- ============ GROUP 3: LLAMAINDEX ============ -->
     <div class="group-divider g3">
-      <div class="group-divider-num">PART 3 · 3 CHAPTERS</div>
+      <div class="group-divider-num">PART 3</div>
       <div class="group-divider-title">LlamaIndex Deep Dive</div>
     </div>
 
-    <section class="chapter g3" id="ch11">
-      <div class="chapter-label">Chapter 11</div>
+    <!-- CHAPTER 8 -->
+    <section class="chapter g3" id="ch8">
+      <div class="chapter-label">Chapter 8</div>
       <h2>Data Connectors</h2>
       <p class="chapter-dek">LlamaIndex's killer feature</p>
 
@@ -874,8 +639,9 @@ docs = SimpleWebPageReader().load_data(["https://example.com/article"])
       <p>This is where LlamaIndex genuinely beats LangChain. If your project starts with "we have data in 5 different systems and need to RAG over it," LlamaIndex is the right starting point.</p>
     </section>
 
-    <section class="chapter g3" id="ch12">
-      <div class="chapter-label">Chapter 12</div>
+    <!-- CHAPTER 9 -->
+    <section class="chapter g3" id="ch9">
+      <div class="chapter-label">Chapter 9</div>
       <h2>Indices</h2>
       <p class="chapter-dek">More than just vector search</p>
 
@@ -910,8 +676,9 @@ print(response)</code></pre>
       </div>
     </section>
 
-    <section class="chapter g3" id="ch13">
-      <div class="chapter-label">Chapter 13</div>
+    <!-- CHAPTER 10 -->
+    <section class="chapter g3" id="ch10">
+      <div class="chapter-label">Chapter 10</div>
       <h2>Query Engines &amp; Routers</h2>
       <p class="chapter-dek">Multiple ways to ask the same index</p>
 
@@ -962,12 +729,13 @@ router.query("My device won't turn on")  # routes to support_tool</code></pre>
 
     <!-- ============ GROUP 4: AGENTS ============ -->
     <div class="group-divider g4">
-      <div class="group-divider-num">PART 4 · THE CENTERPIECE · 4 CHAPTERS</div>
+      <div class="group-divider-num">PART 4 — THE CENTERPIECE</div>
       <div class="group-divider-title">Agents</div>
     </div>
 
-    <section class="chapter g4" id="ch14">
-      <div class="chapter-label">Chapter 14</div>
+    <!-- CHAPTER 11 -->
+    <section class="chapter g4" id="ch11">
+      <div class="chapter-label">Chapter 11</div>
       <h2>What Is an Agent?</h2>
       <p class="chapter-dek">An LLM in a loop, with tools, choosing what to do next</p>
 
@@ -1005,8 +773,9 @@ router.query("My device won't turn on")  # routes to support_tool</code></pre>
       </div>
     </section>
 
-    <section class="chapter g4" id="ch15">
-      <div class="chapter-label">Chapter 15</div>
+    <!-- CHAPTER 12 -->
+    <section class="chapter g4" id="ch12">
+      <div class="chapter-label">Chapter 12</div>
       <h2>The ReAct Loop</h2>
       <p class="chapter-dek">How agents actually think</p>
 
@@ -1045,8 +814,9 @@ router.query("My device won't turn on")  # routes to support_tool</code></pre>
       </div>
     </section>
 
-    <section class="chapter g4" id="ch16">
-      <div class="chapter-label">Chapter 16</div>
+    <!-- CHAPTER 13 -->
+    <section class="chapter g4" id="ch13">
+      <div class="chapter-label">Chapter 13</div>
       <h2>Building a Real Agent</h2>
       <p class="chapter-dek">Three tools, one loop, all the pieces together</p>
 
@@ -1117,134 +887,10 @@ for msg in result["messages"]:
 
       <p>You wrote three small functions and one <code>create_react_agent</code> call. The orchestration — picking tools, ordering calls, threading results — is all the LLM. <strong>That's the leverage frameworks give you.</strong></p>
 
-      <p>But there's a layer underneath <code>create_react_agent</code> — a graph-based runtime called <strong>LangGraph</strong> — that you'll want to understand the moment your agent needs to do anything beyond a basic ReAct loop. That's the next chapter.</p>
-    </section>
-
-    <!-- NEW CHAPTER 17: LANGGRAPH -->
-    <section class="chapter g4" id="ch17">
-      <div class="chapter-label">Chapter 17</div>
-      <h2>LangGraph — State Machines for Agents</h2>
-      <p class="chapter-dek">When create_react_agent isn't enough</p>
-
-      <p><code>create_react_agent</code> from the previous chapter is the simplest possible LangGraph agent — it's a one-liner that hides everything. <strong>LangGraph itself</strong> is a framework for building agent workflows as <em>graphs</em>: nodes that do work, edges that route between them, and shared state that flows through the system.</p>
-
-      <p>If LCEL is "compose Runnables left to right," LangGraph is "compose Runnables into a state machine where the LLM picks the next node."</p>
-
-      <div class="analogy">
-        ReAct agents are like a single-loop GPS — "what's the next turn?" repeated until you arrive. LangGraph is the full traffic system — multiple roads, conditional turns, checkpoints where a human can intervene, parallel routes, ability to back out and retry. For destinations with one straight path, GPS is fine. For complex routing, you want the system.
-      </div>
-
-      <h3>The three primitives</h3>
-      <ul>
-        <li><strong>State</strong> — a typed dict shared by all nodes. Each node reads it, returns updates to it.</li>
-        <li><strong>Nodes</strong> — Python functions (or Runnables) that take state and return updates. An LLM call, a tool call, a Python function — all are nodes.</li>
-        <li><strong>Edges</strong> — connections between nodes. Can be unconditional ("always go A → B") or <em>conditional</em> ("from A, go to B or C based on the state").</li>
-      </ul>
-
-      <div class="demo">
-        <div class="demo-header">Interactive · LangGraphFlowDemo</div>
-        <div class="demo-body" id="langgraph-demo-root"></div>
-      </div>
-
-      <h3>A minimal LangGraph agent from scratch</h3>
-      <p>Here's what <code>create_react_agent</code> hides — the same agent, written explicitly as a graph:</p>
-      <pre><code>from typing import Annotated, TypedDict
-from langgraph.graph import StateGraph, END
-from langgraph.graph.message import add_messages
-from langchain_core.messages import BaseMessage
-
-# 1. Define the shared state
-class AgentState(TypedDict):
-    messages: Annotated[list[BaseMessage], add_messages]
-
-# 2. Define the nodes
-llm_with_tools = llm.bind_tools(tools)
-
-def call_model(state: AgentState):
-    response = llm_with_tools.invoke(state["messages"])
-    return {"messages": [response]}
-
-def call_tools(state: AgentState):
-    last_msg = state["messages"][-1]
-    tool_messages = []
-    for tool_call in last_msg.tool_calls:
-        result = tools_by_name[tool_call["name"]].invoke(tool_call["args"])
-        tool_messages.append(ToolMessage(content=str(result), tool_call_id=tool_call["id"]))
-    return {"messages": tool_messages}
-
-# 3. Define the conditional edge
-def should_continue(state: AgentState):
-    last_msg = state["messages"][-1]
-    if last_msg.tool_calls:
-        return "tools"
-    return END
-
-# 4. Wire the graph
-graph = StateGraph(AgentState)
-graph.add_node("agent", call_model)
-graph.add_node("tools", call_tools)
-graph.set_entry_point("agent")
-graph.add_conditional_edges("agent", should_continue)
-graph.add_edge("tools", "agent")  # after tools, back to agent
-
-app = graph.compile()
-result = app.invoke({"messages": [("user", "...")]})</code></pre>
-
-      <p>That's the entire ReAct loop made explicit. <code>create_react_agent</code> generates this for you. The reason to learn the manual version is everything you can do once you control the graph.</p>
-
-      <h3>What the graph form unlocks</h3>
-
-      <h3>Human-in-the-loop checkpoints</h3>
-      <p>Pause the graph before a node, ask a human for approval, then resume. Critical for any agent that does irreversible things (sending emails, making purchases, modifying production data).</p>
-      <pre><code>from langgraph.checkpoint.memory import MemorySaver
-
-memory = MemorySaver()
-app = graph.compile(checkpointer=memory, interrupt_before=["tools"])
-
-# Run until the interrupt point
-config = {"configurable": {"thread_id": "user-42"}}
-result = app.invoke({"messages": [("user", "Send the report to all clients")]}, config)
-
-# Inspect what's about to happen — show the user
-state = app.get_state(config)
-print(f"About to call: {state.values['messages'][-1].tool_calls}")
-
-# If approved, continue. If not, modify the state first.
-result = app.invoke(None, config)  # resumes from the checkpoint</code></pre>
-
-      <h3>Multi-step planning agents</h3>
-      <p>Add a planning node that runs before the main loop. The plan becomes part of state and guides subsequent decisions.</p>
-      <pre><code>def make_plan(state):
-    plan = planner_llm.invoke(state["messages"])
-    return {"plan": plan, "messages": [plan]}
-
-graph.add_node("plan", make_plan)
-graph.add_edge("plan", "agent")
-graph.set_entry_point("plan")  # plan first, then loop</code></pre>
-
-      <h3>Parallel branches</h3>
-      <p>Run multiple research nodes simultaneously, merge results before continuing. A reducer in the state schema (<code>add_messages</code>, <code>operator.add</code>) defines how parallel updates combine.</p>
-
-      <h3>Multi-agent systems</h3>
-      <p>Each node can be a <em>different</em> agent with its own tools and instructions. A "supervisor" node routes work between them. This is the foundation of multi-agent architectures — researcher + writer + critic, or planner + executor + verifier.</p>
-
-      <h3>Time travel and replay</h3>
-      <p>Because the graph checkpoints state, you can rewind to any prior step and explore an alternative path. Invaluable for debugging and for "what if I had answered differently?" UX.</p>
-
       <div class="callout why">
-        <div class="callout-label">When to drop down to LangGraph</div>
-        <p>Stay with <code>create_react_agent</code> for vanilla tool-using agents. Move to explicit LangGraph the moment you need any of:</p>
-        <ul>
-          <li>Human approval steps before destructive actions</li>
-          <li>A planning phase distinct from execution</li>
-          <li>Multiple cooperating agents</li>
-          <li>Parallel tool calls with custom merging</li>
-          <li>Persistent state across sessions (checkpointing to a database)</li>
-          <li>Rewind/replay/branching workflows</li>
-        </ul>
+        <div class="callout-label">LangGraph note</div>
+        <p>LangChain's modern agent runtime is <strong>LangGraph</strong> — a graph-based orchestration layer that replaced the older <code>AgentExecutor</code>. It's more flexible (custom state machines, human-in-the-loop checkpoints, parallel tool calls). For most cases, <code>create_react_agent</code> is the one-liner you want. Drop down to raw graphs when you need explicit control flow.</p>
       </div>
-
-      <p>LangGraph is where serious production agent work happens. The one-liner is the on-ramp; the graph is the road.</p>
     </section>
 
     <!-- ============ GROUP 5: PRODUCTION ============ -->
@@ -1253,8 +899,9 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
       <div class="group-divider-title">Production &amp; Choice</div>
     </div>
 
-    <section class="chapter g5" id="ch18">
-      <div class="chapter-label">Chapter 18</div>
+    <!-- CHAPTER 14 -->
+    <section class="chapter g5" id="ch14">
+      <div class="chapter-label">Chapter 14</div>
       <h2>When to Use What</h2>
       <p class="chapter-dek">A practical decision guide</p>
 
@@ -1272,10 +919,8 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
         </thead>
         <tbody>
           <tr><td>Pure RAG over messy data sources</td><td>LlamaIndex</td><td>Best connectors and indices</td></tr>
-          <tr><td>Simple tool-using agent</td><td>LangChain + create_react_agent</td><td>One-liner; fastest path</td></tr>
-          <tr><td>Production agent with approvals/planning</td><td>LangGraph (explicit graph)</td><td>Need checkpoints, control flow</td></tr>
-          <tr><td>Multi-agent system</td><td>LangGraph</td><td>Graph form fits naturally</td></tr>
-          <tr><td>Conversational app with memory</td><td>LangChain</td><td>Memory primitives + LCEL</td></tr>
+          <tr><td>Agentic app with tools</td><td>LangChain + LangGraph</td><td>Agents are the core abstraction</td></tr>
+          <tr><td>Conversational app with memory</td><td>LangChain</td><td>Memory primitives and chat history</td></tr>
           <tr><td>Hybrid (RAG + tools + memory)</td><td>LangChain, LlamaIndex inside</td><td>Use each for its strength</td></tr>
           <tr><td>One-off script, no production target</td><td>Raw API</td><td>Frameworks are overhead here</td></tr>
           <tr><td>You're learning</td><td>Raw API first, then framework</td><td>You did this. Sections 1-5.</td></tr>
@@ -1300,20 +945,19 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     <!-- PRACTICE -->
     <div class="practice" id="practice">
       <h2>Practice Assignments</h2>
-      <p>Pick at least four. The agent and LangGraph builds are non-negotiable.</p>
+      <p>Pick at least three. The agent build is non-negotiable.</p>
       <ol>
-        <li><strong>Output Parsers</strong> — Take any prompt from Section 2 that returned JSON. Re-implement it using <code>PydanticOutputParser</code> or <code>with_structured_output()</code>. Compare error rates: how many outputs needed retries vs. before?</li>
-        <li><strong>LangChain RAG</strong> — Re-build the Section 4 RAG pipeline using LangChain's loader → splitter → Chroma → retriever → <code>create_retrieval_chain</code> pattern. Measure: lines of code before vs. after.</li>
-        <li><strong>LangChain Agent</strong> — Build a ReAct agent with three tools (web search, calculator, one custom API). Run it on a question that needs all three. Submit a LangSmith trace screenshot.</li>
-        <li><strong>LangGraph Workflow</strong> — Take the agent from #3 and rebuild it as an explicit LangGraph with a human-in-the-loop checkpoint before any tool that hits an external API. Demonstrate the approval flow.</li>
-        <li><strong>LlamaIndex Query Engine</strong> — Build a query engine over a complex dataset with at least two document types. Compare default vs. <code>tree_summarize</code> response modes.</li>
-        <li><strong>Same RAG, Both Frameworks</strong> — Build the same RAG pipeline in LangChain and LlamaIndex. Write up: which felt easier, where each abstraction helped or got in the way.</li>
+        <li><strong>LangChain Agent</strong> — Build an agent with three tools (web search, calculator, one custom API of your choice). Run it on a question that needs all three. Submit a LangSmith trace screenshot.</li>
+        <li><strong>LlamaIndex Query Engine</strong> — Build a query engine over a complex dataset. Use at least two document types (PDF + DOCX, or web pages + local files). Compare default vs. <code>tree_summarize</code> response modes.</li>
+        <li><strong>Same RAG, Both Frameworks</strong> — Build the same RAG pipeline (same docs, same query) in LangChain and LlamaIndex. Write up: which felt easier, which produced better results, where each abstraction helped or got in the way.</li>
+        <li><strong>Documentation Reading</strong> — Read the "core concepts" sections of both LangChain and LlamaIndex docs. Note three things in each that you didn't expect.</li>
         <li><strong>LangSmith Tracing</strong> — Take any chain or agent from earlier sections, add tracing, and explore the UI. Find the most expensive call in your trace.</li>
         <li><strong>AI Twitter/X Setup</strong> — Follow at least 10 accounts in the GenAI ecosystem (LangChain, LlamaIndex, Anthropic, OpenAI, key researchers). Skim daily for two weeks.</li>
       </ol>
-      <p style="margin-top:1rem"><strong>Deliverable:</strong> Working LangGraph agent + framework comparison writeup (1-2 pages).</p>
+      <p style="margin-top:1rem"><strong>Deliverable:</strong> Working agent + framework comparison writeup (1-2 pages).</p>
     </div>
 
+    <!-- FOOTER -->
     <div class="footer-nav">
       <a href="./5-rag-part2.html">← Section 5 · RAG Part 2</a>
       <a href="../index.html" class="home">Home</a>
@@ -1323,10 +967,13 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
   </main>
 </div>
 
+<!-- ============================================================ -->
+<!-- INTERACTIVE DEMOS                                              -->
+<!-- ============================================================ -->
 <script type="text/babel">
   const { useState, useEffect, useRef } = React;
 
-  // ---------- 1. LCEL Pipe Demo ----------
+  // ---------------- 1. LCEL Pipe Demo ----------------
   function LCELPipeDemo() {
     const steps = [
       { name: "Input", value: '{"text": "Hello, world"}', desc: "Your variables enter the pipeline." },
@@ -1336,6 +983,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     ];
     const [active, setActive] = useState(0);
     const [running, setRunning] = useState(false);
+
     const run = () => {
       setRunning(true); setActive(0);
       let i = 0;
@@ -1345,6 +993,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
         setActive(i);
       }, 900);
     };
+
     return (
       <div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem",flexWrap:"wrap",gap:"0.5rem"}}>
@@ -1375,45 +1024,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 2. Output Parser Demo (NEW) ----------
-  function OutputParserDemo() {
-    const [mode, setMode] = useState("str");
-    const input = "Sarah, 34, is a software engineer at TechStore.";
-    const outputs = {
-      str: { type: "str (Python string)", value: '"Sarah is 34 and works as a software engineer."' },
-      json: { type: "dict (Python dict)", value: '{\n  "name": "Sarah",\n  "age": 34,\n  "occupation": "software engineer"\n}' },
-      pydantic: { type: "Person (typed object)", value: 'Person(\n  name="Sarah",\n  age=34,\n  occupation="software engineer"\n)\n\nperson.age + 1  → 35  ✓' }
-    };
-    const labels = { str: "StrOutputParser", json: "JsonOutputParser", pydantic: "PydanticOutputParser" };
-    return (
-      <div>
-        <div style={{display:"flex",gap:"0.4rem",marginBottom:"1rem",flexWrap:"wrap"}}>
-          {["str","json","pydantic"].map(k => (
-            <button key={k} onClick={() => setMode(k)} style={{
-              padding:"0.4rem 0.8rem", border:"1px solid", borderColor:mode===k?"var(--g2)":"var(--border)",
-              background:mode===k?"var(--g2-bg)":"#fff", borderRadius:"6px", cursor:"pointer",
-              fontSize:"0.82rem", fontWeight:mode===k?700:500, color:mode===k?"var(--g2)":"var(--text)"
-            }}>{labels[k]}</button>
-          ))}
-        </div>
-        <div style={{padding:"0.7rem 0.9rem",background:"var(--g2-bg)",borderRadius:"6px",marginBottom:"0.8rem"}}>
-          <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"1px",color:"var(--g2)",marginBottom:"0.25rem"}}>INPUT TEXT</div>
-          <div style={{fontSize:"0.9rem",fontStyle:"italic"}}>"{input}"</div>
-        </div>
-        <div style={{border:"1px solid var(--border)",borderRadius:"8px",padding:"0.8rem"}}>
-          <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"1px",color:"var(--muted)",marginBottom:"0.4rem"}}>OUTPUT TYPE: <span style={{color:"var(--g2)"}}>{outputs[mode].type}</span></div>
-          <pre style={{margin:0,fontSize:"0.85rem",whiteSpace:"pre-wrap",background:"var(--code-bg)",padding:"0.7rem",borderRadius:"4px",border:"none"}}>{outputs[mode].value}</pre>
-        </div>
-        <div style={{marginTop:"0.8rem",fontSize:"0.85rem",color:"var(--muted)"}}>
-          {mode === "str" && "Use for: text answers, summaries, creative writing."}
-          {mode === "json" && "Use for: quick prototypes; you get back a Python dict."}
-          {mode === "pydantic" && "Use for: production code. Real types, real validation, real autocomplete."}
-        </div>
-      </div>
-    );
-  }
-
-  // ---------- 3. Memory Types Demo ----------
+  // ---------------- 2. Memory Types Demo ----------------
   function MemoryTypesDemo() {
     const conversation = [
       { user: "Hi, my name is Nij and I live in Dubai.", asst: "Nice to meet you, Nij!" },
@@ -1422,18 +1033,21 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
       { user: "What's my name and what am I learning?", asst: "?" },
     ];
     const [type, setType] = useState("buffer");
+
     const memoryFor = (t) => {
       if (t === "buffer") return conversation.slice(0, -1).map(c => `User: ${c.user}\nAI: ${c.asst}`).join("\n");
       if (t === "window") return conversation.slice(-2, -1).map(c => `User: ${c.user}\nAI: ${c.asst}`).join("\n");
       if (t === "summary") return "Summary: User Nij from Dubai is learning GenAI engineering. Just finished RAG, starting agents.";
       if (t === "vector") return "[Retrieved on relevance]\nUser: Hi, my name is Nij and I live in Dubai.\nUser: I'm learning GenAI engineering.";
     };
+
     const answers = {
       buffer: "Your name is Nij and you're learning GenAI engineering.",
       window: "I'm not sure of your name from recent context, but you mentioned learning agents next.",
       summary: "Your name is Nij and you're learning GenAI engineering.",
       vector: "Your name is Nij and you're learning GenAI engineering.",
     };
+
     return (
       <div>
         <div style={{display:"flex",gap:"0.4rem",marginBottom:"1rem",flexWrap:"wrap"}}>
@@ -1462,59 +1076,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 4. Retriever Chain Demo (NEW) ----------
-  function RetrieverChainDemo() {
-    const stages = [
-      { name: "User Query", value: '"What\'s our return policy?"', desc: "The question enters the chain." },
-      { name: "Retriever", value: "[doc1: return_policy.txt, doc2: faq.txt, doc3: terms.txt]", desc: "Vector store finds the top-K most similar chunks." },
-      { name: "Stuff Documents", value: "Context:\n- 30-day window for returns\n- Original packaging required\n- Opened software non-refundable", desc: "Retrieved docs are 'stuffed' into the prompt context." },
-      { name: "LLM", value: '"Customers can return items within 30 days with original packaging. Opened software is non-refundable."', desc: "Model generates an answer grounded in the context." }
-    ];
-    const [active, setActive] = useState(0);
-    const [running, setRunning] = useState(false);
-    const run = () => {
-      setRunning(true); setActive(0);
-      let i = 0;
-      const interval = setInterval(() => {
-        i++;
-        if (i >= stages.length) { clearInterval(interval); setRunning(false); return; }
-        setActive(i);
-      }, 1100);
-    };
-    return (
-      <div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem",flexWrap:"wrap",gap:"0.5rem"}}>
-          <code style={{fontSize:"0.85rem"}}>create_retrieval_chain(retriever, stuff_docs_chain)</code>
-          <button onClick={run} disabled={running}
-            style={{background:"var(--g2)",color:"#fff",border:"none",padding:"0.4rem 0.9rem",borderRadius:"6px",fontWeight:600,cursor:running?"default":"pointer",opacity:running?0.6:1,fontSize:"0.85rem"}}>
-            {running ? "Running..." : "▶ Run RAG chain"}
-          </button>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:"0.5rem"}}>
-          {stages.map((s, i) => (
-            <div key={i} onClick={() => !running && setActive(i)} style={{
-              padding:"0.7rem 0.9rem", border:"2px solid", borderColor: i===active?"var(--g2)":"var(--border)",
-              borderRadius:"8px", background: i===active?"var(--g2-bg)":"#fff", cursor:running?"default":"pointer", transition:"all 0.2s",
-              opacity: i>active && running ? 0.4 : 1
-            }}>
-              <div style={{display:"flex",alignItems:"center",gap:"0.6rem",marginBottom:i===active?"0.4rem":0}}>
-                <div style={{width:"24px",height:"24px",borderRadius:"50%",background:i===active?"var(--g2)":"#FEF3E8",color:i===active?"#fff":"var(--text)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.75rem",fontWeight:700}}>{i+1}</div>
-                <div style={{fontWeight:700,fontSize:"0.95rem"}}>{s.name}</div>
-              </div>
-              {i===active && (
-                <>
-                  <pre style={{margin:"0.3rem 0",fontSize:"0.78rem",whiteSpace:"pre-wrap",background:"var(--code-bg)",padding:"0.5rem 0.7rem",borderRadius:"4px",border:"none"}}>{s.value}</pre>
-                  <div style={{fontSize:"0.78rem",color:"var(--muted)"}}>{s.desc}</div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // ---------- 5. Index Comparison Demo ----------
+  // ---------------- 3. Index Comparison Demo ----------------
   function IndexComparisonDemo() {
     const [pick, setPick] = useState("vector");
     const indices = {
@@ -1557,7 +1119,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 6. Agent Loop Demo ----------
+  // ---------------- 4. Agent Loop Demo ----------------
   function AgentLoopDemo() {
     const trace = [
       { thought: "I need Apple's current stock price. That's recent data — use web_search.", action: "web_search('Apple stock price today')", obs: "AAPL is trading at $224.50 as of market close." },
@@ -1569,6 +1131,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     const [phase, setPhase] = useState(0);
     const [running, setRunning] = useState(false);
     const intervalRef = useRef(null);
+
     const start = () => {
       setStep(0); setPhase(0); setRunning(true);
       let s = 0, p = 0;
@@ -1585,8 +1148,10 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
       }, 1100);
     };
     const reset = () => { clearInterval(intervalRef.current); setRunning(false); setStep(0); setPhase(0); };
+
     const phaseColors = ["var(--g3)","var(--g1)","var(--g2)"];
     const phaseLabels = ["THOUGHT","ACTION","OBSERVATION"];
+
     return (
       <div>
         <div style={{display:"flex",gap:"0.5rem",marginBottom:"1rem"}}>
@@ -1635,7 +1200,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 7. Tool Selection Demo ----------
+  // ---------------- 5. Tool Selection Demo ----------------
   function ToolSelectionDemo() {
     const tools = [
       { name: "web_search", desc: "Search for current events, news, prices, or recent info." },
@@ -1653,6 +1218,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     const [qi, setQi] = useState(0);
     const [revealed, setRevealed] = useState(false);
     const next = () => { setRevealed(false); setQi((qi+1) % queries.length); };
+
     return (
       <div>
         <div style={{padding:"0.8rem 1rem",background:"var(--g4-bg)",borderRadius:"8px",marginBottom:"0.9rem"}}>
@@ -1669,7 +1235,8 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
                 border:"2px solid",borderColor:isMatch?"var(--g2)":"var(--border)",
                 borderRadius:"8px",padding:"0.6rem 0.8rem",
                 background:isMatch?"var(--g2-bg)":"#fff",
-                opacity:isWrong?0.5:1, transition:"all 0.3s"
+                opacity:isWrong?0.5:1,
+                transition:"all 0.3s"
               }}>
                 <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:"0.85rem",marginBottom:"0.2rem",color:isMatch?"var(--g2)":"var(--text)"}}>
                   {t.name}{isMatch && " ✓"}
@@ -1694,7 +1261,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 8. ReAct Trace Demo ----------
+  // ---------------- 6. ReAct Trace Demo ----------------
   function ReActTraceDemo() {
     const scenarios = {
       compare: {
@@ -1712,7 +1279,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
         query: "Plan a one-day Dubai trip for someone interested in architecture and food.",
         steps: [
           { thought:"I should search for top architectural sites in Dubai first.", action:"web_search('top architectural landmarks Dubai')", obs:"Burj Khalifa, Museum of the Future, Cayan Tower, Dubai Frame." },
-          { thought:"Now famous food spots.", action:"web_search('best restaurants Downtown Dubai')", obs:"Pierchic, Al Fanar, Ravi Restaurant, Ossiano." },
+          { thought:"Now famous food spots that pair well with these locations.", action:"web_search('best restaurants Downtown Dubai')", obs:"Pierchic, Al Fanar, Ravi Restaurant, Ossiano." },
           { thought:"I have enough to build an itinerary. No more tools needed.", action:"FINAL_ANSWER", obs:"Morning: Museum of the Future + breakfast nearby. Afternoon: Burj Khalifa + late lunch at Al Fanar. Evening: Dubai Frame + dinner at Pierchic." }
         ]
       },
@@ -1726,6 +1293,7 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     };
     const [scenario, setScenario] = useState("compare");
     const data = scenarios[scenario];
+
     return (
       <div>
         <div style={{display:"flex",gap:"0.4rem",marginBottom:"1rem",flexWrap:"wrap"}}>
@@ -1753,8 +1321,8 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
                 <span style={{fontSize:"0.62rem",fontWeight:700,letterSpacing:"1px",color:"var(--g1)"}}>ACTION</span>
                 <div style={{fontSize:"0.82rem",fontFamily:"'JetBrains Mono',monospace"}}>{s.action}</div>
               </div>
-              <div style={{borderLeft:"3px solid var(--g2)",paddingLeft:"0.6rem"}}>
-                <span style={{fontSize:"0.62rem",fontWeight:700,letterSpacing:"1px",color:"var(--g2)"}}>{s.action === "FINAL_ANSWER" ? "FINAL ANSWER" : "OBSERVATION"}</span>
+              <div style={{borderLeft:`3px solid ${s.action === "FINAL_ANSWER" ? "var(--g2)" : "var(--g2)"}`,paddingLeft:"0.6rem"}}>
+                <span style={{fontSize:"0.62rem",fontWeight:700,letterSpacing:"1px",color:s.action === "FINAL_ANSWER" ? "var(--g2)" : "var(--g2)"}}>{s.action === "FINAL_ANSWER" ? "FINAL ANSWER" : "OBSERVATION"}</span>
                 <div style={{fontSize:"0.85rem"}}>{s.obs}</div>
               </div>
             </div>
@@ -1764,159 +1332,25 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // ---------- 9. LangGraph Flow Demo (NEW) ----------
-  function LangGraphFlowDemo() {
-    const [scenario, setScenario] = useState("simple");
-    const scenarios = {
-      simple: {
-        label: "Simple ReAct",
-        nodes: [
-          { id: "START", label: "START", x: 50, y: 30 },
-          { id: "agent", label: "agent\n(LLM)", x: 200, y: 30 },
-          { id: "tools", label: "tools\n(execute)", x: 350, y: 30 },
-          { id: "END", label: "END", x: 350, y: 150 }
-        ],
-        edges: [
-          { from: "START", to: "agent", label: "" },
-          { from: "agent", to: "tools", label: "tool_calls?", conditional: true },
-          { from: "agent", to: "END", label: "done", conditional: true },
-          { from: "tools", to: "agent", label: "loop back" }
-        ],
-        desc: "The basic ReAct pattern. Agent decides: call a tool, or finish."
-      },
-      hitl: {
-        label: "Human-in-loop",
-        nodes: [
-          { id: "START", label: "START", x: 50, y: 30 },
-          { id: "agent", label: "agent\n(LLM)", x: 180, y: 30 },
-          { id: "approval", label: "human\napproval", x: 320, y: 30, special: "warn" },
-          { id: "tools", label: "tools\n(execute)", x: 320, y: 130 },
-          { id: "END", label: "END", x: 50, y: 130 }
-        ],
-        edges: [
-          { from: "START", to: "agent", label: "" },
-          { from: "agent", to: "approval", label: "tool_calls?", conditional: true },
-          { from: "agent", to: "END", label: "done", conditional: true },
-          { from: "approval", to: "tools", label: "approved" },
-          { from: "tools", to: "agent", label: "loop" }
-        ],
-        desc: "Pause before destructive tools and ask a human. Critical for production agents that send emails, make purchases, etc."
-      },
-      planner: {
-        label: "Plan-then-execute",
-        nodes: [
-          { id: "START", label: "START", x: 50, y: 30 },
-          { id: "plan", label: "planner\n(make plan)", x: 180, y: 30, special: "info" },
-          { id: "agent", label: "agent\n(execute step)", x: 320, y: 30 },
-          { id: "tools", label: "tools", x: 460, y: 30 },
-          { id: "END", label: "END", x: 320, y: 130 }
-        ],
-        edges: [
-          { from: "START", to: "plan", label: "" },
-          { from: "plan", to: "agent", label: "plan ready" },
-          { from: "agent", to: "tools", label: "tool", conditional: true },
-          { from: "agent", to: "END", label: "plan done", conditional: true },
-          { from: "tools", to: "agent", label: "" }
-        ],
-        desc: "Make a plan first, then execute step by step. Good for multi-stage tasks where the agent benefits from thinking ahead."
-      }
-    };
-    const data = scenarios[scenario];
-    const nodeColor = (n) => {
-      if (n.id === "START") return "var(--g3)";
-      if (n.id === "END") return "var(--g2)";
-      if (n.special === "warn") return "var(--g1)";
-      if (n.special === "info") return "var(--g3)";
-      return "var(--g4)";
-    };
-    return (
-      <div>
-        <div style={{display:"flex",gap:"0.4rem",marginBottom:"1rem",flexWrap:"wrap"}}>
-          {Object.keys(scenarios).map(k => (
-            <button key={k} onClick={() => setScenario(k)} style={{
-              padding:"0.4rem 0.8rem", border:"1px solid", borderColor:scenario===k?"var(--g4)":"var(--border)",
-              background:scenario===k?"var(--g4-bg)":"#fff", borderRadius:"6px", cursor:"pointer",
-              fontSize:"0.82rem", fontWeight:scenario===k?700:500, color:scenario===k?"var(--g4)":"var(--text)"
-            }}>{scenarios[k].label}</button>
-          ))}
-        </div>
-        <div style={{border:"1px solid var(--border)",borderRadius:"8px",padding:"1rem",background:"#fff",overflowX:"auto"}}>
-          <svg width="540" height="200" style={{display:"block"}}>
-            <defs>
-              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,6 L9,3 z" fill="var(--muted)" />
-              </marker>
-            </defs>
-            {data.edges.map((e, i) => {
-              const from = data.nodes.find(n => n.id === e.from);
-              const to = data.nodes.find(n => n.id === e.to);
-              if (!from || !to) return null;
-              const x1 = from.x + 50, y1 = from.y + 25;
-              const x2 = to.x + 50, y2 = to.y + 25;
-              const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-              const dx = x2 - x1, dy = y2 - y1;
-              const dist = Math.sqrt(dx*dx + dy*dy);
-              const ux = dx / dist, uy = dy / dist;
-              const ax = x2 - ux * 35, ay = y2 - uy * 25;
-              return (
-                <g key={i}>
-                  <line x1={x1} y1={y1} x2={ax} y2={ay}
-                    stroke={e.conditional ? "var(--g4)" : "var(--muted)"}
-                    strokeWidth={e.conditional ? 1.5 : 1.5}
-                    strokeDasharray={e.conditional ? "5,3" : "0"}
-                    markerEnd="url(#arrow)" />
-                  {e.label && (
-                    <text x={mx} y={my - 4} textAnchor="middle" fontSize="10" fontFamily="'JetBrains Mono',monospace"
-                      fill={e.conditional ? "var(--g4)" : "var(--muted)"}>{e.label}</text>
-                  )}
-                </g>
-              );
-            })}
-            {data.nodes.map((n, i) => (
-              <g key={i}>
-                <rect x={n.x} y={n.y} width="100" height="50" rx="8"
-                  fill={nodeColor(n)} stroke={nodeColor(n)} strokeWidth="1.5" />
-                <text x={n.x + 50} y={n.y + 22} textAnchor="middle"
-                  fill="#fff" fontSize="11" fontWeight="700" fontFamily="'DM Sans',sans-serif">
-                  {n.label.split('\n').map((line, li) => (
-                    <tspan key={li} x={n.x + 50} dy={li === 0 ? 0 : 13}>{line}</tspan>
-                  ))}
-                </text>
-              </g>
-            ))}
-          </svg>
-        </div>
-        <div style={{marginTop:"0.8rem",padding:"0.7rem 0.9rem",background:"var(--g4-bg)",borderLeft:"3px solid var(--g4)",borderRadius:"6px",fontSize:"0.88rem"}}>
-          {data.desc}
-        </div>
-        <div style={{marginTop:"0.8rem",display:"flex",gap:"1rem",fontSize:"0.78rem",color:"var(--muted)",flexWrap:"wrap"}}>
-          <div><span style={{display:"inline-block",width:"20px",height:"3px",background:"var(--g4)",verticalAlign:"middle"}}></span> dashed = conditional edge (LLM decides)</div>
-          <div><span style={{display:"inline-block",width:"20px",height:"3px",background:"var(--muted)",verticalAlign:"middle"}}></span> solid = unconditional edge</div>
-        </div>
-      </div>
-    );
-  }
-
-  // ---------- 10. Framework Choice Demo ----------
+  // ---------------- 7. Framework Choice Demo ----------------
   function FrameworkChoiceDemo() {
     const [answers, setAnswers] = useState({});
     const questions = [
       { id: "q1", text: "Does your app need to make decisions or call tools at runtime?", options: ["Yes — agents/tools", "No — fixed pipeline"] },
       { id: "q2", text: "What's your data situation?", options: ["Multiple messy sources (PDFs, Notion, Slack, etc.)", "One or two clean sources"] },
-      { id: "q3", text: "Will you ship this to real users?", options: ["Yes — production", "No — script or experiment"] },
-      { id: "q4", text: "Do you need human approval before destructive actions?", options: ["Yes", "No"] }
+      { id: "q3", text: "Will you ship this to real users?", options: ["Yes — production", "No — script or experiment"] }
     ];
     const recommend = () => {
-      const a1 = answers.q1, a2 = answers.q2, a3 = answers.q3, a4 = answers.q4;
-      if (!a1 || !a2 || !a3 || !a4) return null;
+      const a1 = answers.q1, a2 = answers.q2, a3 = answers.q3;
+      if (!a1 || !a2 || !a3) return null;
       if (a3 === "No — script or experiment") return { name:"Raw API", color:"var(--g3)", reason:"For one-off scripts, frameworks add overhead. Stick with the OpenAI/Anthropic SDK directly." };
-      if (a1 === "Yes — agents/tools" && a4 === "Yes") return { name:"LangGraph (explicit graph)", color:"var(--g4)", reason:"Human-in-the-loop checkpoints require explicit graph control. create_react_agent isn't enough." };
-      if (a1 === "Yes — agents/tools" && a2 === "Multiple messy sources (PDFs, Notion, Slack, etc.)") return { name:"LangChain + LlamaIndex", color:"var(--g5)", reason:"You need both — LlamaIndex for the data layer, LangChain (or LangGraph) for agentic orchestration on top." };
-      if (a1 === "Yes — agents/tools") return { name:"LangChain + create_react_agent", color:"var(--g4)", reason:"Vanilla ReAct agent is one line. Drop down to LangGraph only when you need more control." };
+      if (a1 === "Yes — agents/tools" && a2 === "Multiple messy sources (PDFs, Notion, Slack, etc.)") return { name:"LangChain + LlamaIndex", color:"var(--g5)", reason:"You need both — LlamaIndex for the data layer, LangChain for agentic orchestration on top." };
+      if (a1 === "Yes — agents/tools") return { name:"LangChain (with LangGraph)", color:"var(--g4)", reason:"Agents are LangChain's strongest area. LangGraph handles the runtime loop." };
       if (a2 === "Multiple messy sources (PDFs, Notion, Slack, etc.)") return { name:"LlamaIndex", color:"var(--g3)", reason:"Connectors and indices are LlamaIndex's killer feature. RAG-first architecture fits your data shape." };
-      return { name:"LangChain", color:"var(--g2)", reason:"Simple chain over clean data — LangChain is fine, LCEL is clean, ecosystem is bigger." };
+      return { name:"Either works — pick LangChain", color:"var(--g2)", reason:"Simple chain over clean data — LangChain is fine, LCEL is clean, ecosystem is bigger." };
     };
     const rec = recommend();
+
     return (
       <div>
         {questions.map(q => (
@@ -1947,16 +1381,12 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
-  // Mount all demos
   ReactDOM.createRoot(document.getElementById("lcel-demo-root")).render(<LCELPipeDemo />);
-  ReactDOM.createRoot(document.getElementById("parser-demo-root")).render(<OutputParserDemo />);
   ReactDOM.createRoot(document.getElementById("memory-demo-root")).render(<MemoryTypesDemo />);
-  ReactDOM.createRoot(document.getElementById("retriever-demo-root")).render(<RetrieverChainDemo />);
   ReactDOM.createRoot(document.getElementById("index-demo-root")).render(<IndexComparisonDemo />);
   ReactDOM.createRoot(document.getElementById("agent-loop-root")).render(<AgentLoopDemo />);
   ReactDOM.createRoot(document.getElementById("tool-selection-root")).render(<ToolSelectionDemo />);
   ReactDOM.createRoot(document.getElementById("react-trace-root")).render(<ReActTraceDemo />);
-  ReactDOM.createRoot(document.getElementById("langgraph-demo-root")).render(<LangGraphFlowDemo />);
   ReactDOM.createRoot(document.getElementById("choice-demo-root")).render(<FrameworkChoiceDemo />);
 </script>
 </body>
