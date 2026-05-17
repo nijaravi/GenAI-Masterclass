@@ -104,6 +104,7 @@
   .chapter-dek{font-family:'Libre Baskerville',serif;font-style:italic;color:var(--muted);font-size:1.05rem;margin:0 0 1.4rem}
   .chapter p{margin:0 0 1.05rem;font-size:1rem;line-height:1.7}
   .chapter h3{font-family:'Libre Baskerville',serif;font-size:1.25rem;margin:1.75rem 0 .65rem;font-weight:700}
+  .chapter h4{font-family:'Libre Baskerville',serif;font-size:1.1rem;margin:1.35rem 0 .55rem;font-weight:700}
   .chapter ul, .chapter ol{margin:0 0 1.1rem;padding-left:1.5rem}
   .chapter li{margin-bottom:.45rem;line-height:1.65}
 
@@ -140,6 +141,129 @@
   code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px;color:var(--text)}
   pre code{background:transparent;padding:0;border:0}
   .chapter strong{font-weight:700}
+
+  .seq-walkthrough-outer{background:var(--g2-bg);border-radius:10px;padding:1rem;margin:1.25rem 0}
+  .seq-walkthrough{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;font-family:'DM Sans',sans-serif}
+  .seq-walkthrough:focus{outline:2px solid var(--g2);outline-offset:2px}
+  .seq-steps{display:flex;align-items:center;justify-content:space-between;gap:.35rem;margin-bottom:1.25rem;flex-wrap:wrap}
+  .seq-step-btn{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;background:none;border:none;cursor:pointer;padding:.25rem;font-family:inherit}
+  .seq-step-dot{width:2rem;height:2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;border:2px solid var(--border);background:#fff;color:var(--muted);transition:all .25s}
+  .seq-step-btn.active .seq-step-dot{background:var(--g2);border-color:var(--g2);color:#fff}
+  .seq-step-btn.done .seq-step-dot{background:var(--g2-bg);border-color:var(--g2);color:var(--g2)}
+  .seq-step-label{font-size:.68rem;margin-top:.35rem;color:var(--muted);text-align:center;line-height:1.2;max-width:5.5rem}
+  .seq-step-btn.active .seq-step-label{color:var(--g2);font-weight:600}
+  .seq-step-connector{flex:0 0 12px;height:2px;background:var(--border);margin-top:-1.1rem}
+  .seq-panel{margin-bottom:1rem;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff}
+  .seq-panel-head{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:.55rem 1rem;background:#F5F2ED;border-bottom:1px solid var(--border)}
+  .seq-panel-body{padding:1rem}
+  .seq-code-line{font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.55;padding:.12rem .5rem;border-radius:4px;white-space:pre-wrap;transition:opacity .25s}
+  .seq-code-line.dim{opacity:.4}
+  .seq-code-line.active{background:var(--g2-bg);border-left:3px solid var(--g2);padding-left:.65rem}
+  .seq-happening{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:700px){.seq-happening{grid-template-columns:1fr}}
+  .seq-prompt-box{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--code-bg);padding:.75rem;border-radius:6px;line-height:1.55;margin-bottom:.5rem}
+  .seq-ph{background:var(--g2-bg);color:var(--g2);padding:1px 6px;border-radius:4px;font-weight:600}
+  .seq-sub-label{font-size:.62rem;font-weight:700;letter-spacing:1px;color:var(--muted);margin:.65rem 0 .35rem}
+  .seq-llm-card{background:var(--g2-bg);border-left:3px solid var(--g2);padding:.75rem;border-radius:6px;font-size:.88rem;line-height:1.55}
+  .seq-dict{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:var(--code-bg);padding:1rem;border-radius:8px;line-height:1.6;white-space:pre-wrap}
+  .seq-dict-key{display:inline-block;animation:seqKeyIn .25s ease}
+  .seq-dict-key.pulse{animation:seqKeyPulse .6s ease}
+  @keyframes seqKeyIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes seqKeyPulse{0%,100%{background:transparent}40%{background:var(--g2-bg);border-radius:3px}}
+  .seq-final-card{background:var(--accent-bg);border:1px solid var(--g2);border-radius:8px;padding:1rem}
+  .seq-final-label{font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--g2);margin-bottom:.4rem}
+  .seq-controls{display:flex;align-items:center;justify-content:space-between;margin-top:1rem;gap:.75rem;flex-wrap:wrap}
+  .seq-btn-prev,.seq-btn-next{padding:.5rem 1.1rem;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--border)}
+  .seq-btn-next{background:var(--g2);color:#fff;border-color:var(--g2)}
+  .seq-btn-next:disabled,.seq-btn-prev:disabled{opacity:.45;cursor:not-allowed}
+  .seq-btn-prev{background:#fff;color:var(--text)}
+  .seq-reset{background:none;border:none;color:var(--muted);font-size:.82rem;cursor:pointer;text-decoration:underline;font-family:inherit}
+  .seq-fade{animation:seqFade .25s ease}
+  @keyframes seqFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .seq-teaching{background:var(--g2-bg);border-left:3px solid var(--g2);padding:.75rem 1rem;border-radius:6px;font-size:.92rem;margin:1rem 0}
+
+  .par-widget,.route-widget{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;font-family:'DM Sans',sans-serif}
+  .par-widget:focus,.route-widget:focus{outline:2px solid var(--g2);outline-offset:2px}
+  .par-input-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;margin-bottom:1rem}
+  .par-topic-pill{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:.45rem .65rem;display:flex;align-items:center;gap:.25rem;flex:1;min-width:200px}
+  .par-topic-pill input{border:none;background:transparent;font-family:inherit;font-size:inherit;outline:none;min-width:120px;color:var(--text)}
+  .par-btn-run{background:var(--g2);color:#fff;border:none;padding:.5rem 1rem;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.88rem}
+  .par-btn-run:disabled{opacity:.55;cursor:not-allowed}
+  .par-btn-ghost{background:#fff;border:1px solid var(--border);padding:.5rem .9rem;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.88rem}
+  .par-broadcast{display:flex;align-items:center;gap:.5rem;margin:1rem 0 1.25rem;min-height:72px}
+  .par-broadcast-input{font-family:'JetBrains Mono',monospace;font-size:.72rem;background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:.5rem .65rem;flex:0 0 auto;max-width:140px}
+  .par-broadcast-svg{flex:1;min-width:120px;height:72px}
+  .par-broadcast-arrow{stroke:var(--border);stroke-width:2;fill:none;transition:stroke .4s,opacity .4s}
+  .par-broadcast-arrow.live{stroke:var(--g2);opacity:1}
+  .par-broadcast-arrow.dim{opacity:.35}
+  .par-broadcast-box{font-size:.7rem;font-weight:700;text-align:center;fill:var(--muted)}
+  .par-broadcast-box.live{fill:var(--g2)}
+  .par-lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.25rem}
+  @media (max-width:700px){.par-lanes{grid-template-columns:1fr}}
+  .par-lane{border:1px solid var(--border);border-radius:8px;padding:.85rem;background:#fff}
+  .par-lane-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+  .par-lane-pill{background:var(--g2);color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:4px;font-family:'JetBrains Mono',monospace}
+  .par-lane-tpl{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);line-height:1.4}
+  .par-progress{height:6px;background:var(--g2-bg);border-radius:3px;margin:.5rem 0;overflow:hidden}
+  .par-progress-fill{height:100%;background:var(--g2);width:0%;transition:width .1s linear;border-radius:3px}
+  .par-status{font-size:.72rem;color:var(--muted);margin-bottom:.5rem}
+  .par-response{font-size:.82rem;line-height:1.5;min-height:3.5rem;color:var(--text)}
+  .par-timing{margin:1.25rem 0}
+  .par-timing-row{margin-bottom:.65rem}
+  .par-timing-label{font-size:.72rem;font-weight:600;margin-bottom:.25rem;display:flex;justify-content:space-between}
+  .par-timing-track{height:22px;background:#F5F2ED;border-radius:4px;overflow:hidden;position:relative}
+  .par-timing-fill{height:100%;border-radius:4px;width:0%;transition:width .1s linear}
+  .par-timing-fill.parallel{background:var(--g2)}
+  .par-timing-fill.sequential{background:var(--muted);opacity:.45}
+  .par-timing-caption{font-size:.8rem;color:var(--muted);margin-top:.5rem;line-height:1.5}
+  .par-output{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:1rem 0;line-height:1.6;white-space:pre-wrap}
+  .par-output-line{opacity:0;animation:seqKeyIn .3s ease forwards}
+  .par-output-line.pulse span.key{animation:seqKeyPulse .6s ease}
+  .par-takeaways{display:grid;gap:.5rem;margin-top:1rem}
+  .par-takeaway{font-size:.85rem;padding:.65rem .85rem;background:var(--g2-bg);border-left:3px solid var(--g2);border-radius:6px;line-height:1.5}
+  .mem-widget{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;font-family:'DM Sans',sans-serif}
+  .mem-widget:focus{outline:2px solid var(--g2);outline-offset:2px}
+  .mem-session-bar{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem}
+  .mem-session-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem}
+  .mem-session-row label{font-size:.82rem;font-weight:600}
+  .mem-session-row input{font-family:'JetBrains Mono',monospace;font-size:.82rem;border:1px solid var(--border);border-radius:4px;padding:.35rem .5rem;min-width:100px}
+  .mem-session-help{font-size:.75rem;color:var(--muted);margin:.4rem 0 0;line-height:1.4}
+  .mem-clear{margin-left:auto;background:none;border:1px solid var(--border);border-radius:6px;padding:.4rem .75rem;font-size:.8rem;cursor:pointer;font-family:inherit}
+  .mem-layout{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,1.4fr);gap:1rem}
+  @media (max-width:800px){.mem-layout{grid-template-columns:1fr}}
+  .mem-turns{display:flex;flex-direction:column;gap:.75rem}
+  .mem-turn-card{border:1px solid var(--border);border-radius:8px;padding:1rem;background:#fff;transition:opacity .25s}
+  .mem-turn-card.locked{opacity:.5;background:#fafafa}
+  .mem-turn-card.active{border-color:var(--g2);box-shadow:0 0 0 1px var(--g2-bg)}
+  .mem-turn-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+  .mem-turn-pill{background:var(--g2);color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:4px}
+  .mem-turn-quote{font-size:.88rem;font-style:italic;color:var(--text);margin-bottom:.65rem;line-height:1.45}
+  .mem-run-btn{background:var(--g2);color:#fff;border:none;padding:.45rem .9rem;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem;font-family:inherit}
+  .mem-run-btn:disabled{opacity:.45;cursor:not-allowed}
+  .mem-store-persist{border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:1rem;background:#fff}
+  .mem-store-persist-head{font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--muted);margin-bottom:.5rem;text-transform:uppercase}
+  .mem-snap-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
+  @media (max-width:700px){.mem-snap-row{grid-template-columns:1fr}}
+  .mem-snap{border:1px solid var(--border);border-radius:6px;padding:.55rem;background:var(--code-bg);min-height:4rem}
+  .mem-snap-title{font-size:.6rem;font-weight:700;letter-spacing:1px;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase}
+  .mem-snap-body{font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.45;white-space:pre-wrap}
+  .mem-msg-list{list-style:none;margin:0;padding:0}
+  .mem-msg-list li{padding:.35rem .5rem;margin-bottom:.25rem;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.4;display:flex;justify-content:space-between;gap:.5rem}
+  .mem-msg-list li.from-store{border-left:3px solid var(--g2);background:var(--g2-bg)}
+  .mem-msg-list li.from-prompt{border-left:3px solid var(--muted)}
+  .mem-msg-list li.from-current{border-left:3px solid var(--g1);background:#FEF7E0}
+  .mem-msg-tag{font-size:.6rem;color:var(--muted);white-space:nowrap}
+  .mem-takeaways{display:grid;gap:.5rem;margin-top:1rem}
+  .route-q-row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:1rem}
+  .route-q-btn{flex:1;min-width:160px;padding:.55rem .75rem;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:.78rem;text-align:left;font-family:inherit;line-height:1.35}
+  .route-q-btn.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+  .route-tree{display:flex;gap:.75rem;justify-content:center;margin:1rem 0;flex-wrap:wrap}
+  .route-tree-node{flex:1;min-width:100px;max-width:140px;padding:.65rem;border:2px solid var(--border);border-radius:8px;text-align:center;font-size:.75rem;font-family:'JetBrains Mono',monospace;opacity:.3;transition:all .25s}
+  .route-tree-node.selected{opacity:1;border-color:var(--g2);background:var(--g2-bg);box-shadow:0 0 0 2px var(--g2-bg)}
+  .route-route-body{font-family:'JetBrains Mono',monospace;font-size:.75rem;background:var(--code-bg);padding:.75rem;border-radius:6px;line-height:1.55;white-space:pre-wrap}
+  .route-route-line.dim{opacity:.35}
+  .route-route-line.active{background:var(--g2-bg);border-left:3px solid var(--g2);padding-left:.5rem;margin-left:-.5rem}
+  .route-badge{display:inline-block;font-size:.7rem;background:var(--g2-bg);color:var(--g2);padding:.25rem .5rem;border-radius:4px;margin-top:.5rem;font-weight:600}
 
   table{width:100%;border-collapse:collapse;margin:1rem 0 1.4rem;font-size:.93rem}
   th,td{text-align:left;padding:.7rem .9rem;border-bottom:1px solid var(--border);vertical-align:top}
@@ -382,42 +506,148 @@ result = chain.invoke({"text": "Hello, world"})</code></pre>
 
       <h3>Pattern 1: Sequential refinement</h3>
       <p>Use the output of one LLM call as the input to the next. Classic example: generate a draft, critique it, revise.</p>
-      <pre><code>draft_chain = draft_prompt | llm | StrOutputParser()
+      <pre><code>from langchain_core.runnables import RunnablePassthrough
+
+draft_prompt = ChatPromptTemplate.from_template(
+    "Write a one-sentence elevator pitch for: {idea}"
+)
+critique_prompt = ChatPromptTemplate.from_template(
+    "Critique this pitch in one sentence — what's weak about it?\n\nPitch: {draft}"
+)
+revise_prompt = ChatPromptTemplate.from_template(
+    "Original pitch: {draft}\n"
+    "Critique: {critique}\n\n"
+    "Rewrite the pitch addressing the critique. One sentence only."
+)
+
+draft_chain = draft_prompt | llm | StrOutputParser()
 critique_chain = critique_prompt | llm | StrOutputParser()
 revise_chain = revise_prompt | llm | StrOutputParser()
 
 full = (
-    {"topic": RunnablePassthrough()}
-    | {"draft": draft_chain, "topic": lambda x: x["topic"]}
-    | {"critique": critique_chain, "draft": lambda x: x["draft"]}
+    {"idea": RunnablePassthrough()}
+    | RunnablePassthrough.assign(draft=draft_chain)
+    | RunnablePassthrough.assign(critique=critique_chain)
     | revise_chain
-)</code></pre>
+)
+
+result = full.invoke("a notebook app for GenAI engineers")</code></pre>
+
+      <h4>How it works under the hood</h4>
+      <p>Step through the pipeline below to see what LangChain actually does at each <code>|</code> — not magic, just dict keys you wired and prompts that read them.</p>
+      <div class="seq-teaching">The chain looks magical, but there's no magic — every key name is something <strong>you</strong> wired explicitly. Step through the execution to see what LangChain actually does at each <code>|</code>.</div>
+
+      <div class="seq-walkthrough-outer">
+        <div class="demo" style="margin:0;border:none;background:transparent">
+          <div class="demo-header">Interactive · Sequential refinement walkthrough</div>
+          <div class="demo-body" id="sequential-refinement-root" style="padding:0;background:transparent"></div>
+        </div>
+      </div>
+
+      <p>The whole "magic" of LCEL chains is just two conventions: <code>.assign(key=chain)</code> writes a key, <code>{key}</code> in a prompt template reads it. Match the names and data flows. Mismatch them and it crashes. That's the entire mechanism.</p>
 
       <h3>Pattern 2: Parallel fan-out</h3>
       <p>Run multiple chains at once and combine results. Useful for asking the same question from different angles.</p>
       <pre><code>from langchain_core.runnables import RunnableParallel
+import time
+
+pros_chain = ChatPromptTemplate.from_template(
+    "List 3 pros of: {topic}. Be brief."
+) | llm | StrOutputParser()
+
+cons_chain = ChatPromptTemplate.from_template(
+    "List 3 cons of: {topic}. Be brief."
+) | llm | StrOutputParser()
+
+summary_chain = ChatPromptTemplate.from_template(
+    "Summarize {topic} in one sentence."
+) | llm | StrOutputParser()
 
 multi_view = RunnableParallel(
     pros=pros_chain,
     cons=cons_chain,
     summary=summary_chain
 )
+
+start = time.time()
 result = multi_view.invoke({"topic": "remote work"})
-# result = {"pros": "...", "cons": "...", "summary": "..."}</code></pre>
+elapsed = time.time() - start
+
+print(f"⏱  Wall time: {elapsed:.1f}s (all 3 ran in parallel)\n")
+print("─── PROS ───");    print(result["pros"])
+print("\n─── CONS ───");  print(result["cons"])
+print("\n─── SUMMARY ───"); print(result["summary"])</code></pre>
+
+      <h4>How it works under the hood</h4>
+      <p>Sequential chains run one after another. Parallel chains run at the same time. Three LLM calls that would take ~6s end-to-end finish in ~2s because they fire concurrently. Watch them race.</p>
+
+      <div class="seq-walkthrough-outer">
+        <div class="demo" style="margin:0;border:none;background:transparent">
+          <div class="demo-header">Interactive · Parallel fan-out</div>
+          <div class="demo-body" style="padding:0;background:transparent">
+            <div id="parallel-fanout-root" class="par-widget" tabindex="0" aria-label="Parallel fan-out walkthrough"></div>
+          </div>
+        </div>
+      </div>
+
+      <p>Use parallel fan-out whenever multiple chains don't depend on each other's outputs. If chain B needs chain A's result, you're back to sequential. If they're independent, fan them out and pay the cost of just one.</p>
 
       <h3>Pattern 3: Routing</h3>
       <p>Pick a different chain based on the input. The LLM acts as a classifier, then a specialized chain handles each case.</p>
-      <pre><code>def route(info):
-    if "code" in info["topic"].lower():
+      <pre><code>from langchain_core.runnables import RunnableLambda
+
+# Three specialist chains
+code_chain = ChatPromptTemplate.from_template(
+    "You are a senior engineer. Answer this code question briefly: {question}"
+) | llm | StrOutputParser()
+
+math_chain = ChatPromptTemplate.from_template(
+    "Solve this math problem step by step: {question}"
+) | llm | StrOutputParser()
+
+general_chain = ChatPromptTemplate.from_template(
+    "Answer this question briefly: {question}"
+) | llm | StrOutputParser()
+
+# Classifier: returns one of: 'code' | 'math' | 'general'
+classifier = ChatPromptTemplate.from_template(
+    "Classify the question into ONE word — code, math, or general.\n\n"
+    "Question: {question}\nClassification:"
+) | llm | StrOutputParser()
+
+def route(info):
+    label = info["topic"].strip().lower()
+    if "code" in label:
         return code_chain
-    elif "math" in info["topic"].lower():
+    elif "math" in label:
         return math_chain
     return general_chain
 
 router = (
-    {"topic": classifier_chain, "input": lambda x: x["question"]}
+    {"topic": classifier, "question": lambda x: x["question"]}
     | RunnableLambda(route)
-)</code></pre>
+)
+
+for q in [
+    "How do I reverse a string in Python?",
+    "What is 23 * 47?",
+    "What's the capital of France?"
+]:
+    print(f"❓ {q}")
+    print(f"→  {router.invoke({'question': q})[:200]}")
+    print()</code></pre>
+
+      <h4>How it works under the hood</h4>
+      <p>The classifier is just an LLM call. The interesting trick is <code>RunnableLambda(route)</code> — <code>route()</code> returns a chain, not data. LangChain takes that returned chain and invokes it for you. Dynamic dispatch built out of two normal Python concepts: a dict and a function.</p>
+
+      <div class="seq-walkthrough-outer">
+        <div class="demo" style="margin:0;border:none;background:transparent">
+          <div class="demo-header">Interactive · Routing walkthrough</div>
+          <div class="demo-body" id="routing-walkthrough-root" style="padding:0;background:transparent"></div>
+        </div>
+      </div>
+
+      <p>Three Python ideas, no framework magic: (1) a chain is a callable that produces a value, (2) a function can return any object including a chain, (3) <code>RunnableLambda</code> tells LangChain "invoke whatever this function returns." Stack those three and you get conditional pipelines without writing a state machine.</p>
 
       <div class="callout how">
         <div class="callout-label">When to reach for a chain vs. plain Python</div>
@@ -544,7 +774,19 @@ chain = prompt | llm | robust_parser
       <h3>The modern way: RunnableWithMessageHistory</h3>
       <pre><code>from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.prompts import MessagesPlaceholder
 
+# Step 1: A simple chat prompt that has a slot for past messages
+chat_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant."),
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{input}"),
+])
+
+# Step 2: Plain chain
+chain = chat_prompt | llm
+
+# Step 3: Wrap with history. The store is just a dict mapping session_id → history.
 store = {}
 def get_history(session_id: str):
     if session_id not in store:
@@ -558,10 +800,32 @@ chain_with_memory = RunnableWithMessageHistory(
     history_messages_key="history",
 )
 
-chain_with_memory.invoke(
-    {"input": "What's the capital of France?"},
-    config={"configurable": {"session_id": "user-42"}}
-)</code></pre>
+# Both calls share the same session — the second remembers the first
+config = {"configurable": {"session_id": "user-42"}}
+
+print(chain_with_memory.invoke(
+    {"input": "Hi, my name is Nij and I live in Dubai."},
+    config
+).content)
+print("---")
+print(chain_with_memory.invoke(
+    {"input": "What's my name and where do I live?"},
+    config
+).content)</code></pre>
+
+      <h4>How it works under the hood</h4>
+      <p>LLMs are stateless — each call is a blank slate. So how does ChatGPT remember your name across turns? It doesn't, really. Something outside the LLM stores past messages and re-sends them every turn. <code>RunnableWithMessageHistory</code> automates that re-sending. Watch two consecutive turns and see exactly what gets injected on turn 2 that wasn't there on turn 1.</p>
+
+      <div class="seq-walkthrough-outer">
+        <div class="demo" style="margin:0;border:none;background:transparent">
+          <div class="demo-header">Interactive · RunnableWithMessageHistory walkthrough</div>
+          <div class="demo-body" style="padding:0;background:transparent">
+            <div id="memory-history-root" class="mem-widget" tabindex="0" aria-label="Memory history walkthrough"></div>
+          </div>
+        </div>
+      </div>
+
+      <p>That's the entire mechanism. Now read the callout below — in production, only the storage backend changes.</p>
 
       <div class="callout why">
         <div class="callout-label">The thing nobody tells you</div>
@@ -1947,8 +2211,479 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
     );
   }
 
+  // ---------- Sequential refinement walkthrough (Ch 4) ----------
+  function SequentialRefinementWalkthrough() {
+    const USER = "a notebook app for GenAI engineers";
+    const DRAFT = "Meet NotebookGenie — the AI-native notebook where Python cells and LLM prompts share the same workspace, so GenAI engineers can prototype, evaluate, and ship in one flow.";
+    const CRITIQUE = "The pitch is feature-listy and vague about who specifically benefits — 'GenAI engineers' is broad, and 'prototype, evaluate, and ship' could describe almost any dev tool.";
+    const REVISE = "NotebookGenie is the notebook built for ML engineers shipping RAG and agent prototypes — where every cell can call an LLM, log a trace, and run an eval, side by side.";
+
+    const CODE_LINES = [
+      '    {"idea": RunnablePassthrough()}',
+      '    | RunnablePassthrough.assign(draft=draft_chain)',
+      '    | RunnablePassthrough.assign(critique=critique_chain)',
+      '    | revise_chain'
+    ];
+
+    const STEPS = [
+      {
+        label: "Wrap input",
+        codeIdx: 0,
+        explanation: "LangChain auto-promotes this dict literal into a RunnableParallel. RunnablePassthrough() is the identity — it returns its input unchanged. The result is a one-key dict that downstream prompts can look up.",
+        noLlm: true,
+        noLlmNote: "No LLM call here. RunnablePassthrough is the identity function. The dict literal {\"idea\": ...} just wraps the raw user input into a dict so later prompts have a key to look up.",
+        dict: { idea: USER },
+        newKey: "idea",
+        isFinal: false
+      },
+      {
+        label: "Generate draft",
+        codeIdx: 1,
+        explanation: "Pass the current dict through unchanged, AND run draft_chain on it, AND merge the result under the key draft. You — the developer — chose the name draft. LangChain didn't infer it from anywhere.",
+        template: "Write a one-sentence elevator pitch for: {idea}",
+        placeholders: ["idea"],
+        rendered: "Write a one-sentence elevator pitch for: " + USER,
+        highlightInRendered: USER,
+        llm: DRAFT,
+        dict: { idea: USER, draft: "Meet NotebookGenie — ..." },
+        newKey: "draft",
+        isFinal: false
+      },
+      {
+        label: "Critique draft",
+        codeIdx: 2,
+        explanation: "Same pattern. The critique prompt has {draft} — that placeholder only works because we named the previous step's output draft. Rename one and the chain breaks.",
+        template: "Critique this pitch in one sentence — what's weak about it?\n\nPitch: {draft}",
+        placeholders: ["draft"],
+        rendered: "Critique this pitch in one sentence — what's weak about it?\n\nPitch: " + DRAFT,
+        highlightInRendered: DRAFT,
+        llm: CRITIQUE,
+        dict: { idea: USER, draft: "Meet NotebookGenie — ...", critique: "The pitch is feature-listy..." },
+        newKey: "critique",
+        isFinal: false
+      },
+      {
+        label: "Revise",
+        codeIdx: 3,
+        explanation: "No .assign(...) here. This is a bare chain at the end, so its output replaces the dict instead of merging into it. That's why full.invoke(...) returns a string, not a dictionary. The revise prompt reads two keys from the dict — {draft} and {critique} — both wired up by the names we chose in the previous two .assign() calls.",
+        template: "Original pitch: {draft}\nCritique: {critique}\n\nRewrite the pitch addressing the critique. One sentence only.",
+        placeholders: ["draft", "critique"],
+        rendered: "Original pitch: " + DRAFT + "\nCritique: " + CRITIQUE + "\n\nRewrite the pitch addressing the critique. One sentence only.",
+        highlightInRendered: null,
+        llm: REVISE,
+        finalString: REVISE,
+        isFinal: true
+      }
+    ];
+
+    const [step, setStep] = useState(0);
+    const [pulseKey, setPulseKey] = useState(null);
+    const [fadeTick, setFadeTick] = useState(0);
+    const rootRef = useRef(null);
+
+    const goTo = (n) => {
+      const next = Math.max(0, Math.min(STEPS.length - 1, n));
+      if (next === step) return;
+      setStep(next);
+      setFadeTick(t => t + 1);
+      const s = STEPS[next];
+      if (!s.isFinal && s.newKey) setPulseKey(s.newKey);
+    };
+
+    useEffect(() => {
+      const onKey = (e) => {
+        const el = rootRef.current;
+        if (!el || !el.contains(document.activeElement)) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); goTo(step + 1); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); goTo(step - 1); }
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [step]);
+
+    const s = STEPS[step];
+
+    const highlightPh = (text, keys) => {
+      const parts = [];
+      const re = new RegExp("\\{(" + keys.join("|") + ")\\}", "g");
+      let last = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) parts.push(<span key={last}>{text.slice(last, m.index)}</span>);
+        parts.push(<span key={m.index} className="seq-ph">{m[0]}</span>);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) parts.push(<span key="end">{text.slice(last)}</span>);
+      return parts.length ? parts : text;
+    };
+
+    const renderDictState = () => {
+      const entries = Object.entries(s.dict);
+      return (
+        <pre className="seq-dict">{"{\n"}
+          {entries.map(([k, v], i) => (
+            <span key={k}>
+              {"  "}
+              <span className={"seq-dict-key" + (pulseKey === k ? " pulse" : "")}>"{k}"</span>
+              {": "}{JSON.stringify(v)}{i < entries.length - 1 ? ",\n" : "\n"}
+            </span>
+          ))}
+          {"}"}
+        </pre>
+      );
+    };
+
+    return (
+      <div className="seq-walkthrough" ref={rootRef} tabIndex={0} role="region" aria-label="Sequential refinement pipeline walkthrough">
+        <div className="seq-steps" role="tablist">
+          {STEPS.map((st, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <div className="seq-step-connector" aria-hidden="true" />}
+              <button type="button" role="tab" aria-selected={step === i} aria-label={`Step ${i + 1}: ${st.label}`}
+                className={"seq-step-btn" + (step === i ? " active" : "") + (step > i ? " done" : "")}
+                onClick={() => goTo(i)}>
+                <span className="seq-step-dot">{step > i ? "✓" : i + 1}</span>
+                <span className="seq-step-label">{st.label}</span>
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div key={fadeTick} className="seq-fade">
+          <div className="seq-panel">
+            <div className="seq-panel-head">Code executing now</div>
+            <div className="seq-panel-body">
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:".78rem",color:"var(--muted)",marginBottom:".35rem"}}>full = (</div>
+              {CODE_LINES.map((line, i) => (
+                <div key={i} className={"seq-code-line" + (s.codeIdx === i ? " active" : " dim")}>{line}</div>
+              ))}
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:".78rem",color:"var(--muted)"}}>)</div>
+            </div>
+          </div>
+
+          <div className="seq-panel">
+            <div className="seq-panel-head">What's happening</div>
+            <div className="seq-panel-body">
+              <p style={{margin:"0 0 .85rem",fontSize:".92rem",lineHeight:1.6}}>{s.explanation}</p>
+              {s.noLlm ? (
+                <div style={{padding:".75rem",background:"var(--g2-bg)",borderRadius:"6px",fontSize:".88rem",borderLeft:"3px solid var(--g2)"}}>{s.noLlmNote}</div>
+              ) : (
+                <div className="seq-happening">
+                  <div>
+                    <div className="seq-sub-label">Prompt template</div>
+                    <div className="seq-prompt-box">{highlightPh(s.template, s.placeholders)}</div>
+                    <div className="seq-sub-label">Rendered prompt</div>
+                    <div className="seq-prompt-box">{s.highlightInRendered ? (
+                      <>
+                        {s.rendered.split(s.highlightInRendered)[0]}
+                        <mark style={{background:"#FEF3C7",padding:"0 2px",borderRadius:"2px"}}>{s.highlightInRendered}</mark>
+                        {s.rendered.split(s.highlightInRendered)[1] || ""}
+                      </>
+                    ) : s.rendered}</div>
+                  </div>
+                  <div>
+                    <div className="seq-sub-label">💬 LLM response</div>
+                    <div className="seq-llm-card">{s.llm}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="seq-panel">
+            <div className="seq-panel-head">{s.isFinal ? "Final return value" : "Dict state after this step"}</div>
+            <div className="seq-panel-body">
+              {s.isFinal ? (
+                <div className="seq-final-card">
+                  <div className="seq-final-label">result (str) — not a dict</div>
+                  <div style={{fontSize:".9rem",lineHeight:1.6}}>"{s.finalString}"</div>
+                </div>
+              ) : renderDictState()}
+            </div>
+          </div>
+        </div>
+
+        <div className="seq-controls">
+          <button type="button" className="seq-btn-prev" disabled={step === 0} onClick={() => goTo(step - 1)}>← Prev</button>
+          <button type="button" className="seq-btn-next" disabled={step === STEPS.length - 1} onClick={() => goTo(step + 1)}>Next →</button>
+          <button type="button" className="seq-reset" onClick={() => { setStep(0); setPulseKey(null); setFadeTick(t => t + 1); }}>Reset</button>
+        </div>
+        <p style={{margin:".75rem 0 0",fontSize:".78rem",color:"var(--muted)"}}>Tip: use ← → arrow keys while this panel is focused (click inside first).</p>
+      </div>
+    );
+  }
+
+
+  function RoutingWalkthrough() {
+    const SCENARIOS = {
+      code: {
+        id: "code", emoji: "💻", label: "How do I reverse a string in Python?",
+        route: "code_chain",
+        steps: [
+          {
+            label: "Classify",
+            codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # classifier runs here', '    | RunnableLambda(route)', ')'],
+            codeIdx: 1,
+            explanation: "The classifier is just another chain — a prompt + LLM + parser. It reads {question} from the input dict and outputs a one-word label.",
+            template: "Classify the question into ONE word — code, math, or general.\n\nQuestion: {question}\nClassification:",
+            placeholders: ["question"],
+            rendered: "Classify the question into ONE word — code, math, or general.\n\nQuestion: How do I reverse a string in Python?\nClassification:",
+            highlight: "How do I reverse a string in Python?",
+            llm: "code",
+            state: { label: "code" },
+            stateNote: "Classifier output (string label)",
+            isFinal: false
+          },
+          {
+            label: "Build routing dict",
+            codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # ← this step', '    | RunnableLambda(route)', ')'],
+            codeIdx: 1,
+            explanation: "This dict literal runs in parallel — classifier produces topic, and the lambda preserves the original question. Both keys are needed downstream: topic tells route() which chain to pick, question is what the picked chain will actually answer.",
+            noLlm: true,
+            mergeNote: "Two parallel branches merge into one dict.",
+            state: { topic: "code", question: "How do I reverse a string in Python?" },
+            isFinal: false
+          },
+          {
+            label: "Dispatch via route()",
+            codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}', '    | RunnableLambda(route)  # ← this step', ')'],
+            codeIdx: 2,
+            explanation: "route() is a regular Python function. It looks at info[\"topic\"] and returns a chain object — not a string, not a result, an actual Runnable. RunnableLambda wraps it so LangChain knows: 'whatever this function returns, invoke it next.'",
+            showRoute: true,
+            routeMatch: "code",
+            state: { topic: "code", question: "How do I reverse a string in Python?" },
+            dispatchBadge: "→ will be passed to code_chain",
+            isFinal: false
+          },
+          {
+            label: "Run specialist",
+            codeLines: ['code_chain = ChatPromptTemplate.from_template(', '    "You are a senior engineer. Answer this code question briefly: {question}"', ') | llm | StrOutputParser()'],
+            codeIdx: 0,
+            explanation: "LangChain invokes the returned chain with the same dict that was passed into route(). So code_chain receives {\"topic\": \"code\", \"question\": \"...\"}. Its prompt template only uses {question} — it ignores topic.",
+            template: "You are a senior engineer. Answer this code question briefly: {question}",
+            placeholders: ["question"],
+            rendered: "You are a senior engineer. Answer this code question briefly: How do I reverse a string in Python?",
+            highlight: "How do I reverse a string in Python?",
+            llm: "Use slicing with a negative step: reversed_str = my_string[::-1]. This works because slicing accepts [start:stop:step] and -1 walks the string from end to start. For more memory-efficient iteration without materializing the reversed string, use reversed(my_string).",
+            isFinal: true
+          }
+        ]
+      },
+      math: {
+        id: "math", emoji: "🔢", label: "What is 23 × 47?",
+        route: "math_chain",
+        steps: [
+          { label: "Classify", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # classifier runs here', '    | RunnableLambda(route)', ')'], codeIdx: 1,
+            explanation: "The classifier is just another chain — a prompt + LLM + parser. It reads {question} from the input dict and outputs a one-word label.",
+            template: "Classify the question into ONE word — code, math, or general.\n\nQuestion: {question}\nClassification:",
+            placeholders: ["question"], rendered: "Classify the question into ONE word — code, math, or general.\n\nQuestion: What is 23 * 47?\nClassification:",
+            highlight: "What is 23 * 47?", llm: "math", state: { label: "math" }, stateNote: "Classifier output (string label)", isFinal: false },
+          { label: "Build routing dict", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # ← this step', '    | RunnableLambda(route)', ')'], codeIdx: 1,
+            explanation: "This dict literal runs in parallel — classifier produces topic, and the lambda preserves the original question. Both keys are needed downstream.",
+            noLlm: true, mergeNote: "Two parallel branches merge into one dict.",
+            state: { topic: "math", question: "What is 23 * 47?" }, isFinal: false },
+          { label: "Dispatch via route()", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}', '    | RunnableLambda(route)  # ← this step', ')'], codeIdx: 2,
+            explanation: "route() returns a chain object. RunnableLambda invokes whatever chain is returned.",
+            showRoute: true, routeMatch: "math",
+            state: { topic: "math", question: "What is 23 * 47?" }, dispatchBadge: "→ will be passed to math_chain", isFinal: false },
+          { label: "Run specialist", codeLines: ['math_chain = ChatPromptTemplate.from_template(', '    "Solve this math problem step by step: {question}"', ') | llm | StrOutputParser()'], codeIdx: 0,
+            explanation: "The returned math_chain runs on the same dict. Its template uses {question} only.",
+            template: "Solve this math problem step by step: {question}", placeholders: ["question"],
+            rendered: "Solve this math problem step by step: What is 23 * 47?", highlight: "What is 23 * 47?",
+            llm: "Step 1: Break 47 into 40 + 7. Step 2: 23 × 40 = 920. Step 3: 23 × 7 = 161. Step 4: 920 + 161 = 1081. Answer: 1081.",
+            isFinal: true }
+        ]
+      },
+      general: {
+        id: "general", emoji: "🌍", label: "What's the capital of France?",
+        route: "general_chain",
+        steps: [
+          { label: "Classify", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # classifier runs here', '    | RunnableLambda(route)', ')'], codeIdx: 1,
+            explanation: "The classifier is just another chain — a prompt + LLM + parser. It reads {question} from the input dict and outputs a one-word label.",
+            template: "Classify the question into ONE word — code, math, or general.\n\nQuestion: {question}\nClassification:",
+            placeholders: ["question"], rendered: "Classify the question into ONE word — code, math, or general.\n\nQuestion: What's the capital of France?\nClassification:",
+            highlight: "What's the capital of France?", llm: "general", state: { label: "general" }, stateNote: "Classifier output (string label)", isFinal: false },
+          { label: "Build routing dict", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}  # ← this step', '    | RunnableLambda(route)', ')'], codeIdx: 1,
+            explanation: "Classifier produces topic; lambda preserves question. Both keys flow to route() and the specialist.",
+            noLlm: true, mergeNote: "Two parallel branches merge into one dict.",
+            state: { topic: "general", question: "What's the capital of France?" }, isFinal: false },
+          { label: "Dispatch via route()", codeLines: ['router = (', '    {"topic": classifier, "question": lambda x: x["question"]}', '    | RunnableLambda(route)  # ← this step', ')'], codeIdx: 2,
+            explanation: "route() returns general_chain when topic is not code or math.",
+            showRoute: true, routeMatch: "general",
+            state: { topic: "general", question: "What's the capital of France?" }, dispatchBadge: "→ will be passed to general_chain", isFinal: false },
+          { label: "Run specialist", codeLines: ['general_chain = ChatPromptTemplate.from_template(', '    "Answer this question briefly: {question}"', ') | llm | StrOutputParser()'], codeIdx: 0,
+            explanation: "general_chain receives the dict and answers using {question}.",
+            template: "Answer this question briefly: {question}", placeholders: ["question"],
+            rendered: "Answer this question briefly: What's the capital of France?", highlight: "What's the capital of France?",
+            llm: "Paris.", isFinal: true }
+        ]
+      }
+    };
+
+    const STEP_LABELS = ["Classify", "Build routing dict", "Dispatch via route()", "Run specialist"];
+    const [scenarioId, setScenarioId] = useState("code");
+    const [step, setStep] = useState(0);
+    const [fadeTick, setFadeTick] = useState(0);
+    const [pulseKeys, setPulseKeys] = useState([]);
+    const rootRef = useRef(null);
+    const sc = SCENARIOS[scenarioId];
+    const s = sc.steps[step];
+
+    const pickScenario = (id) => { setScenarioId(id); setStep(0); setFadeTick(t => t + 1); setPulseKeys([]); };
+    const goTo = (n) => {
+      const next = Math.max(0, Math.min(sc.steps.length - 1, n));
+      if (next === step) return;
+      setStep(next);
+      setFadeTick(t => t + 1);
+      const st = sc.steps[next];
+      if (st.state) setPulseKeys(Object.keys(st.state));
+    };
+
+    useEffect(() => {
+      const onKey = (e) => {
+        const el = rootRef.current;
+        if (!el || !el.contains(document.activeElement)) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); goTo(step + 1); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); goTo(step - 1); }
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [step, scenarioId]);
+
+    const highlightPh = (text, keys) => {
+      const parts = [];
+      const re = new RegExp("\\{(" + keys.join("|") + ")\\}", "g");
+      let last = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) parts.push(<span key={last}>{text.slice(last, m.index)}</span>);
+        parts.push(<span key={m.index} className="seq-ph">{m[0]}</span>);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) parts.push(<span key="end">{text.slice(last)}</span>);
+      return parts.length ? parts : text;
+    };
+
+    const renderState = () => {
+      if (!s.state) return null;
+      if (s.stateNote && Object.keys(s.state).length === 1) {
+        return <pre className="seq-dict">"{Object.values(s.state)[0]}"</pre>;
+      }
+      return (
+        <pre className="seq-dict">{"{\n" + Object.entries(s.state).map(([k,v], i, arr) =>
+          `  "${k}": ${JSON.stringify(v)}${i < arr.length - 1 ? "," : ""}`
+        ).join("\n") + "\n}"}</pre>
+      );
+    };
+
+    const routeBody = `def route(info):
+    label = info["topic"].strip().lower()
+    if "code" in label:
+        return code_chain
+    elif "math" in label:
+        return math_chain
+    return general_chain`;
+
+    return (
+      <div className="route-widget seq-walkthrough" ref={rootRef} tabIndex={0}>
+        <div className="route-q-row">
+          {Object.values(SCENARIOS).map(scn => (
+            <button key={scn.id} type="button" className={"route-q-btn" + (scenarioId === scn.id ? " active" : "")}
+              onClick={() => pickScenario(scn.id)}>{scn.emoji} {scn.label}</button>
+          ))}
+          <button type="button" className="seq-reset" style={{marginLeft:"auto"}} onClick={() => pickScenario(scenarioId)}>Reset</button>
+        </div>
+        <div className="seq-steps" style={{marginTop:"1rem"}}>
+          {STEP_LABELS.map((lbl, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <div className="seq-step-connector" />}
+              <button type="button" className={"seq-step-btn" + (step === i ? " active" : "") + (step > i ? " done" : "")}
+                onClick={() => goTo(i)}>
+                <span className="seq-step-dot">{step > i ? "✓" : i + 1}</span>
+                <span className="seq-step-label">{lbl}</span>
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+        <div key={fadeTick + scenarioId} className="seq-fade" style={{marginTop:"1rem"}}>
+          <div className="seq-panel">
+            <div className="seq-panel-head">Code executing now</div>
+            <div className="seq-panel-body">
+              {(s.codeLines || []).map((line, i) => (
+                <div key={i} className={"seq-code-line" + (s.codeIdx === i ? " active" : " dim")}>{line}</div>
+              ))}
+            </div>
+          </div>
+          <div className="seq-panel">
+            <div className="seq-panel-head">What's happening</div>
+            <div className="seq-panel-body">
+              <p style={{margin:"0 0 .85rem",fontSize:".92rem",lineHeight:1.6}}>{s.explanation}</p>
+              {s.noLlm ? (
+                <div style={{padding:".75rem",background:"var(--g2-bg)",borderRadius:"6px",fontSize:".88rem",borderLeft:"3px solid var(--g2)"}}>
+                  {s.mergeNote || "No new LLM call — dict assembly only."}
+                </div>
+              ) : s.showRoute ? (
+                <>
+                  <div className="route-route-body">
+                    {routeBody.split("\n").map((line, i) => {
+                      const isMatch = (s.routeMatch === "code" && line.includes("code_chain") && line.includes("return")) ||
+                        (s.routeMatch === "math" && line.includes("math_chain")) ||
+                        (s.routeMatch === "general" && line.trim() === "return general_chain");
+                      const isBranch = line.includes("elif") || line.includes("if ");
+                      return <div key={i} className={"route-route-line" + (isMatch ? " active" : isBranch ? " dim" : "")}>{line}</div>;
+                    })}
+                  </div>
+                  <div className="route-tree">
+                    {["code_chain","math_chain","general_chain"].map(name => (
+                      <div key={name} className={"route-tree-node" + (sc.route === name ? " selected" : "")}>{name}</div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="seq-happening">
+                  <div>
+                    <div className="seq-sub-label">Prompt template</div>
+                    <div className="seq-prompt-box">{highlightPh(s.template, s.placeholders)}</div>
+                    <div className="seq-sub-label">Rendered prompt</div>
+                    <div className="seq-prompt-box">
+                      {s.highlight ? (<>{s.rendered.split(s.highlight)[0]}<mark style={{background:"#FEF3C7",padding:"0 2px"}}>{s.highlight}</mark>{s.rendered.split(s.highlight)[1]||""}</>) : s.rendered}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="seq-sub-label">💬 LLM response</div>
+                    <div className="seq-llm-card">{s.llm}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="seq-panel">
+            <div className="seq-panel-head">{s.isFinal ? "Final return value" : "State after this step"}</div>
+            <div className="seq-panel-body">
+              {s.isFinal ? (
+                <div className="seq-final-card">
+                  <div className="seq-final-label">router.invoke(...) returns (str)</div>
+                  <div style={{fontSize:".9rem",lineHeight:1.6}}>"{s.llm}"</div>
+                </div>
+              ) : (
+                <>
+                  {renderState()}
+                  {s.dispatchBadge && <div className="route-badge">{s.dispatchBadge}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="seq-controls">
+          <button type="button" className="seq-btn-prev" disabled={step === 0} onClick={() => goTo(step - 1)}>← Prev</button>
+          <button type="button" className="seq-btn-next" disabled={step === sc.steps.length - 1} onClick={() => goTo(step + 1)}>Next →</button>
+        </div>
+        <p style={{margin:".75rem 0 0",fontSize:".78rem",color:"var(--muted)"}}>Tip: click inside, then use ← → arrow keys.</p>
+      </div>
+    );
+  }
+
   // Mount all demos
   ReactDOM.createRoot(document.getElementById("lcel-demo-root")).render(<LCELPipeDemo />);
+  ReactDOM.createRoot(document.getElementById("sequential-refinement-root")).render(<SequentialRefinementWalkthrough />);
   ReactDOM.createRoot(document.getElementById("parser-demo-root")).render(<OutputParserDemo />);
   ReactDOM.createRoot(document.getElementById("memory-demo-root")).render(<MemoryTypesDemo />);
   ReactDOM.createRoot(document.getElementById("retriever-demo-root")).render(<RetrieverChainDemo />);
@@ -1957,7 +2692,391 @@ graph.set_entry_point("plan")  # plan first, then loop</code></pre>
   ReactDOM.createRoot(document.getElementById("tool-selection-root")).render(<ToolSelectionDemo />);
   ReactDOM.createRoot(document.getElementById("react-trace-root")).render(<ReActTraceDemo />);
   ReactDOM.createRoot(document.getElementById("langgraph-demo-root")).render(<LangGraphFlowDemo />);
+  ReactDOM.createRoot(document.getElementById("routing-walkthrough-root")).render(<RoutingWalkthrough />);
   ReactDOM.createRoot(document.getElementById("choice-demo-root")).render(<FrameworkChoiceDemo />);
+</script>
+
+<script>
+(function () {
+  const root = document.getElementById("parallel-fanout-root");
+  if (!root) return;
+
+  const PRESET = {
+    "remote work": {
+      pros: "1) Eliminates commuting time and costs. 2) Greater flexibility for deep work and personal schedules. 3) Access to a global talent pool, unconstrained by geography.",
+      cons: "1) Weaker spontaneous collaboration and culture-building. 2) Easier to blur work/life boundaries and burn out. 3) Career visibility and mentorship can suffer without in-person presence.",
+      summary: "Remote work trades the structure and serendipity of an office for flexibility, autonomy, and a wider hiring pool."
+    }
+  };
+  const LANES = [
+    { key: "pros", tpl: "List 3 pros of: {topic}. Be brief.", ms: 2400 },
+    { key: "cons", tpl: "List 3 cons of: {topic}. Be brief.", ms: 2700 },
+    { key: "summary", tpl: "Summarize {topic} in one sentence.", ms: 1900 }
+  ];
+  const MAX_MS = 2700, SEQ_MS = 7000;
+
+  root.innerHTML = `
+    <div class="par-input-row">
+      <div class="par-topic-pill" id="par-topic-pill-wrap"></div>
+      <button type="button" class="par-btn-run" id="par-run">▶ Run parallel</button>
+      <button type="button" class="par-btn-ghost" id="par-reset">Reset</button>
+    </div>
+    <div class="par-broadcast" id="par-broadcast">
+      <div class="par-broadcast-input" id="par-broadcast-label">{"topic":"…"}</div>
+      <svg class="par-broadcast-svg" viewBox="0 0 400 72" aria-hidden="true">
+        <path id="par-arr-pros" class="par-broadcast-arrow dim" d="M95,36 L155,18"/>
+        <path id="par-arr-cons" class="par-broadcast-arrow dim" d="M95,36 L155,36"/>
+        <path id="par-arr-sum" class="par-broadcast-arrow dim" d="M95,36 L155,54"/>
+        <text x="40" y="40" class="par-broadcast-box" id="par-box-in">input</text>
+        <text x="175" y="22" class="par-broadcast-box" id="par-box-pros">pros</text>
+        <text x="175" y="40" class="par-broadcast-box" id="par-box-cons">cons</text>
+        <text x="175" y="58" class="par-broadcast-box" id="par-box-sum">summary</text>
+      </svg>
+    </div>
+    <div class="par-lanes" id="par-lanes"></div>
+    <div class="par-timing">
+      <div class="par-timing-row">
+        <div class="par-timing-label"><span>Parallel (actual)</span><span id="par-par-label">0.0s</span></div>
+        <div class="par-timing-track"><div class="par-timing-fill parallel" id="par-par-bar"></div></div>
+      </div>
+      <div class="par-timing-row">
+        <div class="par-timing-label"><span>Sequential (would have been)</span><span id="par-seq-label" style="text-decoration:line-through;color:var(--muted)">0.0s</span></div>
+        <div class="par-timing-track"><div class="par-timing-fill sequential" id="par-seq-bar"></div></div>
+      </div>
+      <p class="par-timing-caption">Wall time = the time of the slowest branch, not the sum of all branches. That's the parallel savings.</p>
+    </div>
+    <div class="par-output" id="par-output">{}</div>
+    <div class="par-takeaways">
+      <div class="par-takeaway"><strong>Same input, broadcast.</strong> All three chains receive the identical input dict — they don't share data between each other.</div>
+      <div class="par-takeaway"><strong>Concurrent, not sequential.</strong> Wall time ≈ slowest branch. This is asyncio under the hood — LangChain handles it for you.</div>
+      <div class="par-takeaway"><strong>Output keys = kwarg names.</strong> RunnableParallel(pros=..., cons=..., summary=...) gives you a dict with exactly those keys, the same way .assign(key=...) works in sequential chains.</div>
+    </div>
+  `;
+
+
+  const pillWrap = document.getElementById("par-topic-pill-wrap");
+  pillWrap.append(document.createTextNode('{"topic": "'));
+  const topicInput = document.createElement("input");
+  topicInput.type = "text";
+  topicInput.id = "par-topic-input";
+  topicInput.value = "remote work";
+  topicInput.setAttribute("aria-label", "Topic");
+  pillWrap.append(topicInput);
+  pillWrap.append(document.createTextNode('"}'));
+
+  const lanesEl = document.getElementById("par-lanes");
+  LANES.forEach(l => {
+    const el = document.createElement("div");
+    el.className = "par-lane";
+    el.dataset.key = l.key;
+    el.innerHTML = `<div class="par-lane-head"><span class="par-lane-pill">${l.key}</span></div>
+      <div class="par-lane-tpl">${l.tpl.replace("{topic}", '<span class="seq-ph">{topic}</span>')}</div>
+      <div class="par-progress"><div class="par-progress-fill"></div></div>
+      <div class="par-status">Waiting</div>
+      <div class="par-response"></div>`;
+    lanesEl.appendChild(el);
+  });
+
+  let timers = [], raf = null, running = false, result = {}, expanded = {};
+
+  function topic() { return document.getElementById("par-topic-input").value.trim() || "remote work"; }
+  function responses() {
+    const t = topic().toLowerCase();
+    if (PRESET[t]) return PRESET[t];
+    const g = {};
+    LANES.forEach(l => { g[l.key] = `(simulated response for ${topic()})`; });
+    return g;
+  }
+  function trim(s, n=60) { return s.length <= n ? s : s.slice(0, n) + "…"; }
+
+  function renderOutput() {
+    const out = document.getElementById("par-output");
+    const keys = Object.keys(result);
+    if (!keys.length) { out.textContent = "{}"; return; }
+    out.innerHTML = keys.map(k => {
+      const full = JSON.stringify(result[k]);
+      const show = expanded[k] ? result[k] : trim(result[k]);
+      return `<div class="par-output-line${expanded[k]?'':' pulse'}"><span class="key">"${k}"</span>: ${JSON.stringify(show)} <button type="button" data-expand="${k}" style="font-size:.7rem;border:none;background:none;color:var(--g2);cursor:pointer;text-decoration:underline">${expanded[k]?'collapse':'expand'}</button></div>`;
+    }).join("\n");
+    out.querySelectorAll("[data-expand]").forEach(btn => btn.onclick = () => { expanded[btn.dataset.expand] = !expanded[btn.dataset.expand]; renderOutput(); });
+    out.innerHTML = "{\n" + out.innerHTML + "\n}";
+  }
+
+  function reset() {
+    running = false;
+    timers.forEach(clearTimeout); timers = [];
+    if (raf) cancelAnimationFrame(raf);
+    result = {}; expanded = {};
+    document.getElementById("par-run").disabled = false;
+    ["par-arr-pros","par-arr-cons","par-arr-sum"].forEach(id => document.getElementById(id).className = "par-broadcast-arrow dim");
+    ["par-box-pros","par-box-cons","par-box-sum"].forEach(id => document.getElementById(id).classList.remove("live"));
+    document.getElementById("par-par-bar").style.width = "0%";
+    document.getElementById("par-seq-bar").style.width = "0%";
+    document.getElementById("par-par-label").textContent = "0.0s";
+    document.getElementById("par-seq-label").textContent = "0.0s";
+    document.querySelectorAll(".par-lane").forEach(lane => {
+      lane.querySelector(".par-progress-fill").style.width = "0%";
+      lane.querySelector(".par-status").textContent = "Waiting";
+      lane.querySelector(".par-response").textContent = "";
+    });
+    renderOutput();
+    const t = topic();
+    document.getElementById("par-broadcast-label").textContent = `{"topic":"${t}"}`;
+  }
+
+  function run() {
+    if (running) return;
+    running = true;
+    result = {};
+    document.getElementById("par-run").disabled = true;
+    const resp = responses();
+    const t0 = performance.now();
+    ["par-arr-pros","par-arr-cons","par-arr-sum"].forEach(id => document.getElementById(id).classList.add("live"));
+    ["par-box-pros","par-box-cons","par-box-sum","par-box-in"].forEach(id => document.getElementById(id).classList.add("live"));
+
+    function tick() {
+      const elapsed = performance.now() - t0;
+      const parPct = Math.min(100, (elapsed / MAX_MS) * (100 * MAX_MS / SEQ_MS));
+      const seqPct = Math.min(100, (elapsed / SEQ_MS) * 100);
+      document.getElementById("par-par-bar").style.width = (Math.min(elapsed, MAX_MS) / SEQ_MS * 100) + "%";
+      document.getElementById("par-seq-bar").style.width = seqPct + "%";
+      document.getElementById("par-par-label").textContent = (Math.min(elapsed, MAX_MS) / 1000).toFixed(1) + "s";
+      document.getElementById("par-seq-label").textContent = (Math.min(elapsed, SEQ_MS) / 1000).toFixed(1) + "s";
+      if (elapsed < MAX_MS + 200) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+
+    LANES.forEach(l => {
+      const lane = document.querySelector(`.par-lane[data-key="${l.key}"]`);
+      const fill = lane.querySelector(".par-progress-fill");
+      const status = lane.querySelector(".par-status");
+      const box = lane.querySelector(".par-response");
+      status.textContent = "Calling LLM…";
+      const start = performance.now();
+      const iv = setInterval(() => {
+        const p = Math.min(100, ((performance.now() - start) / l.ms) * 100);
+        fill.style.width = p + "%";
+      }, 50);
+      timers.push(setTimeout(() => {
+        clearInterval(iv);
+        fill.style.width = "100%";
+        status.textContent = "✓ Done";
+        box.textContent = resp[l.key];
+        result[l.key] = resp[l.key];
+        renderOutput();
+        if (Object.keys(result).length === LANES.length) {
+          running = false;
+          document.getElementById("par-run").disabled = false;
+          document.getElementById("par-par-label").textContent = (MAX_MS / 1000).toFixed(1) + "s";
+          document.getElementById("par-seq-label").textContent = (SEQ_MS / 1000).toFixed(1) + "s";
+        }
+      }, l.ms));
+    });
+  }
+
+  document.getElementById("par-run").onclick = run;
+  document.getElementById("par-reset").onclick = reset;
+  document.getElementById("par-topic-input").oninput = () => {
+    document.getElementById("par-broadcast-label").textContent = `{"topic":"${topic()}"}`;
+  };
+  reset();
+})();
+</script>
+
+<script>
+(function () {
+  const root = document.getElementById("memory-history-root");
+  if (!root) return;
+
+  const CODE = [
+    "def get_history(session_id: str):",
+    "    if session_id not in store:",
+    "        store[session_id] = InMemoryChatMessageHistory()",
+    "    return store[session_id]",
+    "",
+    "chat_prompt = ChatPromptTemplate.from_messages([",
+    '    MessagesPlaceholder(variable_name="history"),',
+    '    ("human", "{input}"),',
+    "])",
+    "",
+    "chain = chat_prompt | llm",
+    "",
+    "chain_with_memory = RunnableWithMessageHistory(",
+    '    input_messages_key="input",',
+    '    history_messages_key="history",',
+    ")",
+  ];
+
+  const STEP_LABELS = ["get_history", "Load msgs", "Inject", "LLM", "Save"];
+
+  const T1 = [
+    { hi: 0, exp: "RunnableWithMessageHistory calls get_history(session_id). First call: the if branch creates InMemoryChatMessageHistory() and saves it.", msgs: "history = []", llm: "—", store: "{}" },
+    { hi: 3, exp: "History is empty on Turn 1. That list fills the {history} slot.", msgs: "history = []", llm: "—", store: '{"user-42": []}' },
+    { hi: 4, exp: "Prompt materialized: system + human only.", msgs: '[\n  SystemMessage("You are a helpful assistant."),\n  HumanMessage("Hi, my name is Nij and I live in Dubai.")\n]', llm: "—", store: '{"user-42": []}' },
+    { hi: 7, exp: "Two messages sent to the LLM. Stateless — no built-in memory.", msgs: "(2 messages)", llm: "Nice to meet you, Nij! Dubai is a fantastic city. How can I help you today?", store: '{"user-42": []}' },
+    { hi: 9, exp: "Wrapper appends human + AI to store[session_id].", msgs: "—", llm: "Nice to meet you, Nij!...", store: '{\n  "user-42": [\n    HumanMessage("Hi, my name is Nij and I live in Dubai."),\n    AIMessage("Nice to meet you, Nij! Dubai is a fantastic city...")\n  ]\n}' },
+  ];
+
+  const T2 = [
+    { hi: 0, exp: "Same get_history — session exists. Returns existing history with Turn 1 messages.", msgs: "history = [2 from Turn 1]", llm: "—", store: "(cache hit)", pulse: true },
+    { hi: 3, exp: "History returns Turn 1 human + AI messages.", msgs: 'history = [HumanMessage(...), AIMessage(...)]', llm: "—", store: null },
+    { hi: 4, exp: "MessagesPlaceholder injects history + current input. Four messages — the climax.", msgs: "render4", llm: "—", store: null },
+    { hi: 7, exp: "LLM sees four messages; answers correctly.", msgs: "(4 messages)", llm: "Your name is Nij and you live in Dubai.", store: null },
+    { hi: 9, exp: "Turn 2 appended. Store has four messages.", msgs: "—", llm: "Your name is Nij and you live in Dubai.", store: '{\n  "user-42": [4 messages total]\n}' },
+  ];
+
+  let turn = 1, step = 0, turn1Done = false;
+
+  root.innerHTML = `
+    <div class="mem-session-bar">
+      <div class="mem-session-row">
+        <label for="mem-sid">Session ID:</label>
+        <input type="text" id="mem-sid" value="user-42" />
+        <button type="button" class="mem-clear" id="mem-clear">🔄 Clear store</button>
+      </div>
+      <p class="mem-session-help">All calls with the same session_id share memory. Change it to user-99 and the assistant will forget everything.</p>
+    </div>
+    <div class="mem-store-persist">
+      <div class="mem-store-persist-head">Persisted store (survives between turns)</div>
+      <pre class="mem-snap-body" id="mem-store-global">{}</pre>
+    </div>
+    <div class="mem-layout">
+      <div class="mem-turns">
+        <div class="mem-turn-card active" id="mem-t1">
+          <div class="mem-turn-head"><span class="mem-turn-pill">Turn 1</span></div>
+          <div class="mem-turn-quote">"Hi, my name is Nij and I live in Dubai."</div>
+          <button type="button" class="mem-run-btn" id="mem-run1">▶ Run Turn 1</button>
+        </div>
+        <div class="mem-turn-card locked" id="mem-t2">
+          <div class="mem-turn-head"><span class="mem-turn-pill">Turn 2</span> <span id="mem-lock" title="Run Turn 1 first">🔒</span></div>
+          <div class="mem-turn-quote">"What's my name and where do I live?"</div>
+          <button type="button" class="mem-run-btn" id="mem-run2" disabled title="Run Turn 1 first to populate the store.">▶ Run Turn 2</button>
+        </div>
+      </div>
+      <div id="mem-inspector"></div>
+    </div>
+    <div class="seq-controls" style="margin-top:1rem">
+      <button type="button" class="seq-btn-prev" id="mem-prev">← Prev</button>
+      <button type="button" class="seq-btn-next" id="mem-next">Next →</button>
+      <button type="button" class="seq-reset" id="mem-reset-step">Reset step</button>
+    </div>
+    <div class="mem-takeaways" style="margin-top:1.25rem">
+      <div class="mem-takeaway"><strong>The LLM is still stateless.</strong> Memory is an illusion built by re-sending past messages every turn. Always.</div>
+      <div class="mem-takeaway"><strong>session_id is the dictionary key.</strong> Same key → same memory. Different key → different conversation. This is how multi-user chat apps stay isolated.</div>
+      <div class="mem-takeaway"><strong>get_history is the storage seam.</strong> Swap InMemoryChatMessageHistory for RedisChatMessageHistory or PostgresChatMessageHistory and nothing else changes. The wrapper doesn't care where messages live — only that the factory hands back something with .messages.</div>
+    </div>
+  `;
+
+  const inspector = document.getElementById("mem-inspector");
+  const storeEl = () => document.getElementById("mem-store-global");
+
+  function steps() { return turn === 1 ? T1 : T2; }
+  function cur() { return steps()[step]; }
+
+  function msgs4() {
+    return `<ul class="mem-msg-list">
+      <li class="from-prompt">SystemMessage("You are a helpful assistant.") <span class="mem-msg-tag">from prompt</span></li>
+      <li class="from-store">HumanMessage("Hi, my name is Nij and I live in Dubai.") <span class="mem-msg-tag">from store</span></li>
+      <li class="from-store">AIMessage("Nice to meet you, Nij! Dubai is a...") <span class="mem-msg-tag">from store</span></li>
+      <li class="from-current">HumanMessage("What's my name and where do I live?") <span class="mem-msg-tag">current turn</span></li>
+    </ul>`;
+  }
+
+  function storeText(st) {
+    if (st.store) return st.store;
+    if (turn === 2) return storeEl().textContent;
+    return turn1Done ? T1[4].store : "{}";
+  }
+
+  function render() {
+    const st = cur();
+    if (turn1Done || (turn === 2 && step >= 0)) storeEl().textContent = turn === 2 && step >= 4 ? T2[4].store : T1[4].store;
+
+    const codeHtml = CODE.map((line, i) =>
+      `<div class="seq-code-line${st.hi === i ? " active" : " dim"}">${line || " "}</div>`
+    ).join("");
+
+    const msgs = st.msgs === "render4" ? msgs4() : `<pre class="mem-snap-body">${st.msgs}</pre>`;
+    const store = storeText(st);
+    const storeCls = st.pulse ? " seq-dict-key pulse" : "";
+
+    let pills = "";
+    STEP_LABELS.forEach((lbl, i) => {
+      if (i) pills += '<div class="seq-step-connector"></div>';
+      pills += `<button type="button" class="seq-step-btn${step===i?" active":""}${step>i?" done":""}" data-s="${i}">
+        <span class="seq-step-dot">${step>i?"✓":i+1}</span><span class="seq-step-label">${lbl}</span></button>`;
+    });
+    pills = pills.split("div").join("div");
+
+    inspector.innerHTML = `
+      <div class="seq-steps" style="margin-bottom:1rem;flex-wrap:wrap">${pills}</div>
+      <div class="seq-fade">
+        <div class="seq-panel"><div class="seq-panel-head">Code executing now</div><div class="seq-panel-body">${codeHtml}</div></div>
+        <div class="seq-panel"><div class="seq-panel-head">What's happening</div><div class="seq-panel-body">
+          <p style="font-size:.9rem;line-height:1.6;margin:0 0 .75rem">${st.exp}</p>${msgs}
+        </div></div>
+        <div class="seq-panel"><div class="seq-panel-head">Live state snapshots</div><div class="seq-panel-body">
+          <div class="mem-snap-row">
+            <div class="mem-snap"><div class="mem-snap-title">messages</div>${msgs}</div>
+            <div class="mem-snap"><div class="mem-snap-title">LLM response</div><pre class="mem-snap-body">${st.llm}</pre></div>
+            <div class="mem-snap"><div class="mem-snap-title">store[session_id]</div><pre class="mem-snap-body${storeCls}">${store}</pre></div>
+          </div>
+        </div></div>
+      </div>`;
+
+    inspector.innerHTML = inspector.innerHTML.split("div").join("div");
+
+    inspector.querySelectorAll("[data-s]").forEach(b => {
+      b.onclick = () => { step = +b.dataset.s; render(); };
+    });
+    document.getElementById("mem-prev").disabled = step === 0;
+    document.getElementById("mem-next").disabled = step === 4;
+  }
+
+  function runTurn(n) {
+    turn = n; step = 0;
+    document.getElementById("mem-t1").classList.toggle("active", n === 1);
+    document.getElementById("mem-t2").classList.toggle("active", n === 2);
+    let i = 0;
+    const t = setInterval(() => {
+      step = i; render();
+      if (i >= 4) {
+        clearInterval(t);
+        if (n === 1) {
+          turn1Done = true;
+          storeEl().textContent = T1[4].store;
+          document.getElementById("mem-t2").classList.remove("locked");
+          document.getElementById("mem-run2").disabled = false;
+          document.getElementById("mem-lock").style.display = "none";
+        } else storeEl().textContent = T2[4].store;
+      }
+      i++;
+    }, 450);
+  }
+
+  function resetAll() {
+    turn = 1; step = 0; turn1Done = false;
+    storeEl().textContent = "{}";
+    document.getElementById("mem-t2").classList.add("locked");
+    document.getElementById("mem-run2").disabled = true;
+    document.getElementById("mem-lock").style.display = "";
+    render();
+  }
+
+  document.getElementById("mem-run1").onclick = () => runTurn(1);
+  document.getElementById("mem-run2").onclick = () => { if (turn1Done) runTurn(2); };
+  document.getElementById("mem-prev").onclick = () => { if (step > 0) { step--; render(); } };
+  document.getElementById("mem-next").onclick = () => { if (step < 4) { step++; render(); } };
+  document.getElementById("mem-reset-step").onclick = () => { step = 0; render(); };
+  document.getElementById("mem-clear").onclick = resetAll;
+  root.onkeydown = e => {
+    if (e.key === "ArrowRight" && step < 4) { step++; render(); e.preventDefault(); }
+    if (e.key === "ArrowLeft" && step > 0) { step--; render(); e.preventDefault(); }
+  };
+
+  resetAll();
+})();
+
 </script>
 </body>
 </html>
