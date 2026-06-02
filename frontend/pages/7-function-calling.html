@@ -1,0 +1,2447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Function Calling, Tool Use & Structured Output</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --sidebar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border: #E8E5E0;
+    --border-light: #F0EDE8;
+    --text: #2D2B28;
+    --text-secondary: #6B6560;
+    --text-muted: #9C9690;
+    --accent: #1A6B4E;
+    --accent-light: #E8F5EE;
+    --accent-hover: #15573F;
+    --build-color: #B45309;
+    --build-bg: #FEF3C7;
+    --build-border: #FCD34D;
+    --work-color: #1A6B4E;
+    --work-bg: #E8F5EE;
+    --work-border: #6EE7B7;
+    --info-color: #1E6091;
+    --info-bg: #EFF6FF;
+    --info-border: #93C5FD;
+    --purple: #6D28D9;
+    --purple-bg: #F3F0FF;
+    --orange: #C2410C;
+    --orange-bg: #FFF7ED;
+    --red: #B91C1C;
+    --red-bg: #FEF2F2;
+    --demo-bg: #1A1D27;
+    --demo-border: #2E3240;
+    --demo-text: #E2E8F0;
+    --sidebar-w: 260px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.7; }
+  ::selection { background: #1A6B4E33; }
+  pre { white-space: pre-wrap; word-wrap: break-word; }
+
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 1px solid var(--border); overflow-y: auto; z-index: 50; padding: 0.75rem 0; scrollbar-width: thin; scrollbar-color: #D1D5DB transparent; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
+  .sidebar-logo { padding: 0 1rem 0.85rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .sidebar-logo h2 { font-family: 'Libre Baskerville', serif; font-size: 0.92rem; color: var(--text); line-height: 1.35; margin-bottom: 0; }
+  .sidebar-logo .brand-by { font-size: 0.72rem; font-weight: 700; color: var(--accent); margin-top: 4px; letter-spacing: 0.02em; }
+  .sidebar-section { padding: 0.25rem 0.75rem; margin-top: 0.25rem; }
+  .sidebar-item { display: block; padding: 5px 9px; border-radius: 7px; text-decoration: none; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.15s; cursor: pointer; margin-bottom: 1px; border: 1px solid transparent; }
+  .sidebar-item:hover { background: var(--bg); color: var(--text); }
+  .sidebar-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; border-color: #6EE7B733; }
+  .sidebar-item .item-num { display: inline-block; width: 20px; height: 20px; border-radius: 5px; text-align: center; line-height: 20px; font-size: 0.66rem; font-weight: 700; margin-right: 7px; flex-shrink: 0; }
+  .sidebar-item.build-item .item-num { background: var(--build-bg); color: var(--build-color); }
+  .sidebar-item.work-item .item-num { background: var(--work-bg); color: var(--work-color); }
+  .sidebar-item .item-title { font-size: 0.8rem; }
+  .sidebar-item .item-sub { font-size: 0.66rem; color: var(--text-muted); margin-top: 0; display: block; }
+  .sidebar-group-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: #fcfcfb;
+    color: var(--text);
+    border-radius: 7px;
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .sidebar-group-toggle .caret {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    transition: transform 0.15s;
+  }
+  .sidebar-group-toggle.expanded .caret { transform: rotate(90deg); }
+  .sidebar-nested { padding-left: 0.35rem; }
+
+  .main { margin-left: var(--sidebar-w); min-height: 100vh; }
+  .content { max-width: 760px; margin: 0 auto; padding: 2rem 2.5rem 4rem; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .content { padding: 1.5rem 1rem 3rem; }
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const FC_CHAPTERS = [
+  { id: "fc-intro", num: "", title: "Overview", sub: "", group: "overview" },
+  { id: "fc-mental", num: "", title: "The Mental Model", sub: "Brain with hands", group: "getting-started" },
+  { id: "fc-loop", num: "", title: "The Tool-Use Loop", sub: "Who actually runs the code?", group: "getting-started" },
+  { id: "fc1", num: "1", title: "Your First Tool Call", sub: "OpenAI walkthrough", group: "core" },
+  { id: "fc2", num: "2", title: "OpenAI vs Anthropic", sub: "Same idea, different syntax", group: "core" },
+  { id: "fc3", num: "3", title: "Multi-Turn Tool Use", sub: "When one tool isn't enough", group: "core" },
+  { id: "fc4", num: "4", title: "Parallel Tool Calls", sub: "Many tools at once", group: "core" },
+  { id: "fc5", num: "5", title: "Naming Tools Well", sub: "The model reads names", group: "schema" },
+  { id: "fc6", num: "6", title: "Writing Descriptions", sub: "Docs for a junior dev", group: "schema" },
+  { id: "fc7", num: "7", title: "Parameter Design", sub: "The schema is a contract", group: "schema" },
+  { id: "fc8", num: "8", title: "Schema Anti-Patterns", sub: "What breaks tool use", group: "schema" },
+  { id: "fc9", num: "9", title: "JSON Mode vs Tools", sub: "When to use which", group: "structured" },
+  { id: "fc10", num: "10", title: "Pydantic Models", sub: "Type-safe LLM output", group: "structured" },
+  { id: "fc11", num: "11", title: "The instructor Library", sub: "The production standard", group: "structured" },
+  { id: "fc12", num: "12", title: "Validation Patterns", sub: "Almost-right JSON", group: "structured" },
+  { id: "fc13", num: "13", title: "Retry Logic", sub: "What to retry, what not to", group: "reliability" },
+  { id: "fc14", num: "14", title: "Fallback Chains", sub: "Plan B, then Plan C", group: "reliability" },
+  { id: "fc15", num: "15", title: "Garbage-Output Patterns", sub: "When the LLM lies", group: "reliability" },
+  { id: "fc16", num: "16", title: "Logging & Observability", sub: "Debugging tool calls", group: "reliability" },
+  { id: "fc17", num: "17", title: "Data Analyst — Design", sub: "Capstone architecture", group: "capstone" },
+  { id: "fc18", num: "18", title: "Data Analyst — Build", sub: "Full code walkthrough", group: "capstone" },
+  { id: "fc19", num: "19", title: "Data Analyst — Live", sub: "Watch it run", group: "capstone" },
+  { id: "fc20", num: "20", title: "Meeting Notes Processor", sub: "Practice challenge", group: "practice" },
+  { id: "fc21", num: "21", title: "Multi-Tool Assistant", sub: "Practice challenge", group: "practice" },
+  { id: "fc22", num: "22", title: "Convert Old Projects", sub: "Practice challenge", group: "practice" },
+  { id: "fc-cheat", num: "", title: "Cheat Sheet", sub: "Which pattern when", group: "reference" },
+];
+
+// ============================================================
+// HELPER COMPONENTS
+// ============================================================
+function ChH({num,title,sub,color="var(--info-color)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"fcch"+num}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function SubH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+function Code({children}){return <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 5px",borderRadius:3,fontSize:"0.82rem",color:"#60A5FA"}}>{children}</span>;}
+
+function NotebookDemoLink() {
+  return (
+    <div style={{marginTop:"2rem",paddingTop:"1.25rem",borderTop:"1px solid var(--border-light)"}}>
+      <div role="note" style={{display:"inline-flex",alignItems:"center",gap:10,padding:"8px 20px",borderRadius:9999,background:"#FFF8F0",border:"1px solid #E8C9A8",color:"#7C2D12",fontWeight:700,fontSize:"0.88rem",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 1px 2px rgba(124,45,18,0.08)",cursor:"default",userSelect:"none"}}>
+        <span style={{fontSize:"1.1rem",lineHeight:1}} aria-hidden>📓</span>
+        Hands-on in live notebook demo
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 1: Tool-Use Loop Visualizer — step through the cycle
+// ============================================================
+function ToolLoopDemo() {
+  const [step, setStep] = useState(0);
+
+  const steps = [
+    { actor:"USER", color:"#94A3B8", icon:"👤", label:"User asks a question",
+      content:"What's the weather in Tokyo right now, and should I bring an umbrella?",
+      note:"The user has a question. The model alone can't answer this — it doesn't know live weather." },
+    { actor:"MODEL", color:"#60A5FA", icon:"🧠", label:"Model decides to call a tool",
+      content:`{
+  "tool_calls": [{
+    "name": "get_weather",
+    "arguments": { "city": "Tokyo" }
+  }]
+}`,
+      note:"The model doesn't return text — it returns JSON describing a tool call. It saw 'weather in Tokyo' and matched it to the get_weather tool you registered." },
+    { actor:"YOUR CODE", color:"#F59E0B", icon:"⚙️", label:"YOUR code runs the function",
+      content:`# This is YOUR Python code, not the LLM:
+result = get_weather(city="Tokyo")
+# → {"temp": 14, "condition": "rain", "humidity": 78}`,
+      note:"This is the part beginners miss: the LLM never executes anything. It just told you what to run. You actually call your function, hit your API, query your DB — whatever the tool does." },
+    { actor:"YOUR CODE", color:"#F59E0B", icon:"📤", label:"Send result back to model",
+      content:`{
+  "role": "tool",
+  "name": "get_weather",
+  "content": "{\\"temp\\": 14, \\"condition\\": \\"rain\\", \\"humidity\\": 78}"
+}`,
+      note:"You hand the function's output back to the model as a new message. The model now has the live data it was missing." },
+    { actor:"MODEL", color:"#10B981", icon:"💬", label:"Model gives the final answer",
+      content:"It's 14°C and raining in Tokyo right now with 78% humidity — yes, definitely bring an umbrella!",
+      note:"Now the model has everything it needs. It writes the natural-language answer using the tool's result." },
+  ];
+
+  const s = steps[step];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The Tool-Use Loop, Step by Step</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click through to see who does what at each stage.</div>
+
+      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {steps.map((st,i)=>(
+          <React.Fragment key={i}>
+            <button onClick={()=>setStep(i)} style={{
+              padding:"6px 10px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.74rem",fontWeight:600,
+              background:i===step?st.color:"#252833",color:i===step?"#fff":"#94A3B8",
+              transition:"all 0.2s",
+            }}>{i+1}. {st.icon}</button>
+            {i<steps.length-1 && <span style={{color:"#3F4555",fontSize:"0.8rem"}}>→</span>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div style={{background:s.color+"15",borderRadius:8,padding:"6px 12px",marginBottom:8,display:"inline-flex",alignItems:"center",gap:6,border:"1px solid "+s.color+"33"}}>
+        <span style={{fontSize:"1rem"}}>{s.icon}</span>
+        <span style={{color:s.color,fontWeight:700,fontSize:"0.78rem",letterSpacing:1}}>{s.actor}</span>
+        <span style={{color:"#94A3B8",fontSize:"0.78rem"}}>— {s.label}</span>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid "+s.color+"33",marginBottom:8,animation:"slideIn 0.25s"}}>
+        <div style={{color:s.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>{step===1||step===3?"PAYLOAD":step===2?"CODE":"MESSAGE"}</div>
+        <pre style={{color:"#E2E8F0",fontSize:"0.82rem",fontFamily:"'JetBrains Mono'",lineHeight:1.7,whiteSpace:"pre-wrap",margin:0}}>{s.content}</pre>
+      </div>
+
+      <div style={{padding:"0.65rem 0.85rem",background:s.color+"12",borderRadius:8,border:"1px solid "+s.color+"22"}}>
+        <span style={{color:s.color,fontSize:"0.78rem",fontWeight:600}}>What's happening: </span>
+        <span style={{color:"#C9CDD3",fontSize:"0.82rem",lineHeight:1.7}}>{s.note}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 2: OpenAI vs Anthropic side-by-side
+// ============================================================
+function ProviderCompareDemo() {
+  const [provider, setProvider] = useState("openai");
+
+  const code = {
+    openai: `from openai import OpenAI
+client = OpenAI()
+
+# 1. Define the tool
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get current weather for a city",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "City name, e.g. 'Tokyo'"
+                }
+            },
+            "required": ["city"]
+        }
+    }
+}]
+
+# 2. Call the model
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role":"user","content":"Weather in Tokyo?"}],
+    tools=tools
+)
+
+# 3. Extract the tool call
+tool_call = response.choices[0].message.tool_calls[0]
+print(tool_call.function.name)       # "get_weather"
+print(tool_call.function.arguments)  # '{"city":"Tokyo"}'`,
+    anthropic: `from anthropic import Anthropic
+client = Anthropic()
+
+# 1. Define the tool
+tools = [{
+    "name": "get_weather",
+    "description": "Get current weather for a city",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "city": {
+                "type": "string",
+                "description": "City name, e.g. 'Tokyo'"
+            }
+        },
+        "required": ["city"]
+    }
+}]
+
+# 2. Call the model
+response = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=1024,
+    messages=[{"role":"user","content":"Weather in Tokyo?"}],
+    tools=tools
+)
+
+# 3. Extract the tool call
+for block in response.content:
+    if block.type == "tool_use":
+        print(block.name)   # "get_weather"
+        print(block.input)  # {"city":"Tokyo"}`,
+  };
+
+  const diffs = [
+    { what:"Tool definition shape", openai:'Wrapped in {"type":"function","function":{...}}', anthropic:"Flat — name, description, input_schema directly" },
+    { what:"Schema field name", openai:'"parameters"', anthropic:'"input_schema"' },
+    { what:"How to read the result", openai:"response.choices[0].message.tool_calls[]", anthropic:"Loop response.content, check block.type" },
+    { what:"Arguments format", openai:"JSON string (need json.loads)", anthropic:"Already a Python dict" },
+  ];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"1.25rem"}}>The Same Tool in Two SDKs</div>
+
+      <div style={{display:"flex",gap:8,marginBottom:"1rem"}}>
+        <button onClick={()=>setProvider("openai")} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:provider==="openai"?"#10B981":"#252833",color:provider==="openai"?"#fff":"#94A3B8"}}>OpenAI</button>
+        <button onClick={()=>setProvider("anthropic")} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:provider==="anthropic"?"#D97706":"#252833",color:provider==="anthropic"?"#fff":"#94A3B8"}}>Anthropic</button>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginBottom:12}}>
+        <pre style={{color:"#E2E8F0",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{code[provider]}</pre>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #2E3240"}}>
+        <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>THE 4 DIFFERENCES</div>
+        {diffs.map((d,i)=>(
+          <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1.5fr 1.5fr",gap:8,padding:"6px 0",borderBottom:i<diffs.length-1?"1px solid #2E3240":"none",fontSize:"0.76rem"}}>
+            <span style={{color:"#94A3B8",fontWeight:600}}>{d.what}</span>
+            <span style={{color:"#10B981",fontFamily:"'JetBrains Mono'"}}>{d.openai}</span>
+            <span style={{color:"#D97706",fontFamily:"'JetBrains Mono'"}}>{d.anthropic}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{marginTop:10,padding:"0.5rem 0.75rem",background:"#10B98112",borderRadius:6,border:"1px solid #10B98133"}}>
+        <span style={{color:"#10B981",fontSize:"0.78rem",fontWeight:600}}>Bottom line: </span>
+        <span style={{color:"#C9CDD3",fontSize:"0.78rem"}}>The concept is identical. The wire format differs slightly. Learn one, you can read the other in 5 minutes.</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 3: Schema Quality — same task, three schemas
+// ============================================================
+function SchemaQualityDemo() {
+  const [quality, setQuality] = useState("good");
+
+  const variants = {
+    bad: {
+      label:"Vague Schema", color:"#EF4444",
+      schema:`{
+  "name": "do_stuff",
+  "description": "does things with data",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "input": { "type": "string" }
+    }
+  }
+}`,
+      modelBehavior:"Model picks the wrong tool, passes the entire user message as 'input', or doesn't call the tool at all. Sometimes it just answers from memory.",
+      verdict:"❌ Tool gets called maybe 30% of the time, often with garbage arguments.",
+      issues:["Name says nothing about what it does","Description is meaningless","No info on what 'input' should contain","No required fields"]
+    },
+    okay: {
+      label:"Okay Schema", color:"#F59E0B",
+      schema:`{
+  "name": "search_products",
+  "description": "Search the product catalog",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "limit": { "type": "integer" }
+    },
+    "required": ["query"]
+  }
+}`,
+      modelBehavior:"Model uses the tool for product searches but is unsure about 'limit'. Sometimes passes 1, sometimes 100. May still try to format the query as natural language instead of keywords.",
+      verdict:"⚠️ Works most of the time, but inconsistent parameter values cause downstream bugs.",
+      issues:["No guidance on query format","No default or hint for 'limit'","Description doesn't say when NOT to use this tool"]
+    },
+    good: {
+      label:"Production Schema", color:"#10B981",
+      schema:`{
+  "name": "search_products",
+  "description": "Search the TechStore product catalog by keyword. Use this when the user asks to find, browse, or compare products. Do NOT use for questions about orders, returns, or shipping — use the corresponding tools instead.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Search keywords, e.g. 'wireless headphones' or 'laptop under $1000'. Avoid full sentences."
+      },
+      "limit": {
+        "type": "integer",
+        "description": "Max results to return. Default 5, max 20.",
+        "default": 5
+      },
+      "category": {
+        "type": "string",
+        "enum": ["electronics","accessories","software","none"],
+        "description": "Optional category filter. Use 'none' if unspecified."
+      }
+    },
+    "required": ["query"]
+  }
+}`,
+      modelBehavior:"Model uses the tool consistently for the right requests, passes clean keyword queries, picks sensible limits, and uses 'none' when no category is mentioned. Skips this tool when the user asks about orders.",
+      verdict:"✅ ~95% reliable. Parameters are clean and downstream code rarely surprises you.",
+      issues:[]
+    },
+  };
+
+  const v = variants[quality];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Same Tool, Three Schema Qualities</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>The model's reliability is determined almost entirely by how well you write this JSON.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {Object.entries(variants).map(([k,vv])=>(
+          <button key={k} onClick={()=>setQuality(k)} style={{padding:"8px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:quality===k?vv.color:"#252833",color:quality===k?"#fff":"#94A3B8"}}>{vv.label}</button>
+        ))}
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid "+v.color+"33",marginBottom:8}}>
+        <div style={{color:v.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>SCHEMA</div>
+        <pre style={{color:"#E2E8F0",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{v.schema}</pre>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #2E3240",marginBottom:8}}>
+        <div style={{color:"#94A3B8",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>HOW THE MODEL BEHAVES</div>
+        <div style={{color:"#C9CDD3",fontSize:"0.85rem",lineHeight:1.7}}>{v.modelBehavior}</div>
+      </div>
+
+      {v.issues.length > 0 && (
+        <div style={{background:"#EF444412",borderRadius:8,padding:"0.65rem 0.85rem",border:"1px solid #EF444433",marginBottom:8}}>
+          <div style={{color:"#EF4444",fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>WHAT'S WRONG</div>
+          {v.issues.map((iss,i)=>(<div key={i} style={{color:"#FCA5A5",fontSize:"0.8rem",lineHeight:1.6}}>• {iss}</div>))}
+        </div>
+      )}
+
+      <div style={{padding:"0.65rem 0.85rem",background:v.color+"12",borderRadius:8,border:"1px solid "+v.color+"33"}}>
+        <span style={{color:v.color,fontSize:"0.82rem",fontWeight:600}}>{v.verdict}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 4: Garbage Output Gallery
+// ============================================================
+function GarbageGallery() {
+  const [active, setActive] = useState(0);
+
+  const cases = [
+    { label:"Hallucinated tool", icon:"👻", color:"#EF4444",
+      llmOutput:`{"tool_calls":[{"name":"get_user_preferences","arguments":{"user_id":42}}]}`,
+      problem:"The model called a tool you never registered. 'get_user_preferences' doesn't exist in your tools list — the model invented it because it sounded plausible.",
+      fix:`# Always validate the tool name exists
+if tool_name not in registered_tools:
+    return {"error": f"Unknown tool: {tool_name}"}
+    # Send this back to the model — it will recover
+    # by either calling a real tool or apologizing.`
+    },
+    { label:"Wrong type", icon:"🔤", color:"#F59E0B",
+      llmOutput:`{"name":"set_temperature","arguments":{"degrees":"twenty-two"}}`,
+      problem:"You declared 'degrees' as an integer. The model passed a string. This happens more often with numbers, booleans, and enums.",
+      fix:`# Use Pydantic to validate before executing
+from pydantic import ValidationError
+
+try:
+    args = SetTempArgs(**tool_call.arguments)
+except ValidationError as e:
+    # Send the error back to the model.
+    # It will almost always fix itself on retry.
+    return {"error": str(e)}`
+    },
+    { label:"Missing required field", icon:"📭", color:"#F59E0B",
+      llmOutput:`{"name":"send_email","arguments":{"subject":"Hi"}}`,
+      problem:"The tool requires 'to', 'subject', and 'body'. The model only provided 'subject'. It may have assumed defaults exist.",
+      fix:`# Pydantic catches this for free — required fields are
+# enforced. Return the validation error to the model:
+{
+  "error": "Missing required: 'to', 'body'",
+  "hint": "All three fields are mandatory."
+}`
+    },
+    { label:"Invalid enum value", icon:"🎯", color:"#F59E0B",
+      llmOutput:`{"name":"set_status","arguments":{"status":"completed"}}`,
+      problem:"Your enum was ['open','closed','in_progress']. The model used 'completed' because it's semantically close. Hallucinated values are common with enums.",
+      fix:`# Tell the model EXACTLY what went wrong:
+{
+  "error": "Invalid status 'completed'.",
+  "valid_values": ["open","closed","in_progress"]
+}
+# The model will retry with a valid value.`
+    },
+    { label:"JSON in a string", icon:"📦", color:"#EF4444",
+      llmOutput:`{"name":"create_user","arguments":"{\\"name\\":\\"Nij\\",\\"age\\":30}"}`,
+      problem:"The arguments came back as a string containing JSON instead of an object. Common with OpenAI's older models and some open-source LLMs.",
+      fix:`# Defensive parsing
+import json
+args = tool_call.arguments
+if isinstance(args, str):
+    args = json.loads(args)
+# Now args is a proper dict.`
+    },
+    { label:"Right answer, no tool", icon:"🙈", color:"#F59E0B",
+      llmOutput:`"The current weather in Tokyo is 14°C with light rain."`,
+      problem:"You gave the model a get_weather tool but it answered from training data anyway. It might be wrong, stale, or hallucinated. Tool was never called.",
+      fix:`# Make the description explicit about when to use the tool:
+"description": "Get LIVE weather. Always use this for any
+weather question — do NOT answer from memory, as your
+training data is stale."`
+    },
+  ];
+
+  const c = cases[active];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The Garbage Output Gallery</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Six ways tool calls fail in production — and the fix for each.</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {cases.map((cc,i)=>(
+          <button key={i} onClick={()=>setActive(i)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.76rem",fontWeight:600,background:active===i?cc.color:"#252833",color:active===i?"#fff":"#94A3B8"}}>{cc.icon} {cc.label}</button>
+        ))}
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid "+c.color+"33",marginBottom:8}}>
+        <div style={{color:c.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>WHAT THE LLM RETURNED</div>
+        <pre style={{color:"#E2E8F0",fontSize:"0.8rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{c.llmOutput}</pre>
+      </div>
+
+      <div style={{background:"#EF444412",borderRadius:8,padding:"0.65rem 0.85rem",border:"1px solid #EF444433",marginBottom:8}}>
+        <div style={{color:"#EF4444",fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>THE PROBLEM</div>
+        <div style={{color:"#FCA5A5",fontSize:"0.82rem",lineHeight:1.7}}>{c.problem}</div>
+      </div>
+
+      <div style={{background:"#10B98112",borderRadius:8,padding:"0.85rem",border:"1px solid #10B98133"}}>
+        <div style={{color:"#10B981",fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>THE FIX</div>
+        <pre style={{color:"#86EFAC",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{c.fix}</pre>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 5: Data Analyst Live Demo (mocked but realistic)
+// ============================================================
+function DataAnalystDemo() {
+  const [running, setRunning] = useState(false);
+  const [currentStep, setCurrentStep] = useState(-1);
+  const [question, setQuestion] = useState("What were our top 5 products by revenue last quarter, and how do they compare to the previous quarter?");
+
+  const steps = [
+    { tool:"run_sql", color:"#60A5FA", icon:"🗄️",
+      args:`SELECT product_name, SUM(revenue) as total
+FROM sales
+WHERE quarter = 'Q3-2025'
+GROUP BY product_name
+ORDER BY total DESC
+LIMIT 5;`,
+      result:`product_name        total
+─────────────────  ────────
+ProMax 15          $1.2M
+SoundPods Pro      $890K
+TabletAir 11       $640K
+SmartHub X         $520K
+WatchFit 3         $410K`,
+      thinking:"I need sales data for Q3-2025 to answer the top-5 question. Running SQL." },
+    { tool:"run_sql", color:"#60A5FA", icon:"🗄️",
+      args:`SELECT product_name, SUM(revenue) as total
+FROM sales
+WHERE quarter = 'Q2-2025'
+  AND product_name IN ('ProMax 15','SoundPods Pro','TabletAir 11','SmartHub X','WatchFit 3')
+GROUP BY product_name;`,
+      result:`product_name        total
+─────────────────  ────────
+ProMax 15          $980K
+SoundPods Pro      $920K
+TabletAir 11       $580K
+SmartHub X         $470K
+WatchFit 3         $390K`,
+      thinking:"Need the Q2 numbers for the same products to compare." },
+    { tool:"make_chart", color:"#A78BFA", icon:"📊",
+      args:`{
+  "type": "bar_grouped",
+  "title": "Top 5 Products: Q2 vs Q3 2025",
+  "series": [
+    {"name":"Q2","data":[980,920,580,470,390]},
+    {"name":"Q3","data":[1200,890,640,520,410]}
+  ],
+  "labels":["ProMax 15","SoundPods Pro","TabletAir 11","SmartHub X","WatchFit 3"]
+}`,
+      result:`✓ Chart saved: /charts/top5_q2_v_q3.png
+Dimensions: 1200x600
+Format: PNG`,
+      thinking:"A grouped bar chart will make the comparison readable. Calling the chart tool." },
+    { tool:"summarize_data", color:"#F59E0B", icon:"📝",
+      args:`{
+  "context": "Top 5 product comparison Q2 vs Q3 2025",
+  "data": [...above data...]
+}`,
+      result:`Key findings:
+• ProMax 15 grew strongly (+22%, $980K → $1.2M)
+• SoundPods Pro declined (-3%, $920K → $890K)
+• TabletAir 11 grew steadily (+10%)
+• SmartHub X showed strongest % growth (+11%)
+• Overall top-5 revenue up 18% QoQ`,
+      thinking:"I'll generate the analytical summary that ties the numbers together." },
+    { tool:"export_report", color:"#10B981", icon:"📄",
+      args:`{
+  "title": "Top 5 Products: Q2 vs Q3 Analysis",
+  "summary": "...",
+  "chart": "/charts/top5_q2_v_q3.png",
+  "format": "pdf"
+}`,
+      result:`✓ Report exported: top5_analysis_q3.pdf
+Pages: 3
+Size: 412 KB`,
+      thinking:"Packaging everything into a PDF deliverable." },
+  ];
+
+  const finalAnswer = `Here's your analysis:
+
+**Top 5 products by Q3 revenue:**
+1. ProMax 15 — $1.2M (up 22% from Q2)
+2. SoundPods Pro — $890K (down 3% — worth investigating)
+3. TabletAir 11 — $640K (up 10%)
+4. SmartHub X — $520K (up 11%)
+5. WatchFit 3 — $410K (up 5%)
+
+Total top-5 revenue grew 18% QoQ, driven mostly by ProMax 15. SoundPods Pro is the only decliner — flagging for product team review.
+
+📄 Full report exported to top5_analysis_q3.pdf with chart and breakdown.`;
+
+  const run = () => {
+    setRunning(true);
+    setCurrentStep(-1);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= steps.length) {
+        setCurrentStep(steps.length);
+        setRunning(false);
+        clearInterval(interval);
+      } else {
+        setCurrentStep(i);
+        i++;
+      }
+    }, 1400);
+  };
+
+  const reset = () => { setCurrentStep(-1); setRunning(false); };
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Live Capstone Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Data Analyst Assistant in Action</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1rem"}}>One question → 5 tool calls → final answer. Click Run to watch the chain execute.</div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #2E3240",marginBottom:10}}>
+        <div style={{color:"#94A3B8",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>USER QUESTION</div>
+        <div style={{color:"#E2E8F0",fontSize:"0.9rem",lineHeight:1.6}}>{question}</div>
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:"1rem"}}>
+        <button onClick={run} disabled={running} style={{padding:"8px 18px",borderRadius:7,border:"none",cursor:running?"not-allowed":"pointer",fontSize:"0.85rem",fontWeight:700,background:running?"#3F4555":"#10B981",color:"#fff",opacity:running?0.6:1}}>{running?"▶ Running...":"▶ Run"}</button>
+        <button onClick={reset} style={{padding:"8px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:"#252833",color:"#94A3B8"}}>↺ Reset</button>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {steps.map((st,i)=>{
+          const visible = i <= currentStep;
+          return (
+            <div key={i} style={{opacity:visible?1:0.25,transition:"opacity 0.3s",background:"#12141C",borderRadius:10,border:"1px solid "+(visible?st.color+"33":"#2E3240"),padding:"0.85rem 1rem"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:"1rem"}}>{st.icon}</span>
+                <span style={{color:st.color,fontFamily:"'JetBrains Mono'",fontSize:"0.82rem",fontWeight:700}}>{st.tool}()</span>
+                <span style={{color:"#6B7280",fontSize:"0.72rem"}}>step {i+1}</span>
+                {visible && i===currentStep && running && <span style={{color:st.color,fontSize:"0.7rem",animation:"pulse 1s infinite"}}>● running</span>}
+                {visible && i<currentStep && <span style={{color:"#10B981",fontSize:"0.7rem"}}>✓ done</span>}
+              </div>
+              {visible && (
+                <>
+                  <div style={{color:"#94A3B8",fontSize:"0.74rem",fontStyle:"italic",marginBottom:8}}>💭 {st.thinking}</div>
+                  <div style={{background:"#0A0C12",borderRadius:6,padding:"8px 10px",marginBottom:6}}>
+                    <div style={{color:"#6B7280",fontSize:"0.62rem",fontWeight:700,letterSpacing:1,marginBottom:3}}>ARGUMENTS</div>
+                    <pre style={{color:"#C9CDD3",fontSize:"0.74rem",fontFamily:"'JetBrains Mono'",lineHeight:1.5,whiteSpace:"pre-wrap",margin:0}}>{st.args}</pre>
+                  </div>
+                  <div style={{background:"#0A0C12",borderRadius:6,padding:"8px 10px"}}>
+                    <div style={{color:"#10B981",fontSize:"0.62rem",fontWeight:700,letterSpacing:1,marginBottom:3}}>RESULT</div>
+                    <pre style={{color:"#86EFAC",fontSize:"0.74rem",fontFamily:"'JetBrains Mono'",lineHeight:1.5,whiteSpace:"pre-wrap",margin:0}}>{st.result}</pre>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+
+        {currentStep >= steps.length && (
+          <div style={{background:"#10B98115",borderRadius:10,border:"1px solid #10B98144",padding:"1rem 1.25rem",marginTop:6,animation:"slideIn 0.4s"}}>
+            <div style={{color:"#10B981",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:8}}>FINAL ANSWER TO USER</div>
+            <pre style={{color:"#E2E8F0",fontSize:"0.85rem",fontFamily:"'DM Sans'",lineHeight:1.7,whiteSpace:"pre-wrap",margin:0}}>{finalAnswer}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 6: JSON Mode vs Tools — when to use which
+// ============================================================
+function JsonModeVsTools() {
+  const [pick, setPick] = useState("structured");
+
+  const opts = {
+    structured: {
+      label:"Just want structured data?", icon:"📋", color:"#60A5FA",
+      use:"JSON Mode or Pydantic via instructor",
+      why:"You're not asking the model to do anything — you just want its answer in a specific shape (extract entities, classify, format). Tool calling is overkill.",
+      example:`# Use instructor + Pydantic
+class Sentiment(BaseModel):
+    label: Literal["positive","negative","neutral"]
+    confidence: float
+
+result = client.chat.completions.create(
+    model="gpt-4o",
+    response_model=Sentiment,
+    messages=[{"role":"user","content":"This product is amazing!"}]
+)
+# result.label → "positive"
+# result.confidence → 0.95`
+    },
+    action: {
+      label:"Need the model to take actions?", icon:"⚡", color:"#F59E0B",
+      use:"Function calling / tool use",
+      why:"The model needs to decide which capability to invoke (search, query, send), pass arguments, and use the result. This is what tools were built for.",
+      example:`# Define tools, let the model pick
+tools = [search_products, get_order, send_email]
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role":"user","content":"Where's my order #4521?"}],
+    tools=tools
+)
+# Model calls get_order(order_id=4521)`
+    },
+    both: {
+      label:"Need both?", icon:"🔀", color:"#10B981",
+      use:"Tools (they're a superset)",
+      why:"Tool calling already returns structured arguments. If you also need the final response in JSON, ask for it in the system prompt or use a structured-output wrapper for the final step.",
+      example:`# Tools handle the actions
+# A final structured-output call shapes the answer
+tools_response = call_with_tools(question)
+
+class Report(BaseModel):
+    summary: str
+    action_items: List[str]
+    
+final = instructor.from_openai(client).chat.completions.create(
+    response_model=Report,
+    messages=[...with tool results...]
+)`
+    },
+  };
+
+  const o = opts[pick];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Decision Helper</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"1.25rem"}}>Structured Output or Tool Calling?</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap"}}>
+        {Object.entries(opts).map(([k,vv])=>(
+          <button key={k} onClick={()=>setPick(k)} style={{padding:"8px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:pick===k?vv.color:"#252833",color:pick===k?"#fff":"#94A3B8"}}>{vv.icon} {vv.label}</button>
+        ))}
+      </div>
+
+      <div style={{background:o.color+"15",borderRadius:8,padding:"0.85rem 1rem",border:"1px solid "+o.color+"33",marginBottom:10}}>
+        <div style={{color:o.color,fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>USE</div>
+        <div style={{color:"#E2E8F0",fontSize:"1rem",fontWeight:700,marginBottom:6}}>{o.use}</div>
+        <div style={{color:"#C9CDD3",fontSize:"0.82rem",lineHeight:1.7}}>{o.why}</div>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240"}}>
+        <pre style={{color:"#E2E8F0",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{o.example}</pre>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function Sidebar({active,onNav}){
+  const [open,setOpen] = useState(true);
+  const [coreOpen,setCoreOpen] = useState(true);
+  const [schemaOpen,setSchemaOpen] = useState(true);
+  const [structOpen,setStructOpen] = useState(true);
+  const [relOpen,setRelOpen] = useState(true);
+  const [capOpen,setCapOpen] = useState(true);
+  const [pracOpen,setPracOpen] = useState(true);
+
+  const groupBtn = (label, color, isOpen, setIsOpen) => (
+    <button onClick={()=>setIsOpen(v=>!v)} style={{width:"100%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 9px 2px",marginTop:4,cursor:"pointer"}}>
+      <span style={{color,fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{label}</span>
+      <span style={{color,fontSize:"0.62rem"}}>{isOpen?"▼":"▶"}</span>
+    </button>
+  );
+
+  const renderGroup = (groupName, color, bgVar) => FC_CHAPTERS.filter(c=>c.group===groupName).map(c=>(
+    <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)} style={{borderLeft:"none"}}>
+      <span className="item-num" style={{background:bgVar,color}}>{c.num}</span>
+      <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+    </a>
+  ));
+
+  return(
+  <div className="sidebar">
+    <div className="sidebar-logo">
+      <h2>GenAI Decoded</h2>
+      <div className="brand-by">by Nij</div>
+    </div>
+    <div className="sidebar-section">
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./1-how-llms-work.html"}>
+        <span>1. How LLMs Actually Work</span><span className="caret">↗</span>
+      </button>
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./2-prompt-engineering.html"}>
+        <span>2. Prompt Engineering</span><span className="caret">↗</span>
+      </button>
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./3-from-notebooks-to-apps.html"}>
+        <span>3. From Notebooks to Apps</span><span className="caret">↗</span>
+      </button>
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./4-rag-part1.html"}>
+        <span>4. RAG — Part 1</span><span className="caret">↗</span>
+      </button>
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./5-rag-part2.html"}>
+        <span>5. RAG — Part 2</span><span className="caret">↗</span>
+      </button>
+      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./6-frameworks-and-agents.html"}>
+        <span>6. Frameworks & Agents</span><span className="caret">↗</span>
+      </button>
+
+      <button className={"sidebar-group-toggle"+(open?" expanded":"")} onClick={()=>setOpen(v=>!v)}>
+        <span>7. Function Calling & Tools</span><span className="caret">▶</span>
+      </button>
+      {open&&(
+        <div className="sidebar-nested">
+          <a className={"sidebar-item"+(active==="fc-intro"?" active":"")} onClick={()=>onNav("fc-intro")}>
+            <span className="item-title">Overview</span>
+          </a>
+
+          <div style={{color:"var(--info-color)",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",padding:"8px 9px 2px",marginTop:4}}>Getting Started</div>
+          <a className={"sidebar-item"+(active==="fc-mental"?" active":"")} onClick={()=>onNav("fc-mental")}>
+            <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🧠</span>
+            <span><span className="item-title">The Mental Model</span><span className="item-sub">Brain with hands</span></span>
+          </a>
+          <a className={"sidebar-item"+(active==="fc-loop"?" active":"")} onClick={()=>onNav("fc-loop")}>
+            <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🔁</span>
+            <span><span className="item-title">The Tool-Use Loop</span><span className="item-sub">Who runs the code?</span></span>
+          </a>
+
+          {groupBtn("Core Mechanics","var(--build-color)",coreOpen,setCoreOpen)}
+          {coreOpen && renderGroup("core","var(--build-color)","var(--build-bg)")}
+
+          {groupBtn("Schema Design","var(--work-color)",schemaOpen,setSchemaOpen)}
+          {schemaOpen && renderGroup("schema","var(--work-color)","var(--work-bg)")}
+
+          {groupBtn("Structured Output","var(--info-color)",structOpen,setStructOpen)}
+          {structOpen && renderGroup("structured","var(--info-color)","var(--info-bg)")}
+
+          {groupBtn("Reliability","var(--orange)",relOpen,setRelOpen)}
+          {relOpen && renderGroup("reliability","var(--orange)","var(--orange-bg)")}
+
+          {groupBtn("Capstone Project","var(--purple)",capOpen,setCapOpen)}
+          {capOpen && renderGroup("capstone","var(--purple)","var(--purple-bg)")}
+
+          {groupBtn("Practice Challenges","var(--purple)",pracOpen,setPracOpen)}
+          {pracOpen && renderGroup("practice","var(--purple)","var(--purple-bg)")}
+
+          <a className={"sidebar-item"+(active==="fc-cheat"?" active":"")} onClick={()=>onNav("fc-cheat")}>
+            <span className="item-title">📋 Cheat Sheet</span>
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
+);}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App(){
+  const [active,setActive]=useState("fc-intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+
+  useEffect(()=>{
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const t = setTimeout(()=>{
+      const el=document.getElementById(hash);
+      if(el){setActive(hash);el.scrollIntoView({behavior:"auto",block:"start"});}
+    }, 0);
+    return ()=>clearTimeout(t);
+  },[]);
+
+  return(
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+        {/* SECTION HEADER */}
+        <div style={{padding:"3rem 0 1.5rem",borderTop:"3px solid var(--info-color)",marginTop:"3rem"}}>
+          <div style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Section 7</div>
+          <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Function Calling, Tool Use & Structured Output</h2>
+          <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>Turning your LLM from a text generator into a system that does things</div>
+        </div>
+
+        {/* ── Overview ── */}
+        <section id="fc-intro">
+          <P>So far in this course, your LLM has been doing one thing: producing text. You prompt it, it answers. Even with RAG, the model still just reads documents and writes text back.</P>
+
+          <P>But every interesting GenAI product does <S>more than write text</S>. It searches databases. Sends emails. Books meetings. Runs SQL. Generates charts. Updates records. These products need the LLM to <S color="var(--info-color)">take actions in the real world</S>.</P>
+
+          <P>That's what this section is about. By the end, you'll know how to give your LLM <S>hands</S> — letting it use tools you've written, while keeping the system reliable enough for production.</P>
+
+          <Callout color="var(--info-color)" icon="🎯"><S>The shift in mindset:</S> Up to now, the LLM was a smart text-completer. From this section forward, treat it as an <S>orchestrator</S> — a brain that decides what to do, while your code does the doing.</Callout>
+
+          <SubH>What you'll build</SubH>
+
+          <div style={{display:"flex",gap:14,marginTop:"1rem",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--info-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--info-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🧠 Foundations</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="getting-started").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--info-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--info-color)",fontWeight:700,fontSize:"0.78rem",flexShrink:0}}>🧠</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--build-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--build-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🛠️ Core Mechanics</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="core").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--build-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--build-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--work-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--work-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>📐 Schema Design</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="schema").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--work-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--work-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--info-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--info-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>📋 Structured Output</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="structured").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--info-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--info-color)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--orange)33",overflow:"hidden"}}>
+              <div style={{background:"var(--orange)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🛡️ Reliability</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="reliability").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--orange-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--orange)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--purple)33",overflow:"hidden"}}>
+              <div style={{background:"var(--purple)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🏗️ Capstone + Practice</div>
+              <div style={{padding:"0.75rem"}}>
+                {FC_CHAPTERS.filter(c=>c.group==="capstone"||c.group==="practice").map(c=>(
+                  <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--border-light)"}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--purple)",fontWeight:700,fontSize:"0.68rem",flexShrink:0}}>{c.num}</div>
+                    <div><div style={{fontWeight:600,fontSize:"0.82rem"}}>{c.title}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Callout color="var(--purple)" icon="🏆"><S>The capstone:</S> a Data Analyst Assistant that takes a plain-English business question, runs SQL on your database, creates charts, summarizes findings, and exports a PDF report — all driven by one LLM orchestrating four tools.</Callout>
+        </section>
+
+        {/* ── The Mental Model ── */}
+        <section id="fc-mental" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--info-bg)",borderRadius:5,marginBottom:10,border:"1px solid var(--info-border)"}}>
+              <span style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The Mental Model</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>The LLM as a brain with hands you build</div>
+          </div>
+
+          <P>Here's an analogy that will save you from a lot of confusion:</P>
+
+          <Callout color="var(--info-color)" icon="🧠"><S>The LLM is a brilliant intern who has read everything but cannot leave the room.</S> They can think, reason, and write — but they can't open a browser, run a database query, or send an email. To do anything useful in the real world, they need to <S>tell you what to do</S>, and you do it for them.</Callout>
+
+          <P>That's <S>exactly</S> what function calling is. The model doesn't gain new abilities. You give it a <S color="var(--info-color)">menu of things you can do</S>, and it decides which to use and what arguments to pass.</P>
+
+          <SubH>The crucial point beginners miss</SubH>
+
+          <div style={{background:"#FEF3C7",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid #FCD34D",margin:"1.25rem 0"}}>
+            <div style={{color:"#B45309",fontWeight:700,fontSize:"0.95rem",marginBottom:6}}>⚠️ The model never runs your code.</div>
+            <div style={{color:"#78350F",fontSize:"0.88rem",lineHeight:1.7}}>It only returns a structured message saying "I'd like to call <Code>get_weather</Code> with <Code>city="Tokyo"</Code>". Your code reads that message, calls your real function, and feeds the result back to the model.</div>
+          </div>
+
+          <P>This is why "tool use" can call <S>anything</S> — a REST API, a local Python function, a database query, a shell command. The model doesn't care what's behind the function. It just sees a name, a description, and parameters.</P>
+
+          <SubH>A second analogy: the restaurant kitchen</SubH>
+
+          <P>Think of a restaurant. The <S color="var(--info-color)">chef</S> (the LLM) reads the order and decides what to make. But the chef can only call out instructions — they have <S>line cooks</S> (your functions) who actually fry the fish, plate the salad, pour the wine. The chef knows which line cook handles which task because the kitchen has a written menu of stations. That menu is your tool schema.</P>
+
+          <P>If you give the chef a vague menu — "Station A does food things, Station B does other stuff" — the chef will yell the wrong orders or just freestyle. If you give a clear menu — "Station 3: grills fish, takes parameters: fish_type, doneness" — the chef knows exactly what to call out.</P>
+
+          <Callout color="var(--info-color)" icon="💡"><S>The whole skill of function calling</S> is writing menus the model can read perfectly. The model is already smart — your job is to be clear.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── The Tool-Use Loop ── */}
+        <section id="fc-loop" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--info-bg)",borderRadius:5,marginBottom:10,border:"1px solid var(--info-border)"}}>
+              <span style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The Tool-Use Loop</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>The 5-step cycle that powers every tool-using LLM</div>
+          </div>
+
+          <P>Every tool call — no matter how complex — follows the same 5-step loop. Once you internalize this loop, the entire section makes sense.</P>
+
+          <ToolLoopDemo />
+
+          <SubH>What's actually happening</SubH>
+
+          <P>The loop has two participants who take turns:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 14px",background:"var(--info-bg)",borderRadius:8,border:"1px solid var(--info-border)"}}>
+              <span style={{fontSize:"1.2rem"}}>🧠</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.92rem",color:"var(--info-color)"}}>The model</div>
+                <div style={{fontSize:"0.86rem",color:"var(--text-secondary)",marginTop:2}}>Decides which tool to call, what arguments to pass, when it has enough info to answer.</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 14px",background:"var(--build-bg)",borderRadius:8,border:"1px solid var(--build-border)"}}>
+              <span style={{fontSize:"1.2rem"}}>⚙️</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.92rem",color:"var(--build-color)"}}>Your code</div>
+                <div style={{fontSize:"0.86rem",color:"var(--text-secondary)",marginTop:2}}>Actually executes the function the model asked for, then sends the result back.</div>
+              </div>
+            </div>
+          </div>
+
+          <P>The conversation passes back and forth between these two until the model decides it has everything it needs and writes a final answer (no tool call this time — just text).</P>
+
+          <SubH>Why this matters for design</SubH>
+
+          <P>Because <S>you</S> run the tool, you're in full control of:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--accent-light)",borderRadius:6,borderLeft:"3px solid var(--accent)"}}><S color="var(--accent)">Security</S> — the model can <S>ask</S> to delete a database row, but you decide whether to actually do it.</div>
+            <div style={{padding:"7px 12px",background:"var(--accent-light)",borderRadius:6,borderLeft:"3px solid var(--accent)"}}><S color="var(--accent)">Validation</S> — you can check arguments before running, reject bad ones, ask the model to retry.</div>
+            <div style={{padding:"7px 12px",background:"var(--accent-light)",borderRadius:6,borderLeft:"3px solid var(--accent)"}}><S color="var(--accent)">Auditing</S> — you log every tool call. Nothing happens off the record.</div>
+            <div style={{padding:"7px 12px",background:"var(--accent-light)",borderRadius:6,borderLeft:"3px solid var(--accent)"}}><S color="var(--accent)">Cost control</S> — expensive tools can require a confirmation step before running.</div>
+          </div>
+
+          <Callout color="var(--accent)" icon="🛡️"><S>The model proposes; your code disposes.</S> This is the safety property that makes function calling production-grade. The LLM can never execute anything you didn't write.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 1: Your First Tool Call ── */}
+        <section id="fc1" style={{paddingTop:"2rem"}}>
+          <ChH num="1" title="Your First Tool Call" sub="OpenAI walkthrough, end to end" color="var(--build-color)"/>
+
+          <P>Let's build the world's simplest tool — a function that returns the weather — and walk through the entire request and response. By the end you'll have seen every piece of the protocol.</P>
+
+          <SubH>Step 1: Write the actual function</SubH>
+
+          <P>Before the LLM enters the picture, you need a real function. For this demo we'll fake the weather lookup, but it could just as easily call a real API.</P>
+
+          <CB>{`def get_weather(city: str) -> dict:
+    """Pretend to look up the weather for a city."""
+    fake_data = {
+        "Tokyo":  {"temp": 14, "condition": "rain"},
+        "Dubai":  {"temp": 38, "condition": "sunny"},
+        "London": {"temp": 9,  "condition": "cloudy"},
+    }
+    return fake_data.get(city, {"error": "unknown city"})`}</CB>
+
+          <SubH>Step 2: Describe the function to the model</SubH>
+
+          <P>The model can't see your Python code. It only sees a <S>JSON schema</S> that describes the function. This is the menu we talked about.</P>
+
+          <CB>{`tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get current weather for a specific city. Use this whenever the user asks about current conditions, temperature, or whether to bring rain gear.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "The city name, e.g. 'Tokyo' or 'London'."
+                }
+            },
+            "required": ["city"]
+        }
+    }
+}]`}</CB>
+
+          <SubH>Step 3: Send the prompt with the tools attached</SubH>
+
+          <CB>{`from openai import OpenAI
+client = OpenAI()
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Should I bring an umbrella to Tokyo today?"}],
+    tools=tools
+)`}</CB>
+
+          <SubH>Step 4: Read what the model decided</SubH>
+
+          <P>This is where it gets different from regular API calls. Instead of <Code>response.choices[0].message.content</Code> being a normal answer, it's <Code>None</Code> — and there's a new field, <Code>tool_calls</Code>.</P>
+
+          <CB>{`msg = response.choices[0].message
+
+print(msg.content)
+# → None  (the model is not answering yet — it wants to use a tool first)
+
+print(msg.tool_calls)
+# → [ChatCompletionMessageToolCall(
+#       id='call_abc123',
+#       function=Function(
+#           name='get_weather',
+#           arguments='{"city":"Tokyo"}'
+#       ),
+#       type='function'
+#   )]`}</CB>
+
+          <Callout color="var(--build-color)" icon="🔑">The <Code>arguments</Code> field is a <S>JSON string</S>, not a Python dict. You need to parse it with <Code>json.loads()</Code> before using it. This trips up almost every beginner.</Callout>
+
+          <SubH>Step 5: Run the function for the model</SubH>
+
+          <CB>{`import json
+
+tool_call = msg.tool_calls[0]
+args = json.loads(tool_call.function.arguments)  # {"city": "Tokyo"}
+
+# Actually run YOUR function
+result = get_weather(**args)  # {"temp": 14, "condition": "rain"}`}</CB>
+
+          <SubH>Step 6: Send the result back to the model</SubH>
+
+          <P>Now the model has the data it was missing. You build a new <Code>messages</Code> list that includes (a) the original question, (b) the model's tool-call message, and (c) the tool's result.</P>
+
+          <CB>{`messages = [
+    {"role": "user", "content": "Should I bring an umbrella to Tokyo today?"},
+    msg,  # The model's tool-call message, passed back unchanged
+    {
+        "role": "tool",
+        "tool_call_id": tool_call.id,  # Must match the call id
+        "content": json.dumps(result)   # Result as a JSON string
+    }
+]
+
+final = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=tools
+)
+
+print(final.choices[0].message.content)
+# → "Yes — it's 14°C and raining in Tokyo. Definitely bring an umbrella!"`}</CB>
+
+          <Callout color="var(--accent)" icon="✅"><S>That's the entire mechanic.</S> Every tool call — no matter how fancy the tool — follows these six steps. The next chapters add multiple tools, multiple turns, and reliability patterns, but the core loop never changes.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 2: OpenAI vs Anthropic ── */}
+        <section id="fc2" style={{paddingTop:"2rem"}}>
+          <ChH num="2" title="OpenAI vs Anthropic" sub="Same concept, two flavors of syntax" color="var(--build-color)"/>
+
+          <P>Every major provider supports function calling, but the wire format differs. You don't need to memorize both — just know that the <S>concept is identical</S> and the differences are mechanical. Reading code for the other provider will feel familiar within minutes.</P>
+
+          <ProviderCompareDemo />
+
+          <SubH>Why the differences exist</SubH>
+
+          <P>The two providers shipped function calling independently and made slightly different design choices:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"#10B98112",borderRadius:6,borderLeft:"3px solid #10B981",fontSize:"0.88rem"}}><S color="#10B981">OpenAI:</S> Wraps tools in <Code>{`{"type":"function","function":{...}}`}</Code> because they're planning for future tool types (file_search, code_interpreter, etc).</div>
+            <div style={{padding:"8px 12px",background:"#D9770612",borderRadius:6,borderLeft:"3px solid #D97706",fontSize:"0.88rem"}}><S color="#D97706">Anthropic:</S> Keeps tool definitions flat. Returns parsed dicts instead of JSON strings (one less <Code>json.loads</Code> call).</div>
+          </div>
+
+          <SubH>What stays the same</SubH>
+
+          <P>The mental model is identical: define a JSON schema, the model decides when to call, you run the function, you send the result back. <S>The loop is the loop</S>, regardless of provider.</P>
+
+          <Callout color="var(--build-color)" icon="📝"><S>Practical tip:</S> If you're building production software, write a thin abstraction layer that takes your tool definitions in <S>one format</S> and adapts them to whichever provider you're using. This pays off the day you decide to switch models or A/B test providers.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 3: Multi-turn ── */}
+        <section id="fc3" style={{paddingTop:"2rem"}}>
+          <ChH num="3" title="Multi-Turn Tool Use" sub="When one tool call isn't enough" color="var(--build-color)"/>
+
+          <P>Real questions rarely need one tool call. They need a <S>chain</S>: look up X, then use X to look up Y, then summarize.</P>
+
+          <P>Example: "Email a Q3 summary to my manager." The model needs to:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.88rem"}}><S>1.</S> Call <Code>get_user_manager()</Code> to find who the manager is.</div>
+            <div style={{padding:"8px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.88rem"}}><S>2.</S> Call <Code>query_sales(quarter="Q3")</Code> to fetch the data.</div>
+            <div style={{padding:"8px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.88rem"}}><S>3.</S> Call <Code>send_email(to=..., subject=..., body=...)</Code> to deliver it.</div>
+          </div>
+
+          <SubH>The pattern: a while loop</SubH>
+
+          <P>The code for multi-turn tool use is just the single-turn code <S>wrapped in a loop</S> that keeps going until the model stops asking for tools.</P>
+
+          <CB>{`def chat_with_tools(user_message, tools, tool_functions, max_turns=10):
+    messages = [{"role": "user", "content": user_message}]
+    
+    for turn in range(max_turns):
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=tools
+        )
+        msg = response.choices[0].message
+        messages.append(msg)  # Always add the model's turn
+        
+        # If no tool calls, the model is done.
+        if not msg.tool_calls:
+            return msg.content
+        
+        # Otherwise, run each tool and add results.
+        for tc in msg.tool_calls:
+            fn = tool_functions[tc.function.name]
+            args = json.loads(tc.function.arguments)
+            result = fn(**args)
+            
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": json.dumps(result)
+            })
+    
+    raise Exception(f"Hit max_turns ({max_turns}) without a final answer.")`}</CB>
+
+          <SubH>Why <Code>max_turns</Code> matters</SubH>
+
+          <P>Without a limit, a confused model can <S>loop forever</S> — calling tools, getting results, deciding it needs more data, calling more tools. Each turn costs money and time. Always cap it.</P>
+
+          <Callout color="var(--orange)" icon="⏱️"><S>Sensible defaults:</S> 5 turns for simple Q&A apps, 10–15 for analytical workflows, 25+ only for explicit agent use cases. If you hit the limit often, your tools probably need better descriptions or you need fewer of them.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 4: Parallel Tool Calls ── */}
+        <section id="fc4" style={{paddingTop:"2rem"}}>
+          <ChH num="4" title="Parallel Tool Calls" sub="Multiple tools at the same time" color="var(--build-color)"/>
+
+          <P>Sometimes the model needs <S>several pieces of info that don't depend on each other</S>. For example: "Compare the weather in Tokyo, London, and Dubai." There's no reason to call <Code>get_weather</Code> three times sequentially.</P>
+
+          <P>Modern models (GPT-4o, Claude Sonnet 4, etc.) can return <S>multiple tool calls in a single response</S> — letting you run them in parallel.</P>
+
+          <CB>{`# The model returns this in ONE response:
+msg.tool_calls = [
+    ToolCall(id="call_1", name="get_weather", arguments='{"city":"Tokyo"}'),
+    ToolCall(id="call_2", name="get_weather", arguments='{"city":"London"}'),
+    ToolCall(id="call_3", name="get_weather", arguments='{"city":"Dubai"}'),
+]`}</CB>
+
+          <SubH>Running them in parallel</SubH>
+
+          <CB>{`import concurrent.futures
+
+def run_one_tool_call(tc, tool_functions):
+    fn = tool_functions[tc.function.name]
+    args = json.loads(tc.function.arguments)
+    return tc.id, fn(**args)
+
+# Fan out — all three calls happen simultaneously
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    futures = [executor.submit(run_one_tool_call, tc, tool_functions) 
+               for tc in msg.tool_calls]
+    
+    # Collect results as they finish
+    for future in concurrent.futures.as_completed(futures):
+        tc_id, result = future.result()
+        messages.append({
+            "role": "tool",
+            "tool_call_id": tc_id,
+            "content": json.dumps(result)
+        })`}</CB>
+
+          <SubH>When parallel helps (and when it doesn't)</SubH>
+
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:240,background:"#10B98112",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #10B98133"}}>
+              <div style={{color:"#10B981",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>✅ Great for parallel</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>Calling the same tool with different arguments</li>
+                <li>Independent lookups (weather, stock prices, user info)</li>
+                <li>Network-bound tools (API calls, DB queries)</li>
+              </ul>
+            </div>
+            <div style={{flex:1,minWidth:240,background:"#EF444412",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #EF444433"}}>
+              <div style={{color:"#EF4444",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>❌ Don't parallelize</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>Calls that depend on each other's output</li>
+                <li>Write operations that should be ordered</li>
+                <li>Tools sharing a rate-limited resource</li>
+              </ul>
+            </div>
+          </div>
+
+          <Callout color="var(--build-color)" icon="⚡"><S>Real impact:</S> A 5-tool sequential chain at 800ms per call = 4 seconds. Parallelized = ~800ms total. Users notice.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 5: Naming Tools Well ── */}
+        <section id="fc5" style={{paddingTop:"2rem"}}>
+          <ChH num="5" title="Naming Tools Well" sub="The model literally reads your names" color="var(--work-color)"/>
+
+          <P>Inside the model, your tool name is just another piece of text it has to interpret. A clear name tilts the model toward the right tool. A vague name makes the model guess.</P>
+
+          <SubH>The naming hierarchy</SubH>
+
+          <div style={{margin:"1rem 0"}}>
+            {[
+              {bad:"do_thing", okay:"get_data", good:"get_user_orders", why:"Be specific about the action AND the object."},
+              {bad:"process", okay:"format_email", good:"format_email_to_html", why:"Include the output format if there's any ambiguity."},
+              {bad:"check", okay:"validate_user", good:"check_user_has_admin_access", why:"State what's being checked, not just 'check'."},
+              {bad:"helper", okay:"calculate", good:"calculate_shipping_cost_usd", why:"Helper names tell the model nothing about when to use them."},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1.5fr",gap:8,padding:"10px 0",borderBottom:"1px solid var(--border-light)",fontSize:"0.84rem"}}>
+                <div><span style={{color:"#EF4444",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem"}}>❌ {r.bad}</span></div>
+                <div><span style={{color:"#F59E0B",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem"}}>⚠️ {r.okay}</span></div>
+                <div><span style={{color:"#10B981",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem"}}>✅ {r.good}</span></div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.78rem"}}>{r.why}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Rules of thumb</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.88rem"}}><S color="var(--work-color)">Verb + noun.</S> <Code>get_user</Code>, <Code>send_email</Code>, <Code>query_sales</Code>. Skip vague verbs like <Code>handle</Code>, <Code>process</Code>, <Code>manage</Code>.</div>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.88rem"}}><S color="var(--work-color)">snake_case</S> for consistency. Mixing camelCase and snake_case confuses both the model and humans reading your code.</div>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.88rem"}}><S color="var(--work-color)">No abbreviations</S> unless universal. <Code>get_id</Code> is fine, <Code>get_usr_prfs</Code> is not.</div>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.88rem"}}><S color="var(--work-color)">No overlap.</S> If you have <Code>search_products</Code> and <Code>find_items</Code>, the model will flip between them randomly.</div>
+          </div>
+
+          <Callout color="var(--work-color)" icon="🎯"><S>The rename test:</S> If you rename a tool from <Code>get_data</Code> to <Code>get_customer_orders_by_status</Code>, the model's tool selection accuracy often jumps 20+ percentage points. The name is doing real work.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 6: Descriptions ── */}
+        <section id="fc6" style={{paddingTop:"2rem"}}>
+          <ChH num="6" title="Writing Descriptions" sub="Treat them as docs for a brand-new junior dev" color="var(--work-color)"/>
+
+          <P>If the name is the menu item, the <S>description is the menu's explanatory text</S>. It's what the model reads when deciding whether to use a tool — and the difference between a one-line description and a thoughtful one can swing accuracy dramatically.</P>
+
+          <SchemaQualityDemo />
+
+          <SubH>The description checklist</SubH>
+
+          <P>Every production tool description should answer four questions:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+            {[
+              {q:"What does it do?", a:"In one sentence, what action does the tool perform?"},
+              {q:"When should I use it?", a:"What user intent triggers this tool? Be specific."},
+              {q:"When should I NOT use it?", a:"This is the secret weapon. Tell the model which other tools to use for adjacent cases."},
+              {q:"What format are arguments in?", a:"Examples beat descriptions. 'e.g. \"wireless headphones\"' is better than 'a search query'."},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,color:"var(--work-color)",fontSize:"0.88rem",marginBottom:4}}>{r.q}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem"}}>{r.a}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Anti-pattern: the one-liner</SubH>
+
+          <CB>{`# ❌ Almost useless
+"description": "Searches products."
+
+# ✅ Production-grade
+"description": "Search the TechStore product catalog by keyword. Use this when the user asks to find, browse, compare, or filter products by name or feature. Do NOT use for order status (use get_order) or returns (use create_return). Query should be keyword-style, not a full sentence."`}</CB>
+
+          <Callout color="var(--work-color)" icon="📚"><S>Mental check:</S> Could a brand-new engineer use only your descriptions and pick the right tool every time? If not, your model will struggle in exactly the same way.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+
+        {/* ── Chapter 7: Parameter Design ── */}
+        <section id="fc7" style={{paddingTop:"2rem"}}>
+          <ChH num="7" title="Parameter Design" sub="The schema is a contract — both sides have to honor it" color="var(--work-color)"/>
+
+          <P>Parameters are where most tool calls go wrong. The model passes weird values, omits fields, or invents data. Good parameter design eliminates 80% of these problems before they happen.</P>
+
+          <SubH>The 5 design principles</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {n:"1", t:"Use enums when the value is one of a known list", c:`{
+  "status": {
+    "type": "string",
+    "enum": ["pending","approved","rejected"],
+    "description": "Current order status."
+  }
+}`, why:"Enums prevent the model from inventing 'completed' when you meant 'approved'."},
+              {n:"2", t:"Mark required fields explicitly", c:`{
+  "required": ["order_id", "amount"]
+}`, why:"If a field isn't required, the model will sometimes skip it. If it IS required, omitting it raises an error you can show the model."},
+              {n:"3", t:"Use the right primitive types", c:`{
+  "amount": {"type": "number"},     // not "string"
+  "is_urgent": {"type": "boolean"}, // not "string"
+  "tags": {"type": "array", "items": {"type": "string"}}
+}`, why:"The wrong type makes the model 'helpfully' coerce — passing '14' instead of 14, or 'true' instead of true."},
+              {n:"4", t:"Add descriptions to every parameter, even obvious ones", c:`{
+  "user_id": {
+    "type": "integer",
+    "description": "The internal numeric user ID. Get this from get_user() if you only have a username."
+  }
+}`, why:"A description teaches the model where to source the value. Without it, the model guesses or invents."},
+              {n:"5", t:"Provide examples inside the description", c:`{
+  "phone": {
+    "type": "string",
+    "description": "Phone number in E.164 format, e.g. '+971501234567' (no spaces, no dashes)."
+  }
+}`, why:"One example is worth 100 words of formatting rules."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                  <span style={{width:24,height:24,borderRadius:6,background:"var(--work-bg)",color:"var(--work-color)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.78rem"}}>{p.n}</span>
+                  <span style={{fontWeight:700,fontSize:"0.92rem"}}>{p.t}</span>
+                </div>
+                <pre style={{background:"#1A1D27",color:"#E2E8F0",padding:"0.6rem 0.85rem",borderRadius:6,fontSize:"0.76rem",fontFamily:"'JetBrains Mono'",margin:"6px 0",overflow:"auto"}}>{p.c}</pre>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",fontStyle:"italic"}}>{p.why}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--work-color)" icon="🤝"><S>Treat your schema like an API contract.</S> Once it's in production, models trained on your schema will hold you to it. Backward-incompatible changes break things in subtle ways.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 8: Anti-patterns ── */}
+        <section id="fc8" style={{paddingTop:"2rem"}}>
+          <ChH num="8" title="Schema Anti-Patterns" sub="The mistakes that quietly destroy reliability" color="var(--work-color)"/>
+
+          <P>Here's a catalogue of the most common schema mistakes — the kind that look fine in code review but produce 50% failure rates in production.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {bad:"Overlapping tools",
+               example:"Having both search_users() and find_user() and lookup_customer()",
+               fix:"One tool per job. If you need variants, use parameters: search_users(by='name'|'email'|'id')."},
+              {bad:"God tools",
+               example:"do_anything(action, target, data, options) — one tool that handles 20 different operations",
+               fix:"Split into smaller, single-purpose tools. The model picks better between 5 clear tools than 1 vague one."},
+              {bad:"String soup",
+               example:"All parameters typed as 'string', including dates, numbers, booleans",
+               fix:"Use proper types. number, boolean, array, object. Strings hide bugs."},
+              {bad:"Free-text categories",
+               example:"category: 'string' — model passes 'Electronics' one time, 'electronics' the next, 'electronic devices' the next",
+               fix:"Use enum: ['electronics','accessories','software']."},
+              {bad:"Hidden side effects",
+               example:"send_email() that also logs to the audit table, charges a fee, and updates the user profile",
+               fix:"Each tool should do one thing. Side effects belong in your code, not surprises in the schema."},
+              {bad:"Stale descriptions",
+               example:"Description says 'returns top 5 results' but the code returns 10",
+               fix:"The schema lies, and the model believes lies. Keep descriptions and behavior synced."},
+              {bad:"Too many tools",
+               example:"30+ tools in one request — model gets confused, slows down, hallucinates",
+               fix:"Cap at ~15 per request. If you need more, route to a smaller toolset based on the user's intent."},
+            ].map((a,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:"#FEF2F2",borderRadius:10,border:"1px solid #FECACA"}}>
+                <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}}>
+                  <span style={{color:"#B91C1C",fontWeight:700,fontSize:"0.92rem"}}>❌ {a.bad}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:6}}><S>Example:</S> {a.example}</div>
+                <div style={{color:"#15803D",fontSize:"0.82rem",background:"#F0FDF4",padding:"6px 10px",borderRadius:6,border:"1px solid #BBF7D0"}}><S color="#15803D">Fix:</S> {a.fix}</div>
+              </div>
+            ))}
+          </div>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 9: JSON Mode vs Tools ── */}
+        <section id="fc9" style={{paddingTop:"2rem"}}>
+          <ChH num="9" title="JSON Mode vs Function Calling" sub="Two different problems, two different tools" color="var(--info-color)"/>
+
+          <P>"Structured output" and "function calling" sound similar and confuse a lot of beginners. They solve <S>different problems</S> and you'll often use them together.</P>
+
+          <JsonModeVsTools />
+
+          <SubH>What JSON Mode actually is</SubH>
+
+          <P>JSON Mode is a flag you pass to the API that <S>forces the model to output valid JSON</S>, nothing else. No prose, no markdown fences, no preamble.</P>
+
+          <CB>{`response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role":"system","content":"Extract entities and return JSON."},
+        {"role":"user","content":"John Smith ordered 3 laptops from Best Buy on Tuesday."}
+    ],
+    response_format={"type": "json_object"}  # ← the magic flag
+)
+
+# Guaranteed to be valid JSON:
+import json
+data = json.loads(response.choices[0].message.content)
+# {"name":"John Smith","item":"laptop","quantity":3,"vendor":"Best Buy","day":"Tuesday"}`}</CB>
+
+          <Callout color="var(--info-color)" icon="📋"><S>JSON Mode gives you valid JSON.</S> It does <S>not</S> guarantee the JSON matches your schema. For that, use Pydantic + instructor (next chapter).</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 10: Pydantic ── */}
+        <section id="fc10" style={{paddingTop:"2rem"}}>
+          <ChH num="10" title="Pydantic Models" sub="Type-safe LLM outputs" color="var(--info-color)"/>
+
+          <P>Pydantic is a Python library that lets you describe data shapes as classes with type hints. It then <S>validates and parses</S> data against those shapes automatically.</P>
+
+          <P>For LLM outputs, this is exactly what we need: declare the shape you want, let Pydantic enforce it.</P>
+
+          <CB>{`from pydantic import BaseModel, Field
+from typing import Literal, List
+
+class ActionItem(BaseModel):
+    owner: str = Field(description="Person responsible for this action")
+    task: str = Field(description="What needs to be done")
+    due_date: str = Field(description="ISO date, e.g. '2025-11-30'")
+    priority: Literal["high","medium","low"]
+
+class MeetingSummary(BaseModel):
+    title: str
+    attendees: List[str]
+    key_decisions: List[str]
+    action_items: List[ActionItem]`}</CB>
+
+          <P>That single class definition gives you:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,borderLeft:"3px solid var(--info-color)",fontSize:"0.86rem"}}><S color="var(--info-color)">A JSON schema</S> automatically derived from the types — no hand-writing.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,borderLeft:"3px solid var(--info-color)",fontSize:"0.86rem"}}><S color="var(--info-color)">Runtime validation</S> — wrong types or missing fields raise <Code>ValidationError</Code>.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,borderLeft:"3px solid var(--info-color)",fontSize:"0.86rem"}}><S color="var(--info-color)">Type-safe attribute access</S> — <Code>summary.action_items[0].owner</Code> is checked by your IDE.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,borderLeft:"3px solid var(--info-color)",fontSize:"0.86rem"}}><S color="var(--info-color)">Field-level descriptions</S> that get passed to the LLM as guidance.</div>
+          </div>
+
+          <SubH>The manual way (without a helper library)</SubH>
+
+          <CB>{`# Get JSON Mode output, then validate against Pydantic
+raw = response.choices[0].message.content
+data = json.loads(raw)
+
+try:
+    summary = MeetingSummary(**data)  # Validates
+    print(summary.action_items[0].owner)
+except ValidationError as e:
+    print("LLM returned malformed data:", e)`}</CB>
+
+          <P>This works, but you're writing boilerplate. The <Code>instructor</Code> library wraps all of this in one call. We'll see it next.</P>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 11: instructor ── */}
+        <section id="fc11" style={{paddingTop:"2rem"}}>
+          <ChH num="11" title="The instructor Library" sub="The production standard for structured LLM output" color="var(--info-color)"/>
+
+          <P><Code>instructor</Code> is a thin wrapper around the OpenAI / Anthropic SDKs that makes structured output a one-line operation. It's become the de-facto standard in production Python codebases.</P>
+
+          <SubH>What it does for you</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>1.</S> Converts your Pydantic model into a function schema automatically.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>2.</S> Calls the LLM with function calling under the hood.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>3.</S> Parses the response into a real instance of your model.</div>
+            <div style={{padding:"7px 12px",background:"var(--info-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>4.</S> If validation fails, automatically retries with the error fed back to the model.</div>
+          </div>
+
+          <CB>{`# pip install instructor
+
+import instructor
+from openai import OpenAI
+from pydantic import BaseModel
+
+class Person(BaseModel):
+    name: str
+    age: int
+    occupation: str
+
+# Wrap your client with instructor
+client = instructor.from_openai(OpenAI())
+
+person = client.chat.completions.create(
+    model="gpt-4o",
+    response_model=Person,            # ← the magic
+    messages=[{"role":"user","content":"Tell me about Marie Curie."}],
+)
+
+# person is a typed Pydantic instance, not raw text:
+print(person.name)        # "Marie Curie"
+print(person.age)         # 66
+print(type(person))       # <class 'Person'>`}</CB>
+
+          <SubH>Automatic retry on validation failure</SubH>
+
+          <P>The killer feature: if the LLM returns data that fails Pydantic validation, instructor catches the error, sends it back to the model, and asks for a corrected version. You don't write a single line of retry code.</P>
+
+          <CB>{`person = client.chat.completions.create(
+    model="gpt-4o",
+    response_model=Person,
+    max_retries=3,  # ← will retry up to 3 times with the error context
+    messages=[...],
+)`}</CB>
+
+          <Callout color="var(--info-color)" icon="✨"><S>In real codebases</S>, you'll see <Code>instructor.from_openai(client)</Code> as the very first line after imports. It's that ubiquitous.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 12: Validation Patterns ── */}
+        <section id="fc12" style={{paddingTop:"2rem"}}>
+          <ChH num="12" title="Validation Patterns" sub="When the JSON is almost right" color="var(--info-color)"/>
+
+          <P>Pydantic validates types and required fields. But sometimes the output is structurally valid yet <S>semantically wrong</S> — a negative age, an email without an @ sign, a date in 1850.</P>
+
+          <P>Pydantic lets you add <S>custom validators</S> for this.</P>
+
+          <CB>{`from pydantic import BaseModel, field_validator, EmailStr
+
+class Customer(BaseModel):
+    name: str
+    age: int
+    email: EmailStr     # Built-in email validation
+    
+    @field_validator("age")
+    @classmethod
+    def age_must_be_realistic(cls, v):
+        if v < 0 or v > 130:
+            raise ValueError(f"Age {v} is not realistic")
+        return v
+    
+    @field_validator("name")
+    @classmethod
+    def name_must_have_content(cls, v):
+        if len(v.strip()) < 2:
+            raise ValueError("Name too short")
+        return v.strip()`}</CB>
+
+          <SubH>The defensive pattern</SubH>
+
+          <P>For high-stakes data (financial, medical, identity), wrap your LLM call in a validation layer that goes beyond Pydantic — checking against your business rules.</P>
+
+          <CB>{`def extract_invoice_data(text: str) -> Invoice:
+    invoice = client.chat.completions.create(
+        model="gpt-4o",
+        response_model=Invoice,
+        max_retries=3,
+        messages=[{"role":"user","content":text}]
+    )
+    
+    # Business-level checks AFTER Pydantic validation
+    if invoice.total != sum(line.amount for line in invoice.line_items):
+        raise ValueError("Line items don't sum to total")
+    if invoice.due_date < invoice.issue_date:
+        raise ValueError("Due date before issue date")
+    if invoice.total > 100_000:
+        raise NeedsHumanReview("High-value invoice — flagged for review")
+    
+    return invoice`}</CB>
+
+          <Callout color="var(--info-color)" icon="🛡️"><S>The principle:</S> Don't trust the LLM with anything you wouldn't trust an unverified user with. Validate types <S>and</S> business rules.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 13: Retry Logic ── */}
+        <section id="fc13" style={{paddingTop:"2rem"}}>
+          <ChH num="13" title="Retry Logic" sub="What to retry, what to give up on" color="var(--orange)"/>
+
+          <P>LLM calls fail. Networks blip, rate limits hit, the model occasionally returns garbage. Production code retries gracefully — but only on the right errors.</P>
+
+          <SubH>What's retryable vs not</SubH>
+
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:240,background:"#10B98112",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #10B98133"}}>
+              <div style={{color:"#10B981",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>✅ Retry these</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>Network errors (timeouts, connection drops)</li>
+                <li>HTTP 429 (rate limit) — with backoff</li>
+                <li>HTTP 500/502/503 (transient server errors)</li>
+                <li>Validation failures (with error context fed back)</li>
+              </ul>
+            </div>
+            <div style={{flex:1,minWidth:240,background:"#EF444412",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #EF444433"}}>
+              <div style={{color:"#EF4444",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>❌ Don't retry these</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>HTTP 401/403 (auth) — your key is bad</li>
+                <li>HTTP 400 (bad request) — your code is wrong</li>
+                <li>Content policy violations — refusal won't change</li>
+                <li>Errors after a successful side effect (you'll duplicate)</li>
+              </ul>
+            </div>
+          </div>
+
+          <SubH>Exponential backoff</SubH>
+
+          <CB>{`from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from openai import APIError, RateLimitError
+
+@retry(
+    retry=retry_if_exception_type((APIError, RateLimitError)),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(5),
+)
+def call_llm(prompt):
+    return client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role":"user","content":prompt}]
+    )`}</CB>
+
+          <P>The waits go: 2s, 4s, 8s, 16s, 30s. This gives a rate limit time to reset and avoids hammering an already-struggling service.</P>
+
+          <Callout color="var(--orange)" icon="⏰"><S>Beware of idempotency:</S> If your tool has side effects (sending an email, charging a card), retrying after the call partially succeeded creates duplicates. Always check whether the action already completed before retrying.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 14: Fallback Chains ── */}
+        <section id="fc14" style={{paddingTop:"2rem"}}>
+          <ChH num="14" title="Fallback Chains" sub="Plan B, then Plan C, then a graceful error" color="var(--orange)"/>
+
+          <P>Even with retries, calls fail. A fallback chain says: "Try the ideal path. If it fails, try a simpler path. If that fails, return something the user can act on."</P>
+
+          <SubH>A typical 3-tier fallback</SubH>
+
+          <CB>{`def get_summary(document: str) -> str:
+    # Tier 1: best model + structured output
+    try:
+        return client.chat.completions.create(
+            model="gpt-4o",
+            response_model=DetailedSummary,
+            messages=[{"role":"user","content":document}]
+        )
+    except (APIError, ValidationError):
+        pass  # fall through to tier 2
+    
+    # Tier 2: cheaper model, no structured output
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role":"system","content":"Summarize this document in 3 bullets."},
+                {"role":"user","content":document}
+            ]
+        )
+        return response.choices[0].message.content
+    except APIError:
+        pass
+    
+    # Tier 3: graceful failure
+    return "Summary unavailable. Please review the document directly."`}</CB>
+
+          <SubH>Designing the fallback</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--orange-bg)",borderRadius:6,borderLeft:"3px solid var(--orange)",fontSize:"0.86rem"}}><S color="var(--orange)">Each tier is less ambitious.</S> If structured output failed, try unstructured. If a multi-tool chain failed, try answering directly. If everything failed, return a useful error.</div>
+            <div style={{padding:"7px 12px",background:"var(--orange-bg)",borderRadius:6,borderLeft:"3px solid var(--orange)",fontSize:"0.86rem"}}><S color="var(--orange)">Log every fallback.</S> If tier 2 fires often, your tier 1 has a problem you need to fix.</div>
+            <div style={{padding:"7px 12px",background:"var(--orange-bg)",borderRadius:6,borderLeft:"3px solid var(--orange)",fontSize:"0.86rem"}}><S color="var(--orange)">Never silently degrade.</S> If you return a tier-3 fallback, the response should indicate that — don't pretend it's tier-1 quality.</div>
+          </div>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 15: Garbage Output ── */}
+        <section id="fc15" style={{paddingTop:"2rem"}}>
+          <ChH num="15" title="Garbage-Output Patterns" sub="When the LLM lies, fabricates, or freestyles" color="var(--orange)"/>
+
+          <P>Production tool use breaks in surprisingly consistent ways. Here are the six patterns you'll see most often and the fix for each.</P>
+
+          <GarbageGallery />
+
+          <SubH>The general recovery loop</SubH>
+
+          <P>Whatever the failure mode, the recovery pattern is the same: <S>catch the error, format it clearly, send it back to the model</S>. Modern models are very good at fixing their own mistakes when given specific feedback.</P>
+
+          <CB>{`def execute_tool_call(tc, tool_functions, registered_tools):
+    # 1. Validate the tool exists
+    if tc.function.name not in registered_tools:
+        return {"error": f"Unknown tool '{tc.function.name}'. Available: {list(registered_tools.keys())}"}
+    
+    # 2. Parse arguments
+    try:
+        args = json.loads(tc.function.arguments)
+    except json.JSONDecodeError as e:
+        return {"error": f"Malformed arguments JSON: {e}"}
+    
+    # 3. Validate against Pydantic schema
+    try:
+        validated = tool_schemas[tc.function.name](**args)
+    except ValidationError as e:
+        return {"error": str(e)}
+    
+    # 4. Run the function
+    try:
+        return tool_functions[tc.function.name](**validated.model_dump())
+    except Exception as e:
+        return {"error": f"Tool execution failed: {e}"}`}</CB>
+
+          <Callout color="var(--orange)" icon="🔁"><S>Never crash on bad output.</S> Always convert errors into messages the model can read. Crashing kills the loop; messages let it self-correct.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 16: Logging ── */}
+        <section id="fc16" style={{paddingTop:"2rem"}}>
+          <ChH num="16" title="Logging & Observability" sub="You can't debug what you can't see" color="var(--orange)"/>
+
+          <P>Tool-using systems are <S>multi-step</S> by nature. When something goes wrong in production, you need to trace exactly which tools were called, with what arguments, and in what order.</P>
+
+          <SubH>What to log for every tool call</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Request ID</S> — a unique ID for the whole user request, propagated to every tool call.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Turn number</S> — which step in the loop this is (helpful for debugging chains).</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Tool name + arguments</S> — what the model wanted.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Result or error</S> — what your code returned.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Latency</S> — how long the tool took.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Token usage</S> — input + output tokens for cost tracking.</div>
+          </div>
+
+          <CB>{`import time, logging, uuid
+
+logger = logging.getLogger("tool_use")
+
+def logged_tool_call(tc, fn, request_id, turn):
+    start = time.time()
+    args = json.loads(tc.function.arguments)
+    try:
+        result = fn(**args)
+        latency = time.time() - start
+        logger.info({
+            "request_id": request_id,
+            "turn": turn,
+            "tool": tc.function.name,
+            "args": args,
+            "status": "ok",
+            "latency_ms": int(latency * 1000),
+        })
+        return result
+    except Exception as e:
+        logger.error({
+            "request_id": request_id,
+            "turn": turn,
+            "tool": tc.function.name,
+            "args": args,
+            "status": "error",
+            "error": str(e),
+        })
+        raise`}</CB>
+
+          <SubH>Tools worth knowing about</SubH>
+
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:220,padding:"10px 14px",background:"var(--info-bg)",borderRadius:8,border:"1px solid var(--info-border)"}}>
+              <div style={{fontWeight:700,color:"var(--info-color)",fontSize:"0.9rem",marginBottom:4}}>LangSmith</div>
+              <div style={{fontSize:"0.82rem",color:"var(--text-secondary)"}}>Visual traces of LLM + tool chains. Great for debugging complex flows.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,padding:"10px 14px",background:"var(--info-bg)",borderRadius:8,border:"1px solid var(--info-border)"}}>
+              <div style={{fontWeight:700,color:"var(--info-color)",fontSize:"0.9rem",marginBottom:4}}>Langfuse</div>
+              <div style={{fontSize:"0.82rem",color:"var(--text-secondary)"}}>Open-source alternative. Self-host if you have sensitive data.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,padding:"10px 14px",background:"var(--info-bg)",borderRadius:8,border:"1px solid var(--info-border)"}}>
+              <div style={{fontWeight:700,color:"var(--info-color)",fontSize:"0.9rem",marginBottom:4}}>OpenTelemetry</div>
+              <div style={{fontSize:"0.82rem",color:"var(--text-secondary)"}}>Standard tracing. Works if you already have observability infrastructure.</div>
+            </div>
+          </div>
+          <NotebookDemoLink />
+        </section>
+
+
+        {/* ── Chapter 17: Capstone Design ── */}
+        <section id="fc17" style={{paddingTop:"2rem"}}>
+          <ChH num="17" title="Data Analyst Assistant — Architecture" sub="Designing a 4-tool capstone" color="var(--purple)"/>
+
+          <P>For the rest of this section, we're building one project: a <S>Data Analyst Assistant</S> that takes a plain-English business question and produces a finished analysis — running SQL, making charts, summarizing findings, and exporting a report.</P>
+
+          <P>This is the kind of system that gets shipped to executives at real companies. By building it end-to-end, you'll see how every concept in this section fits together.</P>
+
+          <SubH>The user experience</SubH>
+
+          <div style={{background:"#F5F3FF",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid #DDD6FE",margin:"1.25rem 0"}}>
+            <div style={{fontWeight:700,color:"#6D28D9",fontSize:"0.85rem",marginBottom:8}}>👤 User asks:</div>
+            <div style={{color:"var(--text)",fontSize:"0.9rem",fontStyle:"italic",marginBottom:10}}>"What were our top 5 products by revenue last quarter, and how do they compare to the previous quarter?"</div>
+            <div style={{fontWeight:700,color:"#6D28D9",fontSize:"0.85rem",marginBottom:8}}>🤖 Assistant produces:</div>
+            <div style={{color:"var(--text)",fontSize:"0.86rem",lineHeight:1.7}}>A written analysis with quarterly comparisons, a grouped bar chart, and a 3-page PDF report — all in under 15 seconds, from one English sentence.</div>
+          </div>
+
+          <SubH>The 4 tools</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {n:"1", icon:"🗄️", name:"run_sql", color:"#60A5FA",
+               desc:"Execute a SQL query against the analytics database. Used when the user asks about data, trends, comparisons, or anything that needs numbers from the warehouse.",
+               params:"query (string), max_rows (integer, default 100)"},
+              {n:"2", icon:"📊", name:"make_chart", color:"#A78BFA",
+               desc:"Create a chart from data. Used after run_sql when a visualization helps. Supports bar, line, pie, scatter, grouped_bar.",
+               params:"type (enum), title (string), labels (array), series (array of {name, data})"},
+              {n:"3", icon:"📝", name:"summarize_data", color:"#F59E0B",
+               desc:"Generate an analytical narrative from numbers. Used to turn raw query results into insights — trends, outliers, percentage changes.",
+               params:"context (string), data (array)"},
+              {n:"4", icon:"📄", name:"export_report", color:"#10B981",
+               desc:"Bundle summary + charts into a downloadable PDF. Used as the final step when the user wants something to share or save.",
+               params:"title (string), summary (string), chart_paths (array), format (enum: pdf, html)"},
+            ].map(t=>(
+              <div key={t.n} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid "+t.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <span style={{fontSize:"1.3rem"}}>{t.icon}</span>
+                  <span style={{fontFamily:"'JetBrains Mono'",fontWeight:700,color:t.color,fontSize:"0.95rem"}}>{t.name}()</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.7,marginBottom:6}}>{t.desc}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'"}}>Parameters: {t.params}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Why these four?</SubH>
+
+          <P>Each tool maps to a clear stage of an analyst's workflow: <S>fetch → visualize → narrate → package</S>. The LLM orchestrates them in whatever order the question requires.</P>
+
+          <Callout color="var(--purple)" icon="🎯"><S>Design principle:</S> Each tool does one thing well. The model is the conductor — it decides the order, runs them in parallel where it can, and combines results.</Callout>
+        </section>
+
+        {/* ── Chapter 18: Capstone Build ── */}
+        <section id="fc18" style={{paddingTop:"2rem"}}>
+          <ChH num="18" title="Data Analyst Assistant — Build" sub="The full code, walked through" color="var(--purple)"/>
+
+          <P>Here's the complete implementation. We'll go file by file.</P>
+
+          <SubH>1. The tool functions (tools.py)</SubH>
+
+          <CB>{`import sqlite3, json, uuid, os
+import matplotlib.pyplot as plt
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+DB_PATH = "analytics.db"
+CHART_DIR = "/tmp/charts"
+REPORT_DIR = "/tmp/reports"
+os.makedirs(CHART_DIR, exist_ok=True)
+os.makedirs(REPORT_DIR, exist_ok=True)
+
+def run_sql(query: str, max_rows: int = 100) -> dict:
+    """Execute a SELECT query and return rows."""
+    # Safety: refuse non-SELECT queries
+    if not query.strip().lower().startswith("select"):
+        return {"error": "Only SELECT queries are allowed."}
+    
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.execute(query)
+    rows = [dict(r) for r in cursor.fetchmany(max_rows)]
+    conn.close()
+    
+    return {"rows": rows, "count": len(rows)}
+
+def make_chart(type: str, title: str, labels: list, series: list) -> dict:
+    """Generate a chart and save to disk."""
+    fig, ax = plt.subplots(figsize=(10, 5))
+    
+    if type == "bar_grouped":
+        import numpy as np
+        x = np.arange(len(labels))
+        width = 0.8 / len(series)
+        for i, s in enumerate(series):
+            ax.bar(x + i * width, s["data"], width, label=s["name"])
+        ax.set_xticks(x + width * (len(series) - 1) / 2)
+        ax.set_xticklabels(labels, rotation=30, ha="right")
+    elif type == "line":
+        for s in series:
+            ax.plot(labels, s["data"], marker="o", label=s["name"])
+    elif type == "bar":
+        ax.bar(labels, series[0]["data"])
+    
+    ax.set_title(title)
+    ax.legend()
+    plt.tight_layout()
+    
+    path = f"{CHART_DIR}/{uuid.uuid4().hex[:8]}.png"
+    plt.savefig(path, dpi=120)
+    plt.close()
+    
+    return {"chart_path": path}
+
+def summarize_data(context: str, data: list) -> dict:
+    """Use a sub-LLM call to write analytical narrative."""
+    prompt = f"Context: {context}\\n\\nData: {json.dumps(data)}\\n\\n"
+    prompt += "Write a 4-5 bullet analytical summary. Call out trends, "
+    prompt += "outliers, and percentage changes."
+    
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role":"user","content":prompt}]
+    )
+    return {"summary": resp.choices[0].message.content}
+
+def export_report(title: str, summary: str, chart_paths: list, format: str = "pdf") -> dict:
+    """Bundle into a PDF."""
+    path = f"{REPORT_DIR}/{uuid.uuid4().hex[:8]}.pdf"
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(72, 720, title)
+    c.setFont("Helvetica", 10)
+    
+    # Wrap and draw summary
+    y = 690
+    for line in summary.split("\\n"):
+        c.drawString(72, y, line[:90])
+        y -= 14
+    
+    # Embed charts
+    for cp in chart_paths:
+        c.showPage()
+        c.drawImage(cp, 72, 300, width=470, height=240)
+    
+    c.save()
+    return {"report_path": path}`}</CB>
+
+          <SubH>2. The tool schemas (schemas.py)</SubH>
+
+          <CB>{`TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "run_sql",
+            "description": "Execute a SELECT query against the analytics database. Use this whenever the user needs data, comparisons, or aggregates. Available tables: sales(product_id, product_name, quarter, revenue, units), products(id, name, category).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "A valid SELECT statement. Use SUM, AVG, GROUP BY as needed."},
+                    "max_rows": {"type": "integer", "description": "Max rows to return. Default 100.", "default": 100}
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "make_chart",
+            "description": "Create a chart from query results. Use after run_sql when a visualization makes the data easier to interpret.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": ["bar","bar_grouped","line","pie"]},
+                    "title": {"type": "string"},
+                    "labels": {"type": "array", "items": {"type": "string"}},
+                    "series": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "data": {"type": "array", "items": {"type": "number"}}
+                            }
+                        }
+                    }
+                },
+                "required": ["type","title","labels","series"]
+            }
+        }
+    },
+    # summarize_data and export_report schemas similarly...
+]`}</CB>
+
+          <SubH>3. The orchestrator (analyst.py)</SubH>
+
+          <CB>{`import json, logging
+from openai import OpenAI
+from tools import run_sql, make_chart, summarize_data, export_report
+from schemas import TOOLS
+
+client = OpenAI()
+log = logging.getLogger("analyst")
+
+TOOL_FUNCS = {
+    "run_sql": run_sql,
+    "make_chart": make_chart,
+    "summarize_data": summarize_data,
+    "export_report": export_report,
+}
+
+SYSTEM_PROMPT = """You are a senior data analyst at TechStore.
+You help executives understand sales data by running SQL, creating charts, 
+and writing concise summaries.
+
+Your workflow:
+1. Use run_sql to fetch the data you need.
+2. If multiple queries are independent, request them in one turn.
+3. Use make_chart when visualization helps.
+4. Use summarize_data to write the analytical narrative.
+5. Use export_report at the end to package everything.
+
+Always write final answers in clear, executive-friendly prose."""
+
+def ask_analyst(question: str, max_turns: int = 12) -> str:
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": question},
+    ]
+    
+    for turn in range(max_turns):
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=TOOLS,
+        )
+        msg = response.choices[0].message
+        messages.append(msg)
+        
+        if not msg.tool_calls:
+            return msg.content
+        
+        for tc in msg.tool_calls:
+            name = tc.function.name
+            log.info(f"[turn {turn}] calling {name}")
+            
+            try:
+                args = json.loads(tc.function.arguments)
+                result = TOOL_FUNCS[name](**args)
+            except Exception as e:
+                result = {"error": str(e)}
+            
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": json.dumps(result)
+            })
+    
+    raise Exception(f"Exceeded {max_turns} turns")`}</CB>
+
+          <SubH>4. Use it</SubH>
+
+          <CB>{`if __name__ == "__main__":
+    answer = ask_analyst(
+        "What were our top 5 products by revenue last quarter, "
+        "and how do they compare to the previous quarter?"
+    )
+    print(answer)`}</CB>
+
+          <Callout color="var(--purple)" icon="🏗️"><S>That's the whole system.</S> ~250 lines of Python. The LLM does the thinking; your tools do the work; the orchestrator threads them together.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 19: Capstone Live ── */}
+        <section id="fc19" style={{paddingTop:"2rem"}}>
+          <ChH num="19" title="Data Analyst — Live Walkthrough" sub="Watch the assistant work through one question" color="var(--purple)"/>
+
+          <P>Here's what happens when you ask the assistant the example question. Click Run to step through the 5 tool calls the LLM makes — and see the final answer it produces.</P>
+
+          <DataAnalystDemo />
+
+          <SubH>What to notice</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,borderLeft:"3px solid var(--purple)",fontSize:"0.86rem"}}><S color="var(--purple)">The LLM made 5 tool calls in sequence</S> — without any pre-defined flowchart. It decided the order based on the question.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,borderLeft:"3px solid var(--purple)",fontSize:"0.86rem"}}><S color="var(--purple)">It ran two SQL queries</S> — recognizing that Q3 and Q2 data were independent and could be fetched separately.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,borderLeft:"3px solid var(--purple)",fontSize:"0.86rem"}}><S color="var(--purple)">Each tool result fed the next.</S> The chart used data from both queries; the summary used the chart's context.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,borderLeft:"3px solid var(--purple)",fontSize:"0.86rem"}}><S color="var(--purple)">The final answer is executive-grade.</S> Numbers, comparisons, an action flag (SoundPods decline), and a deliverable.</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="🎓"><S>You've built a system</S> where a single English sentence triggers SQL execution, chart generation, analytical writing, and PDF export — orchestrated by an LLM. This is the core pattern behind every "AI analyst", "AI assistant", and "AI copilot" you see in industry.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 20: Meeting Notes ── */}
+        <section id="fc20" style={{paddingTop:"2rem"}}>
+          <ChH num="20" title="Practice: Meeting Notes Processor" sub="Practice challenge — structured output" color="var(--purple)"/>
+
+          <P><S>Goal:</S> Take a raw meeting transcript and produce a structured summary with action items, owners, and due dates — all in one LLM call using <Code>instructor</Code> + Pydantic.</P>
+
+          <SubH>The challenge</SubH>
+
+          <CB>{`# Input: messy transcript
+transcript = """
+Sarah: Okay so the launch is still on track for Nov 15. 
+Mike, can you finish the landing page by next Friday?
+Mike: Sure, I'll have it ready by Nov 8.
+Sarah: Great. Priya, we need legal sign-off on the terms — 
+that's blocking us. Can you escalate?
+Priya: I'll talk to legal tomorrow, should have an answer 
+by end of week.
+Sarah: Decision: we're using Stripe for payments, not PayPal.
+...
+"""
+
+# Desired output: a structured object
+summary = process_meeting(transcript)
+print(summary.action_items)
+# [
+#   ActionItem(owner="Mike", task="Finish landing page", due="2025-11-08", priority="high"),
+#   ActionItem(owner="Priya", task="Get legal sign-off on terms", due="2025-11-07", priority="high"),
+# ]
+print(summary.decisions)
+# ["Using Stripe for payments instead of PayPal"]`}</CB>
+
+          <SubH>Hints</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>1.</S> Define <Code>ActionItem</Code> and <Code>MeetingSummary</Code> as Pydantic models with type hints.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>2.</S> Use <Code>instructor.from_openai(client)</Code> and pass <Code>response_model=MeetingSummary</Code>.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>3.</S> Add a field validator that converts relative dates ("next Friday") to ISO dates.</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>4.</S> Use <Code>max_retries=2</Code> to auto-fix validation failures.</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="✅"><S>Success criteria:</S> Works on at least 3 different transcripts. Action items have real owners (not "team"). Dates are ISO format. Priority is one of [high, medium, low].</Callout>
+        </section>
+
+        {/* ── Chapter 21: Multi-tool ── */}
+        <section id="fc21" style={{paddingTop:"2rem"}}>
+          <ChH num="21" title="Practice: Multi-Tool Assistant" sub="Practice challenge — at least 4 tools, your choice of domain" color="var(--purple)"/>
+
+          <P><S>Goal:</S> Pick a domain you care about and build an assistant with <S>at least 4 tools</S> orchestrated by an LLM.</P>
+
+          <SubH>Domain ideas</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"1rem 0"}}>
+            {[
+              {icon:"🛒", name:"E-commerce concierge", tools:"search_products, get_order_status, create_return, recommend_alternatives"},
+              {icon:"📅", name:"Calendar copilot", tools:"find_free_slot, create_event, list_attendee_conflicts, send_invite"},
+              {icon:"💸", name:"Personal finance assistant", tools:"get_balance, list_transactions, categorize_spending, generate_budget_chart"},
+              {icon:"📰", name:"Research helper", tools:"web_search, fetch_url, summarize_article, save_to_notes"},
+              {icon:"🏥", name:"Health log", tools:"log_symptom, list_medications, find_doctor_appointments, summarize_week"},
+              {icon:"🎬", name:"Movie night planner", tools:"search_films, check_streaming_availability, get_imdb_rating, save_watchlist"},
+            ].map((d,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12}}>
+                <span style={{fontSize:"1.4rem"}}>{d.icon}</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:"0.9rem"}}>{d.name}</div>
+                  <div style={{color:"var(--text-muted)",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'"}}>{d.tools}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Requirements</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>✓ At least 4 tools with proper descriptions and parameters.</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>✓ Multi-turn orchestration loop with <Code>max_turns</Code>.</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>✓ Validation on every tool call (Pydantic).</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>✓ Logging that traces every call (request_id + turn + tool + latency).</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>✓ At least one fallback chain for a tool that can fail.</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="🎯"><S>Bonus:</S> Wrap it with a simple Streamlit or Gradio UI so you have something to demo. This becomes a strong portfolio piece.</Callout>
+        </section>
+
+        {/* ── Chapter 22: Convert Old Projects ── */}
+        <section id="fc22" style={{paddingTop:"2rem"}}>
+          <ChH num="22" title="Practice: Convert Old Projects" sub="Replace string parsing with function calling" color="var(--purple)"/>
+
+          <P>If you've been writing LLM apps for a while, you probably have code that looks like this — and it's brittle.</P>
+
+          <CB>{`# The old way — string parsing the LLM's output
+response = ask("Extract the user's intent and target from: " + msg)
+
+# Now hope the LLM formatted it the way you asked
+if "intent: search" in response.lower():
+    target = response.split("target:")[1].strip()
+    do_search(target)
+elif "intent: order" in response.lower():
+    # ... etc`}</CB>
+
+          <P><S>Your task:</S> Pick 3 of your earlier projects and rewrite them to use function calling instead of prompt-and-parse.</P>
+
+          <SubH>What changes</SubH>
+
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:240,background:"#FEF2F2",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #FECACA"}}>
+              <div style={{color:"#B91C1C",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>❌ Before</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>Brittle string parsing</li>
+                <li>Manual JSON extraction</li>
+                <li>If/elif intent routing</li>
+                <li>Breaks when LLM changes formatting</li>
+              </ul>
+            </div>
+            <div style={{flex:1,minWidth:240,background:"#F0FDF4",borderRadius:10,padding:"0.85rem 1rem",border:"1px solid #BBF7D0"}}>
+              <div style={{color:"#15803D",fontSize:"0.78rem",fontWeight:700,marginBottom:6}}>✅ After</div>
+              <ul style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7,paddingLeft:18,margin:0}}>
+                <li>Structured tool calls</li>
+                <li>Pydantic-validated args</li>
+                <li>Tool dispatcher (a dict lookup)</li>
+                <li>Robust to LLM phrasing changes</li>
+              </ul>
+            </div>
+          </div>
+
+          <SubH>Measure the improvement</SubH>
+
+          <P>Run both versions on the same 50 test inputs and count:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>How many failed parsing in the old version?</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>How many produced wrong actions in the new version?</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>How many lines of code did you delete?</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="📈"><S>Typical result:</S> ~50% fewer lines of code, ~3× higher reliability. The new version also handles inputs the old version never anticipated.</Callout>
+        </section>
+
+        {/* ── Cheat Sheet ── */}
+        <section id="fc-cheat" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--accent-light)",borderRadius:5,marginBottom:10,border:"1px solid var(--work-border)"}}>
+              <span style={{color:"var(--accent)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>REFERENCE</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Cheat Sheet</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Which pattern when</div>
+          </div>
+
+          <SubH>Decision flow</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {q:"Just want JSON output?", a:"JSON Mode + Pydantic", color:"#60A5FA"},
+              {q:"Want type-safe parsed output?", a:"instructor + Pydantic", color:"#60A5FA"},
+              {q:"Need the LLM to call one function?", a:"Function calling (single tool)", color:"#B45309"},
+              {q:"Need orchestration across multiple tools?", a:"Tool loop with max_turns", color:"#B45309"},
+              {q:"Multiple independent lookups?", a:"Parallel tool calls", color:"#B45309"},
+              {q:"Tool occasionally fails?", a:"Retry with exponential backoff", color:"#C2410C"},
+              {q:"Tool routinely fails?", a:"Fallback chain (3 tiers)", color:"#C2410C"},
+              {q:"Model picks wrong tool?", a:"Fix descriptions + add 'do NOT use for...'", color:"#1A6B4E"},
+              {q:"Model passes bad arguments?", a:"Tighter Pydantic + enums + examples", color:"#1A6B4E"},
+              {q:"Production observability?", a:"Log request_id + turn + tool + latency", color:"#C2410C"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr auto 1.5fr",gap:12,alignItems:"center",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"0.86rem",color:"var(--text)"}}>{r.q}</div>
+                <div style={{color:r.color,fontSize:"0.92rem"}}>→</div>
+                <div style={{fontSize:"0.86rem",color:r.color,fontWeight:600}}>{r.a}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Schema checklist</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "Tool name is verb_noun and specific",
+              "Description explains what AND when (and when NOT) to use",
+              "All parameters have descriptions with examples",
+              "Enums used for fixed value sets",
+              "Required vs optional is explicit",
+              "Types are accurate (not 'string' for everything)",
+              "No two tools have overlapping scope",
+              "Schema synced with actual function behavior",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<7?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--accent)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Production checklist</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "Every tool call validated with Pydantic before execution",
+              "max_turns cap on the orchestration loop",
+              "Retry logic for transient errors (with backoff)",
+              "Fallback chain for high-value paths",
+              "Errors converted to messages, not exceptions",
+              "Logging includes request_id, tool, args, latency",
+              "Token usage tracked per request",
+              "Side-effect tools are idempotent or guarded",
+              "Tool count per request kept ≤ 15",
+              "Cost-sensitive tools have human-in-the-loop confirmation",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<9?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--accent)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--accent)" icon="🎓"><S>Section 7 complete.</S> You now have everything you need to build LLMs that take actions in the real world — reliably, observably, and with the safety properties that production systems demand. Next stop: longer-running agent workflows that string many of these together.</Callout>
+        </section>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
