@@ -818,7 +818,6 @@ final = instructor.from_openai(client).chat.completions.create(
 // SIDEBAR
 // ============================================================
 function Sidebar({active,onNav}){
-  const [open,setOpen] = useState(true);
   const [coreOpen,setCoreOpen] = useState(true);
   const [schemaOpen,setSchemaOpen] = useState(true);
   const [structOpen,setStructOpen] = useState(true);
@@ -847,67 +846,41 @@ function Sidebar({active,onNav}){
       <div className="brand-by">by Nij</div>
     </div>
     <div className="sidebar-section">
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./1-how-llms-work.html"}>
-        <span>1. How LLMs Actually Work</span><span className="caret">↗</span>
-      </button>
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./2-prompt-engineering.html"}>
-        <span>2. Prompt Engineering</span><span className="caret">↗</span>
-      </button>
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./3-from-notebooks-to-apps.html"}>
-        <span>3. From Notebooks to Apps</span><span className="caret">↗</span>
-      </button>
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./4-rag-part1.html"}>
-        <span>4. RAG — Part 1</span><span className="caret">↗</span>
-      </button>
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./5-rag-part2.html"}>
-        <span>5. RAG — Part 2</span><span className="caret">↗</span>
-      </button>
-      <button className={"sidebar-group-toggle"} onClick={()=>window.location.href="./6-frameworks-and-agents.html"}>
-        <span>6. Frameworks & Agents</span><span className="caret">↗</span>
-      </button>
+      <a className={"sidebar-item"+(active==="fc-intro"?" active":"")} onClick={()=>onNav("fc-intro")}>
+        <span className="item-title">Overview</span>
+      </a>
 
-      <button className={"sidebar-group-toggle"+(open?" expanded":"")} onClick={()=>setOpen(v=>!v)}>
-        <span>7. Function Calling & Tools</span><span className="caret">▶</span>
-      </button>
-      {open&&(
-        <div className="sidebar-nested">
-          <a className={"sidebar-item"+(active==="fc-intro"?" active":"")} onClick={()=>onNav("fc-intro")}>
-            <span className="item-title">Overview</span>
-          </a>
+      <div style={{color:"var(--info-color)",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",padding:"8px 9px 2px",marginTop:4}}>Getting Started</div>
+      <a className={"sidebar-item"+(active==="fc-mental"?" active":"")} onClick={()=>onNav("fc-mental")}>
+        <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🧠</span>
+        <span><span className="item-title">The Mental Model</span><span className="item-sub">Brain with hands</span></span>
+      </a>
+      <a className={"sidebar-item"+(active==="fc-loop"?" active":"")} onClick={()=>onNav("fc-loop")}>
+        <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🔁</span>
+        <span><span className="item-title">The Tool-Use Loop</span><span className="item-sub">Who runs the code?</span></span>
+      </a>
 
-          <div style={{color:"var(--info-color)",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",padding:"8px 9px 2px",marginTop:4}}>Getting Started</div>
-          <a className={"sidebar-item"+(active==="fc-mental"?" active":"")} onClick={()=>onNav("fc-mental")}>
-            <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🧠</span>
-            <span><span className="item-title">The Mental Model</span><span className="item-sub">Brain with hands</span></span>
-          </a>
-          <a className={"sidebar-item"+(active==="fc-loop"?" active":"")} onClick={()=>onNav("fc-loop")}>
-            <span className="item-num" style={{background:"var(--info-bg)",color:"var(--info-color)"}}>🔁</span>
-            <span><span className="item-title">The Tool-Use Loop</span><span className="item-sub">Who runs the code?</span></span>
-          </a>
+      {groupBtn("Core Mechanics","var(--build-color)",coreOpen,setCoreOpen)}
+      {coreOpen && renderGroup("core","var(--build-color)","var(--build-bg)")}
 
-          {groupBtn("Core Mechanics","var(--build-color)",coreOpen,setCoreOpen)}
-          {coreOpen && renderGroup("core","var(--build-color)","var(--build-bg)")}
+      {groupBtn("Schema Design","var(--work-color)",schemaOpen,setSchemaOpen)}
+      {schemaOpen && renderGroup("schema","var(--work-color)","var(--work-bg)")}
 
-          {groupBtn("Schema Design","var(--work-color)",schemaOpen,setSchemaOpen)}
-          {schemaOpen && renderGroup("schema","var(--work-color)","var(--work-bg)")}
+      {groupBtn("Structured Output","var(--info-color)",structOpen,setStructOpen)}
+      {structOpen && renderGroup("structured","var(--info-color)","var(--info-bg)")}
 
-          {groupBtn("Structured Output","var(--info-color)",structOpen,setStructOpen)}
-          {structOpen && renderGroup("structured","var(--info-color)","var(--info-bg)")}
+      {groupBtn("Reliability","var(--orange)",relOpen,setRelOpen)}
+      {relOpen && renderGroup("reliability","var(--orange)","var(--orange-bg)")}
 
-          {groupBtn("Reliability","var(--orange)",relOpen,setRelOpen)}
-          {relOpen && renderGroup("reliability","var(--orange)","var(--orange-bg)")}
+      {groupBtn("Capstone Project","var(--purple)",capOpen,setCapOpen)}
+      {capOpen && renderGroup("capstone","var(--purple)","var(--purple-bg)")}
 
-          {groupBtn("Capstone Project","var(--purple)",capOpen,setCapOpen)}
-          {capOpen && renderGroup("capstone","var(--purple)","var(--purple-bg)")}
+      {groupBtn("Practice Challenges","var(--purple)",pracOpen,setPracOpen)}
+      {pracOpen && renderGroup("practice","var(--purple)","var(--purple-bg)")}
 
-          {groupBtn("Practice Challenges","var(--purple)",pracOpen,setPracOpen)}
-          {pracOpen && renderGroup("practice","var(--purple)","var(--purple-bg)")}
-
-          <a className={"sidebar-item"+(active==="fc-cheat"?" active":"")} onClick={()=>onNav("fc-cheat")}>
-            <span className="item-title">📋 Cheat Sheet</span>
-          </a>
-        </div>
-      )}
+      <a className={"sidebar-item"+(active==="fc-cheat"?" active":"")} onClick={()=>onNav("fc-cheat")}>
+        <span className="item-title">📋 Cheat Sheet</span>
+      </a>
     </div>
   </div>
 );}
