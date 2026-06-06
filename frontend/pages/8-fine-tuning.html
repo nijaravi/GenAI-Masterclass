@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine-Tuning & Open-Source Models</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --sidebar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border: #E8E5E0;
+    --border-light: #F0EDE8;
+    --text: #2D2B28;
+    --text-secondary: #6B6560;
+    --text-muted: #9C9690;
+    --accent: #1A6B4E;
+    --accent-light: #E8F5EE;
+    --accent-hover: #15573F;
+    --build-color: #B45309;
+    --build-bg: #FEF3C7;
+    --build-border: #FCD34D;
+    --work-color: #1A6B4E;
+    --work-bg: #E8F5EE;
+    --work-border: #6EE7B7;
+    --info-color: #1E6091;
+    --info-bg: #EFF6FF;
+    --info-border: #93C5FD;
+    --purple: #6D28D9;
+    --purple-bg: #F3F0FF;
+    --purple-border: #C4B5FD;
+    --orange: #C2410C;
+    --orange-bg: #FFF7ED;
+    --red: #B91C1C;
+    --red-bg: #FEF2F2;
+    --demo-bg: #1A1D27;
+    --demo-border: #2E3240;
+    --demo-text: #E2E8F0;
+    --sidebar-w: 260px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.7; }
+  ::selection { background: #6D28D933; }
+  pre { white-space: pre-wrap; word-wrap: break-word; }
+
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 1px solid var(--border); overflow-y: auto; z-index: 50; padding: 0.75rem 0; scrollbar-width: thin; scrollbar-color: #D1D5DB transparent; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
+  .sidebar-logo { padding: 0 1rem 0.85rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .sidebar-logo h2 { font-family: 'Libre Baskerville', serif; font-size: 0.92rem; color: var(--text); line-height: 1.35; margin-bottom: 0; }
+  .sidebar-logo .brand-by { font-size: 0.72rem; font-weight: 700; color: var(--accent); margin-top: 4px; letter-spacing: 0.02em; }
+  .sidebar-section { padding: 0.25rem 0.75rem; margin-top: 0.25rem; }
+  .sidebar-item { display: block; padding: 5px 9px; border-radius: 7px; text-decoration: none; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.15s; cursor: pointer; margin-bottom: 1px; border: 1px solid transparent; }
+  .sidebar-item:hover { background: var(--bg); color: var(--text); }
+  .sidebar-item.active { background: var(--purple-bg); color: var(--purple); font-weight: 600; border-color: #C4B5FD55; }
+  .sidebar-item .item-num { display: inline-block; width: 20px; height: 20px; border-radius: 5px; text-align: center; line-height: 20px; font-size: 0.66rem; font-weight: 700; margin-right: 7px; flex-shrink: 0; }
+  .sidebar-item .item-title { font-size: 0.8rem; }
+  .sidebar-item .item-sub { font-size: 0.66rem; color: var(--text-muted); margin-top: 0; display: block; }
+  .sidebar-group-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: #fcfcfb;
+    color: var(--text);
+    border-radius: 7px;
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .sidebar-group-toggle .caret {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    transition: transform 0.15s;
+  }
+  .sidebar-group-toggle.expanded .caret { transform: rotate(90deg); }
+  .sidebar-nested { padding-left: 0.35rem; }
+
+  .main { margin-left: var(--sidebar-w); min-height: 100vh; }
+  .content { max-width: 760px; margin: 0 auto; padding: 2rem 2.5rem 4rem; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .content { padding: 1.5rem 1rem 3rem; }
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const FT_CHAPTERS = [
+  { id: "ft-intro", num: "", title: "Overview", sub: "", group: "overview" },
+  { id: "ft-mental", num: "", title: "Mental Model", sub: "Teaches style, not facts", group: "decision" },
+  { id: "ft-when", num: "", title: "When to Fine-Tune", sub: "4 good reasons", group: "decision" },
+  { id: "ft-not", num: "", title: "When NOT to Fine-Tune", sub: "Skip fine-tuning here", group: "decision" },
+  { id: "ft-vs", num: "", title: "Prompt vs RAG vs FT", sub: "Pick the right tool", group: "decision" },
+  { id: "ft1", num: "1", title: "Closed vs Open Source", sub: "What changed", group: "landscape" },
+  { id: "ft2", num: "2", title: "The Model Families", sub: "Llama, Mistral, Phi, Qwen, Gemma", group: "landscape" },
+  { id: "ft3", num: "3", title: "Model Sizes", sub: "3B vs 7B vs 70B", group: "landscape" },
+  { id: "ft4", num: "4", title: "Hugging Face Ecosystem", sub: "Hub, Transformers, Datasets", group: "landscape" },
+  { id: "ft5", num: "5", title: "How OpenAI FT Works", sub: "Under the hood", group: "openai" },
+  { id: "ft6", num: "6", title: "The JSONL Format", sub: "Preparing your data", group: "openai" },
+  { id: "ft7", num: "7", title: "Running the Job", sub: "End to end", group: "openai" },
+  { id: "ft8", num: "8", title: "Evaluating the Result", sub: "Did it actually help?", group: "openai" },
+  { id: "ft9", num: "9", title: "Why Full Fine-Tuning Fails", sub: "The 8B-weight problem", group: "lora" },
+  { id: "ft10", num: "10", title: "LoRA Explained", sub: "Rank decomposition", group: "lora" },
+  { id: "ft11", num: "11", title: "QLoRA", sub: "Laptop-scale fine-tuning", group: "lora" },
+  { id: "ft12", num: "12", title: "PEFT in 20 Lines", sub: "The HF library", group: "lora" },
+  { id: "ft13", num: "13", title: "Loading Open Models", sub: "From HF Hub", group: "hf" },
+  { id: "ft14", num: "14", title: "Transformers Pipeline", sub: "Inference in 3 lines", group: "hf" },
+  { id: "ft15", num: "15", title: "Reading Model Cards", sub: "What to look for", group: "hf" },
+  { id: "ft16", num: "16", title: "Capstone — LoRA FT", sub: "Llama 3.2 + support tickets", group: "capstone" },
+  { id: "ft17", num: "17", title: "Prompt vs FT Bake-Off", sub: "Same task, measured", group: "capstone" },
+  { id: "ft18", num: "18", title: "Deployment Options", sub: "vLLM, Together, self-host", group: "production" },
+  { id: "ft19", num: "19", title: "Cost Analysis", sub: "Break-even math", group: "production" },
+  { id: "ft20", num: "20", title: "Maintenance & Drift", sub: "What goes wrong over time", group: "production" },
+  { id: "ft21", num: "21", title: "Practice — OpenAI FT", sub: "Classification challenge", group: "practice" },
+  { id: "ft22", num: "22", title: "Practice — Decision Framework", sub: "Write your own", group: "practice" },
+  { id: "ft-cheat", num: "", title: "Cheat Sheet", sub: "Which approach when", group: "reference" },
+];
+
+// ============================================================
+// HELPER COMPONENTS
+// ============================================================
+function ChH({num,title,sub,color="var(--purple)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}} id={"ftch"+num}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--purple)"?"var(--purple-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function SubH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+function Code({children}){return <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 5px",borderRadius:3,fontSize:"0.82rem",color:"#A78BFA"}}>{children}</span>;}
+
+function NotebookDemoLink() {
+  return (
+    <div style={{marginTop:"2rem",paddingTop:"1.25rem",borderTop:"1px solid var(--border-light)"}}>
+      <div role="note" style={{display:"inline-flex",alignItems:"center",gap:10,padding:"8px 20px",borderRadius:9999,background:"#FFF8F0",border:"1px solid #E8C9A8",color:"#7C2D12",fontWeight:700,fontSize:"0.88rem",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 1px 2px rgba(124,45,18,0.08)",cursor:"default",userSelect:"none"}}>
+        <span style={{fontSize:"1.1rem",lineHeight:1}} aria-hidden>📓</span>
+        Hands-on in live notebook demo
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 1: Decision Tree — which approach should you use?
+// ============================================================
+function DecisionTreeDemo() {
+  const [answers, setAnswers] = useState({});
+  const [step, setStep] = useState(0);
+
+  const questions = [
+    { id:"need", q:"What do you actually need from the model?",
+      opts:[
+        {v:"facts", l:"Up-to-date facts or info from my data", icon:"📚"},
+        {v:"format", l:"A specific output format or style", icon:"🎨"},
+        {v:"classify", l:"Classification or tagging at scale", icon:"🏷️"},
+        {v:"reason", l:"Better reasoning on a task", icon:"🧠"},
+      ]},
+    { id:"data", q:"How many high-quality labeled examples do you have?",
+      opts:[
+        {v:"few", l:"Under 50", icon:"🤏"},
+        {v:"some", l:"50 to 500", icon:"📦"},
+        {v:"many", l:"500 to 10,000", icon:"📚"},
+        {v:"lots", l:"More than 10,000", icon:"🗄️"},
+      ]},
+    { id:"volume", q:"How often will this run in production?",
+      opts:[
+        {v:"rare", l:"Occasional / one-off", icon:"🐢"},
+        {v:"moderate", l:"~1k requests/day", icon:"🚶"},
+        {v:"high", l:"~100k+ requests/day", icon:"🏃"},
+      ]},
+  ];
+
+  const verdicts = {
+    "facts-*-*": { answer:"RAG", color:"#1E6091", icon:"📚",
+      why:"You need facts the model doesn't know. Use RAG: pull the right documents into each request. Don't fine-tune for this — trained models forget specific facts and can make things up more confidently." },
+    "format-few-*": { answer:"Prompt engineering + few-shot", color:"#1A6B4E", icon:"✍️",
+      why:"With little data, put 3–5 good examples in the prompt. That usually works better than fine-tuning. Try prompts first; only fine-tune if you still need more at high volume." },
+    "format-some-rare": { answer:"Prompt engineering + few-shot", color:"#1A6B4E", icon:"✍️",
+      why:"Low traffic + format task: keep it simple. Few-shot prompts are cheap to build, easy to change, and cheap to run." },
+    "format-some-moderate": { answer:"Fine-tuning (worth trying)", color:"#6D28D9", icon:"🎯",
+      why:"Format and style at real volume is a strong fine-tuning case. You may move from GPT-4o to a fine-tuned mini model and cut cost 5–10× with similar quality." },
+    "format-many-*": { answer:"Fine-tuning", color:"#6D28D9", icon:"🎯",
+      why:"You have enough data and a clear goal. Train a smaller model on your style — often cheaper, faster, and more consistent. Start with OpenAI fine-tuning; use LoRA on open models if cost or privacy matters." },
+    "format-lots-*": { answer:"Fine-tuning (probably LoRA)", color:"#6D28D9", icon:"🎯",
+      why:"With 10k+ examples and high volume, LoRA on an open model often costs less overall. You also keep the model yourself — no vendor lock-in." },
+    "classify-few-*": { answer:"Prompt + few-shot", color:"#1A6B4E", icon:"✍️",
+      why:"Under 50 examples, a good prompt with those examples usually beats fine-tuning. Work on the prompt first." },
+    "classify-some-*": { answer:"Fine-tuning is competitive here", color:"#6D28D9", icon:"🎯",
+      why:"With 100+ labeled examples, fine-tuning often wins on classification — a small tuned model can match a big prompted model at much lower cost. Worth comparing both." },
+    "classify-many-*": { answer:"Fine-tuning (definitely)", color:"#6D28D9", icon:"🎯",
+      why:"Classification is where fine-tuning shines. A small tuned model often beats GPT-4o on your exact task, costs less, and responds faster." },
+    "classify-lots-*": { answer:"Fine-tuning (open source + LoRA)", color:"#6D28D9", icon:"🎯",
+      why:"At this scale, OpenAI fine-tuning gets expensive. LoRA on Llama 3.2 3B or Phi-3 is often the best balance of cost and quality." },
+    "reason-*-*": { answer:"Better prompting first; consider o1/Sonnet", color:"#B45309", icon:"🧠",
+      why:"Fine-tuning rarely improves reasoning — it mainly changes style and format. Try clearer prompts, step-by-step reasoning, and a stronger base model before you train." },
+  };
+
+  function pickVerdict() {
+    const k1 = answers.need || "*";
+    const k2 = answers.data || "*";
+    const k3 = answers.volume || "*";
+    const tryKeys = [
+      `${k1}-${k2}-${k3}`,
+      `${k1}-${k2}-*`,
+      `${k1}-*-${k3}`,
+      `${k1}-*-*`,
+    ];
+    for (const k of tryKeys) {
+      if (verdicts[k]) return verdicts[k];
+    }
+    return null;
+  }
+
+  const verdict = step >= questions.length ? pickVerdict() : null;
+  const q = step < questions.length ? questions[step] : null;
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Decision Tree</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Should You Actually Fine-Tune?</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Answer three questions. The honest answer is often "not yet."</div>
+
+      <div style={{display:"flex",gap:4,marginBottom:"1rem"}}>
+        {questions.map((qq,i)=>(
+          <div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=step?"#A78BFA":"#2E3240"}}/>
+        ))}
+      </div>
+
+      {q && (
+        <div style={{animation:"slideIn 0.25s"}}>
+          <div style={{color:"#A78BFA",fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>QUESTION {step+1} of {questions.length}</div>
+          <div style={{color:"#F0F4F8",fontSize:"1rem",fontWeight:600,marginBottom:12}}>{q.q}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {q.opts.map(o=>(
+              <button key={o.v} onClick={()=>{setAnswers({...answers, [q.id]:o.v}); setStep(step+1);}}
+                style={{textAlign:"left",padding:"10px 14px",background:"#252833",border:"1px solid #3F4555",borderRadius:8,color:"#E2E8F0",cursor:"pointer",fontSize:"0.88rem",display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="#2E3240";e.currentTarget.style.borderColor="#A78BFA";}}
+                onMouseLeave={e=>{e.currentTarget.style.background="#252833";e.currentTarget.style.borderColor="#3F4555";}}>
+                <span style={{fontSize:"1.1rem"}}>{o.icon}</span>
+                <span>{o.l}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {verdict && (
+        <div style={{animation:"slideIn 0.3s"}}>
+          <div style={{background:verdict.color+"22",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid "+verdict.color+"55",marginBottom:10}}>
+            <div style={{color:verdict.color,fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>RECOMMENDED APPROACH</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <span style={{fontSize:"1.5rem"}}>{verdict.icon}</span>
+              <span style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700}}>{verdict.answer}</span>
+            </div>
+            <div style={{color:"#C9CDD3",fontSize:"0.85rem",lineHeight:1.7}}>{verdict.why}</div>
+          </div>
+          <button onClick={()=>{setAnswers({});setStep(0);}} style={{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.8rem",fontWeight:600,background:"#252833",color:"#94A3B8"}}>↺ Start over</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// LoRA deep dive — collapsible
+// ============================================================
+function LoRAWhyCollapsible() {
+  const [open, setOpen] = useState(false);
+  const stepH = (n, title) => (
+    <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.05rem",color:"var(--work-color)",fontWeight:700,margin:n===1?"1rem 0 0.65rem":"1.75rem 0 0.65rem",paddingTop:n===1?0:"0.75rem",borderTop:n===1?"none":"1px solid var(--border-light)"}}>
+      Step {n}: {title}
+    </div>
+  );
+  const flowBox = (children) => (
+    <div style={{background:"var(--work-bg)",border:"1px solid var(--work-border)",borderRadius:8,padding:"0.85rem 1rem",margin:"0.75rem 0",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.8rem",lineHeight:1.65,color:"var(--text)"}}>{children}</div>
+  );
+
+  return (
+    <div style={{borderRadius:10,border:"1px solid var(--border)",background:"white",margin:"1.25rem 0",boxShadow:"0 1px 2px rgba(0,0,0,0.04)"}}>
+      <button type="button" onClick={()=>setOpen(!open)} aria-expanded={open}
+        style={{width:"100%",textAlign:"left",padding:"12px 14px",border:"none",background:open?"var(--work-bg)":"#fafaf8",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,borderRadius:open?"10px 10px 0 0":"10px"}}>
+        <span style={{fontSize:"0.95rem",color:"var(--text)",fontWeight:700,fontFamily:"'Libre Baskerville',serif",lineHeight:1.45}}>🔍 Why does LoRA work?</span>
+        <span style={{color:"var(--work-color)",fontSize:"0.72rem",fontWeight:700,flexShrink:0,letterSpacing:0.5}}>{open?"▲ Hide":"▼ Show"}</span>
+      </button>
+      {open&&(
+        <div style={{padding:"0 14px 18px",borderTop:"1px solid var(--border-light)"}}>
+          {stepH(1,"What is this giant matrix W?")}
+          <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.65rem 0 0.85rem"}}>Inside a transformer, every layer contains weight matrices. For example:</p>
+          {flowBox(<>
+            Input Vector (4096 numbers)<br/>↓<br/>W (4096 × 4096)<br/>↓<br/>Output Vector
+          </>)}
+          <P>The matrix <Code>W</Code> contains:</P>
+          <CB>{`4096 × 4096 = 16,777,216 parameters`}</CB>
+          <P>When traditional fine-tuning happens:</P>
+          <CB>{`W_old  →  W_new
+
+All 16.8 million values are updated.`}</CB>
+
+          {stepH(2,"What actually changes during fine-tuning?")}
+          <P>Suppose you fine-tune Llama to become a banking assistant. The model already knows English, grammar, reasoning, and math. You don't need to rewrite everything — only a small adjustment:</P>
+          <CB>{`W_new = W_old + ΔW
+
+ΔW = the change needed`}</CB>
+          <P>The key discovery behind LoRA:</P>
+          <Callout color="var(--work-color)" icon="💡"><S>Most useful changes are much simpler than the original matrix.</S> The change matrix ΔW often contains a lot of redundancy.</Callout>
+
+          {stepH(3,"Understanding rank")}
+          <P>This is the part that confuses everyone. Imagine a spreadsheet: 10 rows × 10 columns = 100 numbers.</P>
+          <P>But suppose every row is actually derived from one pattern:</P>
+          <CB>{`Row1 = [1  2  3]
+Row2 = 2 × Row1
+Row3 = 3 × Row1
+...`}</CB>
+          <P>All rows come from one pattern. Although there are 100 numbers, the real information is tiny. We say <S>Rank = 1</S> — one direction explains everything.</P>
+          <P>Another example: Row1 = pattern A, Row2 = pattern B, and all other rows are combinations. Then <S>Rank = 2</S> — only two independent patterns exist.</P>
+          <P><S>Think of rank as:</S> the number of independent ideas needed to describe a matrix.</P>
+
+          {stepH(4,"Why does LoRA use rank?")}
+          <P>Researchers observed that during fine-tuning, <Code>ΔW</Code> does not need all 4096 dimensions. The useful updates often live in a much smaller subspace — maybe only 8, 16, or 32 dimensions. LoRA exploits this.</P>
+
+          {stepH(5,"The two tiny matrices")}
+          <P>Instead of learning the full change matrix:</P>
+          <CB>{`ΔW  (4096 × 4096)`}</CB>
+          <P>LoRA learns two smaller matrices:</P>
+          <CB>{`A  (4096 × r)
+B  (r × 4096)
+
+r = rank
+
+ΔW = A × B`}</CB>
+          <P>Suppose <Code>r = 8</Code>:</P>
+          <CB>{`A = 4096 × 8
+B = 8 × 4096
+
+Trainable parameters:
+4096×8 + 8×4096 = 65,536
+
+instead of 16,777,216`}</CB>
+          <P><S>Why does A × B work?</S> Think of it like compression. Instead of storing 16 million pixels, you store 8 important features and reconstruct from them. LoRA does something similar:</P>
+          {flowBox(<>
+            Original update (4096 dimensions)<br/>↓ Compress (B)<br/>8 dimensions<br/>↓ Expand (A)<br/>4096 dimensions<br/><br/>A × B reconstructs the update.
+          </>)}
+
+          <SubH>Why does increasing rank increase parameters?</SubH>
+          <CB>{`Parameters = 4096×r + r×4096 = 8192 × r   (linear growth)`}</CB>
+          <div style={{margin:"1rem 0",overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:"0.86rem"}}>
+              <thead>
+                <tr style={{background:"var(--work-bg)",borderBottom:"2px solid var(--work-border)"}}>
+                  <th style={{padding:"8px 12px",textAlign:"left",color:"var(--work-color)",fontSize:"0.78rem",fontWeight:700}}>Rank</th>
+                  <th style={{padding:"8px 12px",textAlign:"left",color:"var(--work-color)",fontSize:"0.78rem",fontWeight:700}}>Parameters</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[["4","32K"],["8","65K"],["16","131K"],["32","262K"],["64","524K"]].map(([r,p],i)=>(
+                  <tr key={r} style={{borderBottom:"1px solid var(--border-light)",background:i%2?"#fff":"var(--bg)"}}>
+                    <td style={{padding:"8px 12px",fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>{r}</td>
+                    <td style={{padding:"8px 12px",fontFamily:"'JetBrains Mono',monospace"}}>{p}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0"}}>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,fontSize:"0.86rem"}}>✅ Higher rank → more flexibility</div>
+            <div style={{padding:"8px 12px",background:"#FEF2F2",borderRadius:6,fontSize:"0.86rem",border:"1px solid #FECACA"}}>❌ Higher rank → more memory and training cost</div>
+          </div>
+
+          <SubH>Why not always use rank 64 or 128?</SubH>
+          <P>The goal is the <S>smallest rank</S> that still captures the behavior you need.</P>
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"0.85rem 0"}}>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--work-color)">Rank 4</S> — enough for sentiment classification, intent detection</div>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--work-color)">Rank 16</S> — enough for text-to-SQL, structured outputs</div>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--work-color)">Rank 64</S> — enough for more complex behavior changes</div>
+            <div style={{padding:"10px 14px",background:"#FEF2F2",borderRadius:8,border:"1px solid #FECACA",fontSize:"0.86rem"}}><S color="#B91C1C">Rank 4096</S> — you're basically back to full fine-tuning. No benefit.</div>
+          </div>
+
+          <SubH>The intuition that finally makes it click</SubH>
+          <P>Imagine you own a huge 500-page banking operations manual.</P>
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:220,background:"#FEF2F2",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid #FECACA"}}>
+              <div style={{color:"#B91C1C",fontSize:"0.8rem",fontWeight:700,marginBottom:6}}>Traditional fine-tuning</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.7}}>Rewrite all 500 pages.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"var(--work-bg)",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--work-border)"}}>
+              <div style={{color:"var(--work-color)",fontSize:"0.8rem",fontWeight:700,marginBottom:6}}>LoRA</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.7}}>Keep the manual frozen. Write a small amendment (<Code>A × B</Code>). Rank <Code>r</Code> controls how big the amendment is.</div>
+            </div>
+          </div>
+
+          <Callout color="var(--info-color)" icon="📊"><S>For data engineers:</S> LoRA is like low-rank matrix factorization in recommendation systems.<br/><br/>
+            <Code>User–Movie Matrix ≈ User Factors × Movie Factors</Code><br/><br/>
+            LoRA does the same thing for weight updates:<br/>
+            <Code>Weight Update Matrix ≈ A × B</Code><br/><br/>
+            The update may have millions of values, but its structure can often be described by a much smaller number of latent factors (the rank). Once you see LoRA as matrix factorization of the weight updates, the whole idea clicks.</Callout>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 2: LoRA rank visualizer
+// ============================================================
+function LoRARankDemo() {
+  const [rank, setRank] = useState(8);
+  const baseDim = 4096;
+  const fullParams = baseDim * baseDim;
+  const loraParams = baseDim * rank * 2;
+  const reduction = (fullParams / loraParams).toFixed(1);
+  const reductionPct = ((1 - loraParams/fullParams) * 100).toFixed(2);
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Visualization</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The LoRA Trick, Visualized</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Drag the rank slider to see how a giant weight matrix gets replaced by two thin ones.</div>
+
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-around",margin:"1rem 0",flexWrap:"wrap",gap:20}}>
+        {/* Original W */}
+        <div style={{textAlign:"center"}}>
+          <div style={{width:140,height:140,background:"#A78BFA",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"1rem",margin:"0 auto",boxShadow:"0 4px 12px rgba(167,139,250,0.3)"}}>
+            W
+            <div style={{position:"absolute",fontSize:"0.7rem",opacity:0.85,marginTop:30}}>4096 × 4096</div>
+          </div>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginTop:10}}>Original weights</div>
+          <div style={{color:"#F0F4F8",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",marginTop:4}}>{(fullParams/1e6).toFixed(1)}M params</div>
+          <div style={{color:"#EF4444",fontSize:"0.72rem",marginTop:2,fontWeight:600}}>frozen ❄️</div>
+        </div>
+
+        <div style={{color:"#A78BFA",fontSize:"1.5rem",fontWeight:700}}>≈</div>
+
+        {/* A × B */}
+        <div style={{textAlign:"center"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width: Math.max(20, rank*4), height:140,background:"#10B981",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.95rem",boxShadow:"0 4px 12px rgba(16,185,129,0.3)"}}>A</div>
+            <span style={{color:"#A78BFA",fontSize:"1.1rem"}}>×</span>
+            <div style={{width:140, height:Math.max(20, rank*4),background:"#10B981",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:"0.95rem",boxShadow:"0 4px 12px rgba(16,185,129,0.3)"}}>B</div>
+          </div>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginTop:10}}>Two tiny matrices (rank {rank})</div>
+          <div style={{color:"#F0F4F8",fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",marginTop:4}}>{(loraParams/1e3).toFixed(0)}K params</div>
+          <div style={{color:"#10B981",fontSize:"0.72rem",marginTop:2,fontWeight:600}}>trainable 🔥</div>
+        </div>
+      </div>
+
+      <div style={{margin:"1.5rem 0 0.5rem"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <span style={{color:"#94A3B8",fontSize:"0.78rem",fontWeight:600}}>RANK (r)</span>
+          <span style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"0.95rem",fontWeight:700}}>{rank}</span>
+        </div>
+        <input type="range" min="1" max="64" value={rank} onChange={e=>setRank(parseInt(e.target.value))}
+          style={{width:"100%",accentColor:"#A78BFA"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.7rem",color:"#6B7280",marginTop:3}}>
+          <span>1</span><span>8 (typical)</span><span>16</span><span>32</span><span>64</span>
+        </div>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:8,padding:"0.85rem 1rem",border:"1px solid #2E3240",marginTop:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,textAlign:"center"}}>
+          <div>
+            <div style={{color:"#6B7280",fontSize:"0.7rem",letterSpacing:1,fontWeight:700,marginBottom:4}}>FEWER PARAMETERS</div>
+            <div style={{color:"#10B981",fontSize:"1.6rem",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{reduction}×</div>
+          </div>
+          <div>
+            <div style={{color:"#6B7280",fontSize:"0.7rem",letterSpacing:1,fontWeight:700,marginBottom:4}}>FROZEN WEIGHTS</div>
+            <div style={{color:"#10B981",fontSize:"1.6rem",fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{reductionPct}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{marginTop:10,padding:"0.65rem 0.85rem",background:"#A78BFA12",borderRadius:8,border:"1px solid #A78BFA33"}}>
+        <span style={{color:"#A78BFA",fontSize:"0.78rem",fontWeight:600}}>The insight: </span>
+        <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>Most weight updates during fine-tuning are "low rank" — they live in a much smaller subspace than the full 4096×4096 grid. LoRA exploits this by learning only that subspace.</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 3: Cost calculator — when does fine-tuning pay off?
+// ============================================================
+function CostCalcDemo() {
+  const [volume, setVolume] = useState(10000);
+  const [tokensPerCall, setTokensPerCall] = useState(500);
+  const [days, setDays] = useState(90);
+
+  // Rough public-API rates (per 1M tokens, input+output blend)
+  const gpt4oCost = 5.0;
+  const gpt4oMiniCost = 0.2;
+  const ftMiniCost = 1.0;  // higher per-token, but smaller prompts because the task is "baked in"
+  const ftTrainingCost = 50; // typical small-job training cost
+  const promptReduction = 0.3; // fine-tuned models need ~30% of the original prompt
+
+  const totalCalls = volume * days;
+  const baseTokens = (totalCalls * tokensPerCall) / 1e6;
+  const ftTokens = (totalCalls * tokensPerCall * promptReduction) / 1e6;
+
+  const gpt4oTotal = baseTokens * gpt4oCost;
+  const miniTotal = baseTokens * gpt4oMiniCost;
+  const ftTotal = ftTokens * ftMiniCost + ftTrainingCost;
+
+  const breakEvenCalls = ftTrainingCost / ((gpt4oCost - ftMiniCost*promptReduction) * tokensPerCall / 1e6);
+  const breakEvenDays = breakEvenCalls / volume;
+
+  const bestOption = ftTotal < miniTotal && ftTotal < gpt4oTotal ? "ft" : miniTotal < gpt4oTotal ? "mini" : "gpt4o";
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Cost Calculator</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>When Does Fine-Tuning Pay For Itself?</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Adjust your expected volume and see the break-even point.</div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{color:"#94A3B8",fontSize:"0.78rem",fontWeight:600}}>REQUESTS PER DAY</span>
+            <span style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"0.88rem",fontWeight:700}}>{volume.toLocaleString()}</span>
+          </div>
+          <input type="range" min="100" max="500000" step="100" value={volume} onChange={e=>setVolume(parseInt(e.target.value))} style={{width:"100%",accentColor:"#A78BFA"}}/>
+        </div>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{color:"#94A3B8",fontSize:"0.78rem",fontWeight:600}}>AVG TOKENS PER REQUEST</span>
+            <span style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"0.88rem",fontWeight:700}}>{tokensPerCall}</span>
+          </div>
+          <input type="range" min="100" max="4000" step="100" value={tokensPerCall} onChange={e=>setTokensPerCall(parseInt(e.target.value))} style={{width:"100%",accentColor:"#A78BFA"}}/>
+        </div>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{color:"#94A3B8",fontSize:"0.78rem",fontWeight:600}}>TIME HORIZON (DAYS)</span>
+            <span style={{color:"#A78BFA",fontFamily:"'JetBrains Mono'",fontSize:"0.88rem",fontWeight:700}}>{days}</span>
+          </div>
+          <input type="range" min="7" max="365" value={days} onChange={e=>setDays(parseInt(e.target.value))} style={{width:"100%",accentColor:"#A78BFA"}}/>
+        </div>
+      </div>
+
+      <div style={{marginTop:18,display:"flex",flexDirection:"column",gap:8}}>
+        {[
+          {k:"gpt4o", l:"GPT-4o (no FT)", total:gpt4oTotal, note:"Highest quality baseline", color:"#94A3B8"},
+          {k:"mini", l:"GPT-4o-mini (no FT)", total:miniTotal, note:"Cheap, often good enough", color:"#60A5FA"},
+          {k:"ft", l:"Fine-tuned mini", total:ftTotal, note:`Includes $${ftTrainingCost} training`, color:"#A78BFA"},
+        ].map(o=>(
+          <div key={o.k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",borderRadius:8,background:bestOption===o.k?o.color+"22":"#12141C",border:"1px solid "+(bestOption===o.k?o.color+"55":"#2E3240")}}>
+            <div>
+              <div style={{color:o.color,fontWeight:700,fontSize:"0.88rem"}}>{o.l}{bestOption===o.k && <span style={{marginLeft:8,color:"#FBBF24",fontSize:"0.72rem"}}>● cheapest</span>}</div>
+              <div style={{color:"#6B7280",fontSize:"0.74rem"}}>{o.note}</div>
+            </div>
+            <div style={{color:"#F0F4F8",fontFamily:"'JetBrains Mono'",fontSize:"1rem",fontWeight:700}}>${o.total.toFixed(0)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{marginTop:14,padding:"0.85rem 1rem",background:"#A78BFA12",borderRadius:8,border:"1px solid #A78BFA33"}}>
+        <div style={{color:"#A78BFA",fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>BREAK-EVEN POINT</div>
+        {breakEvenDays > 0 && breakEvenDays < 365*5 ? (
+          <div style={{color:"#C9CDD3",fontSize:"0.85rem",lineHeight:1.6}}>
+            Fine-tuned mini beats GPT-4o after ~<S color="#A78BFA">{Math.ceil(breakEvenDays)} days</S> ({Math.ceil(breakEvenCalls).toLocaleString()} requests). Below that, the training cost isn't worth it.
+          </div>
+        ) : (
+          <div style={{color:"#C9CDD3",fontSize:"0.85rem"}}>Volume too low — training cost dominates at this scale.</div>
+        )}
+      </div>
+
+      <div style={{marginTop:8,fontSize:"0.72rem",color:"#6B7280",fontStyle:"italic"}}>
+        Rough estimates only. Real prices change; check current OpenAI/Anthropic pricing pages.
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 4: Model family comparison
+// ============================================================
+function ModelFamilyDemo() {
+  const [pick, setPick] = useState("llama");
+
+  const families = {
+    llama: { name:"Llama 3 / 3.1 / 3.2", maker:"Meta", color:"#3B82F6", icon:"🦙",
+      sizes:["1B","3B","8B","70B","405B"],
+      strengths:["Best overall open-source quality at the 8B+ tier","Huge community + tooling","Strong tool-use support","Permissive license for most uses"],
+      weaknesses:["License restricts use for very large companies","Smaller variants (1B/3B) weaker than competitors at the same size"],
+      bestFor:"General-purpose tasks, agents, RAG, fine-tuning baseline" },
+    mistral: { name:"Mistral / Mixtral", maker:"Mistral AI (France)", color:"#F97316", icon:"🌬️",
+      sizes:["7B","8×7B (MoE)","8×22B (MoE)","Large"],
+      strengths:["Excellent quality-per-parameter","Mixtral MoE models are very fast for their quality","European, GDPR-friendly story","Apache 2.0 license on most models"],
+      weaknesses:["Smaller community than Llama","Newer specialized models (Codestral, etc.) under different licenses"],
+      bestFor:"European deployments, mixture-of-experts use cases, balanced quality + speed" },
+    phi: { name:"Phi-3 / Phi-4", maker:"Microsoft", color:"#10B981", icon:"φ",
+      sizes:["3.8B (mini)","7B (small)","14B (medium)"],
+      strengths:["Punches WAY above its weight class — Phi-3 mini rivals 8B+ models","Designed for edge / on-device inference","MIT license","Trained on textbook-quality synthetic data"],
+      weaknesses:["Weaker on creative / open-ended generation","Less coverage of obscure topics (training data is curated)"],
+      bestFor:"Edge deployment, mobile, low-latency classification, fine-tuning candidates" },
+    qwen: { name:"Qwen 2 / 2.5 / 3", maker:"Alibaba", color:"#A855F7", icon:"千",
+      sizes:["0.5B","1.5B","3B","7B","14B","32B","72B"],
+      strengths:["Best multilingual support (Chinese, Arabic, others)","Strong reasoning at larger sizes","Wide size range — great for finding your sweet spot","Apache 2.0 license"],
+      weaknesses:["English benchmarks slightly behind Llama","Data provenance less transparent"],
+      bestFor:"Multilingual products, non-English tasks, when you need a specific size point" },
+    gemma: { name:"Gemma 2 / 3", maker:"Google", color:"#EF4444", icon:"💎",
+      sizes:["2B","9B","27B"],
+      strengths:["Tight integration with JAX / TPU","Solid quality, especially at 9B","Backed by Google Research","Strong safety-tuning out of the box"],
+      weaknesses:["Slightly restrictive license vs Apache 2.0 peers","Smaller community than Llama/Mistral","Fewer fine-tuning recipes published"],
+      bestFor:"Google-Cloud-centric stacks, safety-sensitive deployments" },
+  };
+
+  const f = families[pick];
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Model Family Comparison</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:"1.25rem"}}>The Open-Source Lineup</div>
+
+      <div style={{display:"flex",gap:6,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        {Object.entries(families).map(([k,fam])=>(
+          <button key={k} onClick={()=>setPick(k)} style={{padding:"7px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.78rem",fontWeight:600,background:pick===k?fam.color:"#252833",color:pick===k?"#fff":"#94A3B8",display:"flex",alignItems:"center",gap:6}}>
+            <span>{fam.icon}</span><span>{fam.name.split(" / ")[0]}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1.25rem",border:"1px solid "+f.color+"33"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <div style={{width:40,height:40,borderRadius:10,background:f.color+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.5rem",border:"1px solid "+f.color+"55"}}>{f.icon}</div>
+          <div>
+            <div style={{color:"#F0F4F8",fontSize:"1.1rem",fontWeight:700}}>{f.name}</div>
+            <div style={{color:"#94A3B8",fontSize:"0.78rem"}}>by {f.maker}</div>
+          </div>
+        </div>
+
+        <div style={{marginBottom:14}}>
+          <div style={{color:f.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>AVAILABLE SIZES</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {f.sizes.map(s=>(
+              <span key={s} style={{padding:"3px 9px",borderRadius:5,background:f.color+"15",border:"1px solid "+f.color+"33",color:f.color,fontFamily:"'JetBrains Mono'",fontSize:"0.74rem",fontWeight:600}}>{s}</span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <div style={{color:"#10B981",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>✓ STRENGTHS</div>
+            <ul style={{margin:0,padding:0,listStyle:"none"}}>
+              {f.strengths.map((s,i)=>(<li key={i} style={{color:"#C9CDD3",fontSize:"0.78rem",padding:"3px 0",lineHeight:1.5}}>• {s}</li>))}
+            </ul>
+          </div>
+          <div>
+            <div style={{color:"#EF4444",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>✗ WATCH-OUTS</div>
+            <ul style={{margin:0,padding:0,listStyle:"none"}}>
+              {f.weaknesses.map((w,i)=>(<li key={i} style={{color:"#C9CDD3",fontSize:"0.78rem",padding:"3px 0",lineHeight:1.5}}>• {w}</li>))}
+            </ul>
+          </div>
+        </div>
+
+        <div style={{padding:"8px 12px",background:f.color+"15",borderRadius:6,borderLeft:"3px solid "+f.color}}>
+          <span style={{color:f.color,fontSize:"0.74rem",fontWeight:700}}>BEST FOR: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>{f.bestFor}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 5: Prompt vs Fine-Tuning bake-off
+// ============================================================
+function BakeOffDemo() {
+  const [view, setView] = useState("prompt");
+
+  const examples = [
+    { input:"My laptop screen is flickering after the update", expected:"Hardware" },
+    { input:"Can't log into my account", expected:"Account" },
+    { input:"How do I get a refund?", expected:"Billing" },
+    { input:"WiFi keeps disconnecting", expected:"Network" },
+    { input:"Excel won't open my file", expected:"Software" },
+  ];
+
+  const promptApproach = {
+    label:"Prompt Engineering", color:"#10B981", icon:"✍️",
+    code:`# 5 categories defined in the prompt + 8 few-shot examples
+prompt = f\"\"\"You are a support ticket classifier.
+
+Categories: Hardware, Software, Network, Account, Billing
+
+Examples:
+"WiFi not working" → Network
+"Wrong charge on my card" → Billing
+"App crashes on startup" → Software
+[... 5 more examples ...]
+
+Classify: {ticket}\"\"\"
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role":"user","content":prompt}],
+    temperature=0
+)`,
+    metrics:{accuracy:"91%", costPerCall:"$0.012", latency:"850ms", tokensIn:420, tokensOut:5},
+    notes:"Big prompt (420 tokens) sent every time. Quality is good. Cost adds up at scale.",
+  };
+
+  const ftApproach = {
+    label:"Fine-Tuned Model", color:"#A78BFA", icon:"🎯",
+    code:`# Trained gpt-4o-mini on 200 examples — prompt now stripped down
+prompt = ticket  # ← just the ticket, nothing else
+
+response = client.chat.completions.create(
+    model="ft:gpt-4o-mini:org:tickets:abc123",  # your model
+    messages=[{"role":"user","content":prompt}],
+    temperature=0
+)`,
+    metrics:{accuracy:"94%", costPerCall:"$0.0008", latency:"310ms", tokensIn:35, tokensOut:5},
+    notes:"Tiny prompt — categories baked into the model's weights. Higher accuracy, 15× cheaper, 3× faster.",
+  };
+
+  const a = view === "prompt" ? promptApproach : ftApproach;
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Bake-Off</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Same Task, Two Approaches</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Support-ticket classification with 5 categories. Click each approach to compare.</div>
+
+      <div style={{display:"flex",gap:8,marginBottom:"1.25rem"}}>
+        <button onClick={()=>setView("prompt")} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.85rem",fontWeight:600,background:view==="prompt"?"#10B981":"#252833",color:view==="prompt"?"#fff":"#94A3B8"}}>✍️ Prompt Engineering</button>
+        <button onClick={()=>setView("ft")} style={{padding:"8px 16px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.85rem",fontWeight:600,background:view==="ft"?"#A78BFA":"#252833",color:view==="ft"?"#fff":"#94A3B8"}}>🎯 Fine-Tuned</button>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid "+a.color+"33",marginBottom:10}}>
+        <div style={{color:a.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>{a.label.toUpperCase()}</div>
+        <pre style={{color:"#E2E8F0",fontSize:"0.76rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre-wrap",margin:0}}>{a.code}</pre>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:10}}>
+        {[
+          {l:"ACCURACY", v:a.metrics.accuracy},
+          {l:"COST / CALL", v:a.metrics.costPerCall},
+          {l:"LATENCY", v:a.metrics.latency},
+          {l:"TOKENS IN", v:a.metrics.tokensIn},
+        ].map((m,i)=>(
+          <div key={i} style={{background:"#12141C",padding:"8px 10px",borderRadius:8,border:"1px solid #2E3240",textAlign:"center"}}>
+            <div style={{color:"#6B7280",fontSize:"0.62rem",fontWeight:700,letterSpacing:1}}>{m.l}</div>
+            <div style={{color:a.color,fontFamily:"'JetBrains Mono'",fontSize:"0.95rem",fontWeight:700,marginTop:2}}>{m.v}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{padding:"0.65rem 0.85rem",background:a.color+"12",borderRadius:8,border:"1px solid "+a.color+"22"}}>
+        <span style={{color:a.color,fontSize:"0.78rem",fontWeight:600}}>Notes: </span>
+        <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>{a.notes}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DEMO 6: JSONL preparation
+// ============================================================
+function JsonlDemo() {
+  const [show, setShow] = useState("raw");
+
+  const raw = `[
+  {"ticket": "My WiFi keeps dropping every 10 min", "category": "Network"},
+  {"ticket": "Refund request for order #4521", "category": "Billing"},
+  {"ticket": "Can't reset my password", "category": "Account"},
+  {"ticket": "Excel keeps crashing", "category": "Software"},
+  {"ticket": "Mouse not working at all", "category": "Hardware"}
+]`;
+
+  const jsonl = `{"messages":[{"role":"system","content":"Classify the support ticket into one of: Hardware, Software, Network, Account, Billing. Respond with only the category."},{"role":"user","content":"My WiFi keeps dropping every 10 min"},{"role":"assistant","content":"Network"}]}
+{"messages":[{"role":"system","content":"Classify the support ticket into one of: Hardware, Software, Network, Account, Billing. Respond with only the category."},{"role":"user","content":"Refund request for order #4521"},{"role":"assistant","content":"Billing"}]}
+{"messages":[{"role":"system","content":"Classify the support ticket into one of: Hardware, Software, Network, Account, Billing. Respond with only the category."},{"role":"user","content":"Can't reset my password"},{"role":"assistant","content":"Account"}]}
+{"messages":[{"role":"system","content":"Classify the support ticket into one of: Hardware, Software, Network, Account, Billing. Respond with only the category."},{"role":"user","content":"Excel keeps crashing"},{"role":"assistant","content":"Software"}]}
+{"messages":[{"role":"system","content":"Classify the support ticket into one of: Hardware, Software, Network, Account, Billing. Respond with only the category."},{"role":"user","content":"Mouse not working at all"},{"role":"assistant","content":"Hardware"}]}`;
+
+  return (
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Format Transformation</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Your Data → JSONL</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>The format OpenAI's fine-tuning API expects. One JSON object per line — no array.</div>
+
+      <div style={{display:"flex",gap:8,marginBottom:"1rem"}}>
+        <button onClick={()=>setShow("raw")} style={{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:show==="raw"?"#60A5FA":"#252833",color:show==="raw"?"#fff":"#94A3B8"}}>1️⃣ Your raw data</button>
+        <button onClick={()=>setShow("jsonl")} style={{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:"0.82rem",fontWeight:600,background:show==="jsonl"?"#A78BFA":"#252833",color:show==="jsonl"?"#fff":"#94A3B8"}}>2️⃣ OpenAI JSONL</button>
+      </div>
+
+      <div style={{background:"#12141C",borderRadius:10,padding:"1rem",border:"1px solid #2E3240",marginBottom:8,maxHeight:340,overflow:"auto"}}>
+        <pre style={{color:"#E2E8F0",fontSize:"0.74rem",fontFamily:"'JetBrains Mono'",lineHeight:1.6,whiteSpace:"pre",margin:0}}>{show==="raw"?raw:jsonl}</pre>
+      </div>
+
+      {show==="jsonl" && (
+        <div style={{padding:"0.65rem 0.85rem",background:"#A78BFA12",borderRadius:8,border:"1px solid #A78BFA33"}}>
+          <span style={{color:"#A78BFA",fontSize:"0.78rem",fontWeight:600}}>What changed: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>Each row became a full chat conversation — system prompt + user message + the assistant reply you want the model to learn. The system prompt is identical for every row, which is fine; OpenAI deduplicates it internally.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function Sidebar({active,onNav}){
+  const [decOpen,setDecOpen] = useState(true);
+  const [landOpen,setLandOpen] = useState(true);
+  const [oaiOpen,setOaiOpen] = useState(true);
+  const [loraOpen,setLoraOpen] = useState(true);
+  const [hfOpen,setHfOpen] = useState(true);
+  const [capOpen,setCapOpen] = useState(true);
+  const [prodOpen,setProdOpen] = useState(true);
+  const [pracOpen,setPracOpen] = useState(true);
+
+  const groupBtn = (label, color, isOpen, setIsOpen) => (
+    <button onClick={()=>setIsOpen(v=>!v)} style={{width:"100%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 9px 2px",marginTop:4,cursor:"pointer"}}>
+      <span style={{color,fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{label}</span>
+      <span style={{color,fontSize:"0.62rem"}}>{isOpen?"▼":"▶"}</span>
+    </button>
+  );
+
+  const renderGroup = (groupName, color, bgVar) => FT_CHAPTERS.filter(c=>c.group===groupName).map(c=>(
+    <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)} style={{borderLeft:"none"}}>
+      <span className="item-num" style={{background:bgVar,color}}>{c.num||"·"}</span>
+      <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+    </a>
+  ));
+
+  return(
+  <div className="sidebar">
+    <div className="sidebar-logo">
+      <h2>GenAI Decoded</h2>
+      <div className="brand-by">by Nij</div>
+    </div>
+    <div className="sidebar-section">
+      <a className={"sidebar-item"+(active==="ft-intro"?" active":"")} onClick={()=>onNav("ft-intro")}>
+        <span className="item-title">Overview</span>
+      </a>
+
+      {groupBtn("Decision Framework","var(--info-color)",decOpen,setDecOpen)}
+      {decOpen && renderGroup("decision","var(--info-color)","var(--info-bg)")}
+
+      {groupBtn("The Landscape","var(--info-color)",landOpen,setLandOpen)}
+      {landOpen && renderGroup("landscape","var(--info-color)","var(--info-bg)")}
+
+      {groupBtn("OpenAI Fine-Tuning","var(--build-color)",oaiOpen,setOaiOpen)}
+      {oaiOpen && renderGroup("openai","var(--build-color)","var(--build-bg)")}
+
+      {groupBtn("LoRA & PEFT","var(--work-color)",loraOpen,setLoraOpen)}
+      {loraOpen && renderGroup("lora","var(--work-color)","var(--work-bg)")}
+
+      {groupBtn("Hugging Face","var(--build-color)",hfOpen,setHfOpen)}
+      {hfOpen && renderGroup("hf","var(--build-color)","var(--build-bg)")}
+
+      {groupBtn("Capstone","var(--purple)",capOpen,setCapOpen)}
+      {capOpen && renderGroup("capstone","var(--purple)","var(--purple-bg)")}
+
+      {groupBtn("Production","var(--orange)",prodOpen,setProdOpen)}
+      {prodOpen && renderGroup("production","var(--orange)","var(--orange-bg)")}
+
+      {groupBtn("Practice","var(--purple)",pracOpen,setPracOpen)}
+      {pracOpen && renderGroup("practice","var(--purple)","var(--purple-bg)")}
+
+      <a className={"sidebar-item"+(active==="ft-cheat"?" active":"")} onClick={()=>onNav("ft-cheat")}>
+        <span className="item-title">📋 Cheat Sheet</span>
+      </a>
+    </div>
+  </div>
+);}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App(){
+  const [active,setActive]=useState("ft-intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+
+  useEffect(()=>{
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const t = setTimeout(()=>{
+      const el=document.getElementById(hash);
+      if(el){setActive(hash);el.scrollIntoView({behavior:"auto",block:"start"});}
+    }, 0);
+    return ()=>clearTimeout(t);
+  },[]);
+
+  return(
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+        {/* SECTION HEADER */}
+        <div style={{padding:"3rem 0 1.5rem",borderTop:"3px solid var(--purple)",marginTop:"3rem"}}>
+          <div style={{color:"var(--purple)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Section 8</div>
+          <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Fine-Tuning & Open-Source Models</h2>
+          <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>Knowing when to fine-tune — and when not to — is most of the skill</div>
+        </div>
+
+        {/* ── Overview ── */}
+        <section id="ft-intro">
+          <P>So far in this course you've used <S>off-the-shelf models</S> — GPT-4o, Claude, sometimes Groq for speed. You shaped their behavior with prompts, grounded them with RAG, gave them tools. That's gotten you very far.</P>
+
+          <P>Fine-tuning is the next lever: instead of telling the model what to do every single call, you <S color="var(--purple)">bake the behavior into the model's weights</S>. Done well, you get a smaller, faster, cheaper model that's better at one specific task than a giant general model.</P>
+
+          <P>Done badly — which is the common case — you spend weeks training a model that performs <S>worse</S> than a well-crafted prompt with the same examples shown as few-shot.</P>
+
+          <Callout color="var(--purple)" icon="⚠️"><S>The most important lesson in this section:</S> many teams think they need fine-tuning, but they actually need a better prompt, better RAG, or a stronger model. This section helps you figure out which you need.</Callout>
+
+          <SubH>What you'll come away with</SubH>
+
+          <div style={{display:"flex",gap:14,marginTop:"1rem",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--info-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--info-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🧠 Decision Framework</div>
+              <div style={{padding:"0.75rem",fontSize:"0.82rem",color:"var(--text-secondary)",lineHeight:1.6}}>Learn which tool fits your problem: change the prompt, use RAG, or fine-tune — and when to use more than one.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--info-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--info-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🗺️ The Landscape</div>
+              <div style={{padding:"0.75rem",fontSize:"0.82rem",color:"var(--text-secondary)",lineHeight:1.6}}>The major open-source model families, their sweet spots, and how to navigate the Hugging Face ecosystem.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--build-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--build-color)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🛠️ Two Paths</div>
+              <div style={{padding:"0.75rem",fontSize:"0.82rem",color:"var(--text-secondary)",lineHeight:1.6}}>Hands-on with OpenAI's managed fine-tuning, then LoRA on an open-source model with Hugging Face PEFT.</div>
+            </div>
+            <div style={{flex:1,minWidth:220,background:"white",borderRadius:12,border:"1px solid var(--purple-border)",overflow:"hidden"}}>
+              <div style={{background:"var(--purple)",padding:"10px 16px",fontWeight:700,color:"white",fontSize:"0.85rem"}}>🏆 Capstone</div>
+              <div style={{padding:"0.75rem",fontSize:"0.82rem",color:"var(--text-secondary)",lineHeight:1.6}}>Fine-tune Llama 3.2 with LoRA on a customer-support classifier, then bake it off against a prompt-engineered baseline.</div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Mental Model ── */}
+        <section id="ft-mental" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--info-bg)",borderRadius:5,marginBottom:10,border:"1px solid var(--info-border)"}}>
+              <span style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The Mental Model</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Fine-tuning teaches style, not facts</div>
+          </div>
+
+          <P>If you remember one sentence from this entire section, make it this one:</P>
+
+          <Callout color="var(--purple)" icon="🎯"><S>Fine-tuning teaches the model HOW to behave, not WHAT to know.</S></Callout>
+
+          <P>This one idea explains most fine-tuning mistakes. Here's a simple way to think about it.</P>
+
+          <SubH>The intern analogy</SubH>
+
+          <P>Imagine you hire a brilliant, well-read intern. They've read every book, can write in any style, and reason about almost anything. But on day one at your company, they don't know:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"#FEF3C7",borderRadius:6,fontSize:"0.88rem"}}><S color="#B45309">Your specific facts</S> — your products, your customers, your contracts</div>
+            <div style={{padding:"8px 12px",background:"#FEF3C7",borderRadius:6,fontSize:"0.88rem"}}><S color="#B45309">Your house style</S> — how your support team phrases things, the tone of your brand voice</div>
+            <div style={{padding:"8px 12px",background:"#FEF3C7",borderRadius:6,fontSize:"0.88rem"}}><S color="#B45309">Your domain conventions</S> — the way your industry shorthand works (e.g., "ARR", "Cohort C", "blue tier")</div>
+          </div>
+
+          <P>Two different ways to bring them up to speed:</P>
+
+          <div style={{display:"flex",gap:14,margin:"1rem 0",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:260,background:"var(--info-bg)",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--info-border)"}}>
+              <div style={{color:"var(--info-color)",fontSize:"0.8rem",fontWeight:700,marginBottom:6}}>📚 Hand them a binder (RAG)</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.7}}>Every time they answer a question, they look up the relevant docs. They can handle new policies the same day you update the binder. Best for <S>facts that change</S>.</div>
+            </div>
+            <div style={{flex:1,minWidth:260,background:"var(--purple-bg)",borderRadius:10,padding:"1rem 1.25rem",border:"1px solid var(--purple-border)"}}>
+              <div style={{color:"var(--purple)",fontSize:"0.8rem",fontWeight:700,marginBottom:6}}>🎓 Send them through onboarding (fine-tuning)</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.85rem",lineHeight:1.7}}>Six weeks shadowing senior staff. They absorb tone, classification habits, the rhythm of how your team works. Best for <S>style and behavior</S>.</div>
+            </div>
+          </div>
+
+          <P>You wouldn't onboard a new intern by drilling them on this week's pricing — by next week the prices will have changed. You'd onboard them on <S>how your team thinks</S>. That's exactly the right intuition for fine-tuning.</P>
+
+          <Callout color="var(--info-color)" icon="🔑">Model missing facts about your data? Use RAG, not fine-tuning. Model doesn't sound like your brand, or can't label your categories reliably? Fine-tuning may be the right fix.</Callout>
+        </section>
+
+        {/* ── When to Fine-Tune ── */}
+        <section id="ft-when" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--info-bg)",borderRadius:5,marginBottom:10,border:"1px solid var(--info-border)"}}>
+              <span style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>When to Fine-Tune</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Four situations where fine-tuning is worth it</div>
+          </div>
+
+          <P>Fine-tuning makes sense for only four types of problems. Learn to spot them.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:12}}>
+            {[
+              {n:"1", icon:"🏷️", color:"#A78BFA",
+                title:"Narrow Classification at Scale",
+                example:"Classifying support tickets into 5 categories, 100k/day. Detecting fraud patterns. Routing customer emails.",
+                why:"A small fine-tuned model can match GPT-4o on one narrow job — often at 1/10 the cost and faster. Your categories stay fixed, so the model doesn't keep changing behavior."},
+              {n:"2", icon:"🎨", color:"#A78BFA",
+                title:"Brand Voice & House Style",
+                example:"Marketing copy that sounds like your brand. Customer-facing replies that match your support team's voice. Code generation in your team's idioms.",
+                why:"Fine-tuning is good at learning tone and style. With 200+ before/after examples, you can lock in a voice that's hard to keep consistent with prompts alone."},
+              {n:"3", icon:"🗣️", color:"#A78BFA",
+                title:"Domain-Specific Language",
+                example:"Legal contracts, medical reports, financial filings, internal jargon, IT ops terminology, scientific notation.",
+                why:"General models often hedge and over-explain in specialized fields. Training on real domain text teaches your terms and how experts actually write."},
+              {n:"4", icon:"💰", color:"#A78BFA",
+                title:"Cost Reduction at High Volume",
+                example:"You've shipped a feature on GPT-4o. It works. Volume is 500k calls/day. The bill is hurting.",
+                why:"Train a smaller model to copy what GPT-4o does. You often keep 95%+ of the quality at 5–15× lower cost. This is the most common reason teams fine-tune in production."},
+            ].map((u,i)=>(
+              <div key={i} style={{padding:"14px 16px",background:"white",borderRadius:12,border:"1px solid "+u.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <div style={{width:30,height:30,borderRadius:7,background:u.color+"22",color:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.92rem",border:"1px solid "+u.color+"44"}}>{u.n}</div>
+                  <span style={{fontSize:"1.4rem"}}>{u.icon}</span>
+                  <span style={{fontWeight:700,fontSize:"1rem",color:u.color}}>{u.title}</span>
+                </div>
+                <div style={{color:"var(--text)",fontSize:"0.86rem",marginBottom:6}}><S>Example:</S> {u.example}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.7,fontStyle:"italic"}}>{u.why}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--purple)" icon="🎯">Not on this list: "the model gets facts wrong" and "I want it to be smarter." Fine-tuning won't fix those — use RAG, better prompts, or a stronger model instead.</Callout>
+        </section>
+
+        {/* ── When NOT to Fine-Tune ── */}
+        <section id="ft-not" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"#FEF2F2",borderRadius:5,marginBottom:10,border:"1px solid #FECACA"}}>
+              <span style={{color:"#B91C1C",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>When NOT to Fine-Tune</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>When fine-tuning wastes time and makes things worse</div>
+          </div>
+
+          <P>Many tutorials skip this part. In several common cases, fine-tuning will <S>hurt</S> your system. Spotting them early saves weeks of work.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {trap:"Adding knowledge", color:"#B91C1C", icon:"📚",
+                what:"You want the model to know your product catalog, policies, or customer data.",
+                why:"Fine-tuning is bad at storing facts. Models forget details during training, can hallucinate more confidently, and you must retrain to update anything.",
+                instead:"Use RAG: add the right documents to each request. Updating data is a database change, not a new training run."},
+              {trap:"Improving reasoning", color:"#B91C1C", icon:"🧠",
+                what:"The model isn't smart enough on math, logic, or multi-step tasks.",
+                why:"Reasoning mostly comes from model size and how you write the prompt — not from training examples. You can't turn a small model into a reasoning expert with 1,000 examples.",
+                instead:"Try step-by-step prompts, a bigger model (Claude Sonnet, o1/o3, GPT-4o), or break the task into smaller steps."},
+              {trap:"You have under ~50 examples", color:"#B91C1C", icon:"🤏",
+                what:"You think 30 examples is enough to teach new behavior.",
+                why:"With under 50 examples, putting them in the prompt usually beats fine-tuning. You need more data for training to win.",
+                instead:"Use few-shot prompting. It's cheaper, faster, and easier to change."},
+              {trap:"Requirements are still changing", color:"#B91C1C", icon:"🌪️",
+                what:"You're not sure what the model should do yet — the spec keeps changing.",
+                why:"Every change means new data, retraining, and re-testing. That takes days. Fine-tuning works best when requirements are stable.",
+                instead:"Keep improving prompts until the requirements settle. Then consider fine-tuning."},
+              {trap:"Low volume", color:"#B91C1C", icon:"🐢",
+                what:"Your app only runs about 50 requests a day.",
+                why:"Training costs $20–$200 and only pays off at high volume. At 50 calls/day, a stronger off-the-shelf model is usually cheaper overall.",
+                instead:"Use the best model you can. At low volume, the price difference is tiny."},
+            ].map((t,i)=>(
+              <div key={i} style={{padding:"12px 16px",background:"#FEF2F2",borderRadius:10,border:"1px solid #FECACA"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <span style={{fontSize:"1.3rem"}}>{t.icon}</span>
+                  <span style={{fontWeight:700,fontSize:"0.95rem",color:t.color}}>❌ {t.trap}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:6}}><S>The trap:</S> {t.what}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",marginBottom:6}}><S>Why it fails:</S> {t.why}</div>
+                <div style={{color:"#15803D",fontSize:"0.82rem",background:"#F0FDF4",padding:"6px 10px",borderRadius:6,border:"1px solid #BBF7D0"}}><S color="#15803D">Better tool:</S> {t.instead}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--red)" icon="🚨"><S>Before you fine-tune:</S> Can you explain why a better prompt or RAG won't work — with real tests? If not, you're not ready. Build a strong prompt-based version first, even if you're sure you need fine-tuning.</Callout>
+        </section>
+
+        {/* ── Decision tree ── */}
+        <section id="ft-vs" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--info-bg)",borderRadius:5,marginBottom:10,border:"1px solid var(--info-border)"}}>
+              <span style={{color:"var(--info-color)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>FOUNDATION</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Prompting vs RAG vs Fine-Tuning</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Answer three questions — get a recommendation</div>
+          </div>
+
+          <P>Prompt, RAG, or fine-tune? Answer the three questions below. You'll get a clear recommendation you can reuse on future projects.</P>
+
+          <DecisionTreeDemo />
+
+          <SubH>You can combine them</SubH>
+
+          <P>In real apps, teams often use more than one approach together:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--purple)">Fine-tune for style + RAG for facts</S> — common for support bots. Train the model on your tone; use RAG for up-to-date policies and docs.</div>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--purple)">Prompts still matter after fine-tuning</S> — fine-tuning sets default behavior; the prompt still guides each request.</div>
+            <div style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--purple)">Fine-tune to save cost, RAG for what changes</S> — train a cheap model to copy an expensive prompt; use RAG for information that updates often.</div>
+          </div>
+        </section>
+
+        {/* ── Chapter 1: Closed vs Open ── */}
+        <section id="ft1" style={{paddingTop:"2rem"}}>
+          <ChH num="1" title="Closed vs Open Source" sub="What changed in the last two years" color="var(--info-color)"/>
+
+          <P>Two years ago, "open-source LLMs" were a curiosity. GPT-3.5 outclassed almost everything you could download. Today, the gap has closed remarkably — and in many narrow tasks, open-source models <S>win</S>.</P>
+
+          <SubH>The shift, in one table</SubH>
+
+          <div style={{margin:"1rem 0",overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:"0.86rem"}}>
+              <thead>
+                <tr style={{background:"var(--info-bg)",borderBottom:"2px solid var(--info-border)"}}>
+                  <th style={{padding:"10px 14px",textAlign:"left",color:"var(--info-color)",fontSize:"0.78rem",fontWeight:700,letterSpacing:1}}></th>
+                  <th style={{padding:"10px 14px",textAlign:"left",color:"var(--info-color)",fontSize:"0.78rem",fontWeight:700,letterSpacing:1}}>CLOSED MODELS</th>
+                  <th style={{padding:"10px 14px",textAlign:"left",color:"var(--info-color)",fontSize:"0.78rem",fontWeight:700,letterSpacing:1}}>OPEN SOURCE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Cost / quality","Pay per call. Best on frontier reasoning.","Pay for compute. Best on narrow tasks."],
+                  ["Privacy","Your data goes to the provider.","Run entirely in your VPC."],
+                  ["Customization","Limited fine-tuning, no weight access.","Full LoRA + full fine-tuning available."],
+                  ["Updates","Provider may change behavior overnight.","Pin the version, behavior is locked."],
+                  ["Setup effort","Two lines of code.","GPU infrastructure required."],
+                  ["Reasoning at frontier","Currently still leads.","Catching up fast at smaller scales."],
+                ].map((row,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid var(--border-light)"}}>
+                    <td style={{padding:"10px 14px",fontWeight:700,color:"var(--text)"}}>{row[0]}</td>
+                    <td style={{padding:"10px 14px",color:"var(--text-secondary)"}}>{row[1]}</td>
+                    <td style={{padding:"10px 14px",color:"var(--text-secondary)"}}>{row[2]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <SubH>The practical rule</SubH>
+
+          <P>Use closed models when you need the best reasoning available and can't host your own. Use open-source models when you need privacy, customization, or you've identified a narrow task where a fine-tuned small model wins on cost.</P>
+
+          <Callout color="var(--info-color)" icon="🌊"><S>The state of play (late 2025):</S> the best closed models still lead on the very hardest reasoning tasks. But for ~80% of production use cases — classification, extraction, summarization, formatting — a well-chosen open-source model is competitive.</Callout>
+        </section>
+
+        {/* ── Chapter 2: Model Families ── */}
+        <section id="ft2" style={{paddingTop:"2rem"}}>
+          <ChH num="2" title="The Model Families" sub="Llama, Mistral, Phi, Qwen, Gemma" color="var(--info-color)"/>
+
+          <P>The open-source ecosystem has five families worth knowing about. They differ in size, license, language coverage, and what they're best at. Click through each below — these are the names you'll see on every model card.</P>
+
+          <ModelFamilyDemo />
+
+          <SubH>Picking your default</SubH>
+
+          <P>If you don't have strong reasons otherwise: <S color="var(--purple)">Llama 3.1 8B for general tasks, Phi-3 mini for edge/mobile, Mistral 7B for European deployments</S>. Start there and only stray when measurements demand it.</P>
+        </section>
+
+        {/* ── Chapter 3: Sizes ── */}
+        <section id="ft3" style={{paddingTop:"2rem"}}>
+          <ChH num="3" title="Understanding Model Sizes" sub="3B vs 7B vs 70B — what changes" color="var(--info-color)"/>
+
+          <P>Model sizes are usually reported in <S>billions of parameters</S> — 1B, 3B, 7B, 70B, 405B. The number describes how many learnable weights the model has, which roughly correlates with quality, cost, and memory footprint.</P>
+
+          <SubH>What size buys you</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {size:"1–3B", color:"#10B981", icon:"🐭",
+                quality:"Decent for classification, extraction, simple formatting",
+                fits:"Phone/edge devices, browsers, CPU-only inference",
+                memory:"~1–6 GB RAM",
+                useCase:"On-device assistants, content filters, simple bots"},
+              {size:"7–8B", color:"#3B82F6", icon:"🐰",
+                quality:"Strong baseline. Handles most production tasks well",
+                fits:"Single consumer GPU (e.g. RTX 4090 with quantization)",
+                memory:"~16 GB RAM (fp16) or ~5 GB (4-bit)",
+                useCase:"The default open-source choice. Llama 3.1 8B, Mistral 7B"},
+              {size:"13–14B", color:"#A78BFA", icon:"🐶",
+                quality:"Notably better reasoning than 7B; closer to mid-tier closed models",
+                fits:"Single high-end GPU or 2× consumer GPUs",
+                memory:"~28 GB RAM (fp16) or ~10 GB (4-bit)",
+                useCase:"When 7B isn't quite enough and 70B is overkill"},
+              {size:"70B", color:"#F59E0B", icon:"🐂",
+                quality:"Competitive with GPT-4o-class on many tasks",
+                fits:"Multi-GPU servers (4×A100 or 2×H100)",
+                memory:"~140 GB (fp16) or ~40 GB (4-bit)",
+                useCase:"Production deployments where quality matters more than infrastructure cost"},
+              {size:"400B+", color:"#EF4444", icon:"🐘",
+                quality:"Frontier — competitive with the very best closed models",
+                fits:"Data centers only; multi-node infra",
+                memory:"~800 GB+ for full precision",
+                useCase:"Rarely worth self-hosting. Use via API providers (Together, Fireworks)"},
+            ].map((s,i)=>(
+              <div key={i} style={{padding:"12px 16px",background:"white",borderRadius:10,border:"1px solid "+s.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <span style={{fontSize:"1.5rem"}}>{s.icon}</span>
+                  <span style={{fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:"1rem",color:s.color}}>{s.size} params</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:"0.82rem"}}>
+                  <div><S>Quality:</S> <span style={{color:"var(--text-secondary)"}}>{s.quality}</span></div>
+                  <div><S>Memory:</S> <span style={{color:"var(--text-secondary)"}}>{s.memory}</span></div>
+                  <div><S>Hardware:</S> <span style={{color:"var(--text-secondary)"}}>{s.fits}</span></div>
+                  <div><S>Sweet spot:</S> <span style={{color:"var(--text-secondary)"}}>{s.useCase}</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--info-color)" icon="📏">Quantization (4-bit, 8-bit) shrinks the memory footprint roughly 2–4× with minor quality loss. A 70B model that needs 140 GB at fp16 fits comfortably in 40 GB at 4-bit. We'll see this in chapter 11.</Callout>
+        </section>
+
+        {/* ── Chapter 4: Hugging Face ── */}
+        <section id="ft4" style={{paddingTop:"2rem"}}>
+          <ChH num="4" title="The Hugging Face Ecosystem" sub="Hub, Transformers, Datasets, model cards" color="var(--info-color)"/>
+
+          <P>Hugging Face is the GitHub of machine learning. Almost every open-source model lives on the Hub; every fine-tuning recipe builds on Hugging Face libraries. Four pieces worth knowing.</P>
+
+          <SubH>The four pillars</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {icon:"🌐", name:"The Hub", color:"#FFD21E",
+                what:"huggingface.co — hosts 1M+ models, datasets, and demos. Like GitHub, but for ML artifacts.",
+                use:"Browse models with filters (size, language, license, task). Read model cards. Download weights with one CLI command."},
+              {icon:"🤗", name:"Transformers library", color:"#FFD21E",
+                what:"The Python library for loading and running models. Same API works across Llama, Mistral, Phi, Qwen — provider-agnostic.",
+                use:"AutoModelForCausalLM.from_pretrained('meta-llama/Llama-3.2-3B-Instruct')"},
+              {icon:"📦", name:"Datasets library", color:"#FFD21E",
+                what:"Standardized dataset access. Load from the Hub, your local files, or popular benchmarks with one line.",
+                use:"load_dataset('squad'), load_dataset('csv', data_files='./tickets.csv')"},
+              {icon:"🧪", name:"PEFT library", color:"#FFD21E",
+                what:"Parameter-Efficient Fine-Tuning. The library that makes LoRA, QLoRA, and other small-footprint training methods accessible.",
+                use:"Wraps any model in a LoRA adapter — train 0.1% of weights, save a 50 MB file instead of a 16 GB checkpoint."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"12px 16px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <span style={{fontSize:"1.4rem"}}>{p.icon}</span>
+                  <span style={{fontWeight:700,fontSize:"0.95rem"}}>{p.name}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",marginBottom:6}}>{p.what}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.78rem",fontFamily:"'JetBrains Mono'",background:"var(--bg)",padding:"6px 10px",borderRadius:6}}>{p.use}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--info-color)" icon="🤗">Even if you primarily use closed APIs, knowing your way around Hugging Face is essential. The day you need to fine-tune, evaluate, or self-host — and that day usually comes — you'll be living in this ecosystem.</Callout>
+        </section>
+
+        {/* ── Chapter 5: How OpenAI FT works ── */}
+        <section id="ft5" style={{paddingTop:"2rem"}}>
+          <ChH num="5" title="How OpenAI Fine-Tuning Works" sub="Under the hood, in plain English" color="var(--build-color)"/>
+
+          <P>OpenAI's fine-tuning is the easy entry point. You upload examples; OpenAI handles the GPUs, the training loop, the hyperparameters, the artifact storage. You get back a new model ID you call like any other.</P>
+
+          <SubH>The flow</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {n:"1", t:"Prepare a JSONL file of example conversations", d:"Each line is a complete chat — system prompt + user message + the assistant reply you want the model to learn."},
+              {n:"2", t:"Upload the file", d:"OpenAI returns a file_id. Your data stays in your account; OpenAI uses it only to train your model."},
+              {n:"3", t:"Start a fine-tuning job", d:"Pick a base model (typically gpt-4o-mini), pass the file_id, optionally set hyperparameters. Training runs on OpenAI's hardware."},
+              {n:"4", t:"Wait", d:"Small jobs (100–500 examples) finish in 10–30 minutes. Larger jobs can take hours. You're emailed when it's done."},
+              {n:"5", t:"Call your model", d:"You get a model ID like ft:gpt-4o-mini-2024-07-18:your-org::abc123. Use it in any chat.completions.create call exactly like a stock model."},
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:12,padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{width:28,height:28,borderRadius:7,background:"var(--build-bg)",color:"var(--build-color)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.85rem",flexShrink:0}}>{s.n}</div>
+                <div>
+                  <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:2}}>{s.t}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{s.d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>What's actually happening on OpenAI's side</SubH>
+
+          <P>Behind the scenes, OpenAI is running <S>supervised fine-tuning (SFT)</S> on the base model. Each line in your JSONL becomes a training example: the model sees the system + user messages, predicts the assistant message token by token, and gets corrected when it predicts wrong. After enough examples, the corrections shape the weights toward your desired behavior.</P>
+
+          <P>OpenAI is almost certainly running this with LoRA or a similar parameter-efficient method under the hood (they don't publish details). What you store and serve is small adapter weights, not a full new model.</P>
+
+          <Callout color="var(--build-color)" icon="💡">OpenAI fine-tuning is best when you want results in an afternoon, don't want to manage GPUs, and the privacy story (your data with OpenAI) is acceptable. For everything else, LoRA on open-source is the alternative.</Callout>
+        </section>
+
+        {/* ── Chapter 6: JSONL ── */}
+        <section id="ft6" style={{paddingTop:"2rem"}}>
+          <ChH num="6" title="The JSONL Format" sub="Preparing your data the way OpenAI wants it" color="var(--build-color)"/>
+
+          <P>JSONL stands for "JSON Lines": one JSON object per line, no surrounding array, no commas between lines. Each line is a complete training example — a full chat conversation.</P>
+
+          <JsonlDemo />
+
+          <SubH>The rules that trip people up</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--build-bg)",borderRadius:6,borderLeft:"3px solid var(--build-color)",fontSize:"0.86rem"}}><S color="var(--build-color)">No outer array.</S> Don't write <Code>[ {`{...}`}, {`{...}`} ]</Code> — write one object per line, no brackets at all.</div>
+            <div style={{padding:"8px 12px",background:"var(--build-bg)",borderRadius:6,borderLeft:"3px solid var(--build-color)",fontSize:"0.86rem"}}><S color="var(--build-color)">Same system prompt across all rows</S> (recommended). OpenAI's tooling deduplicates this internally and trains more efficiently.</div>
+            <div style={{padding:"8px 12px",background:"var(--build-bg)",borderRadius:6,borderLeft:"3px solid var(--build-color)",fontSize:"0.86rem"}}><S color="var(--build-color)">Quality &gt; quantity.</S> 200 carefully reviewed examples beats 2,000 noisy ones. Mislabeled examples actively teach the model the wrong thing.</div>
+            <div style={{padding:"8px 12px",background:"var(--build-bg)",borderRadius:6,borderLeft:"3px solid var(--build-color)",fontSize:"0.86rem"}}><S color="var(--build-color)">Balance your classes.</S> If 80% of your training data is one category, the model will overpredict that category. Aim for rough parity.</div>
+            <div style={{padding:"8px 12px",background:"var(--build-bg)",borderRadius:6,borderLeft:"3px solid var(--build-color)",fontSize:"0.86rem"}}><S color="var(--build-color)">Hold out a test set.</S> Split your data 80/20 before training. Use the held-out 20% only for evaluation — never for training.</div>
+          </div>
+
+          <SubH>The Python that builds it</SubH>
+
+          <CB>{`import json
+
+with open("training_data.jsonl", "w") as f:
+    for example in your_dataset:
+        line = {
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": example["input"]},
+                {"role": "assistant", "content": example["output"]},
+            ]
+        }
+        f.write(json.dumps(line) + "\\n")  # ← one object per line
+
+# Validate before uploading — OpenAI rejects malformed files
+with open("training_data.jsonl") as f:
+    for i, line in enumerate(f):
+        obj = json.loads(line)
+        assert "messages" in obj
+        assert len(obj["messages"]) >= 2
+print("✅ JSONL valid")`}</CB>
+          <NotebookDemoLink />
+        </section>
+
+
+        {/* ── Chapter 7: Running the Job ── */}
+        <section id="ft7" style={{paddingTop:"2rem"}}>
+          <ChH num="7" title="Running a Fine-Tuning Job" sub="End to end with the OpenAI API" color="var(--build-color)"/>
+
+          <P>Once your JSONL is ready, the actual training is three API calls: upload the file, start the job, poll for completion.</P>
+
+          <CB>{`from openai import OpenAI
+client = OpenAI()
+
+# 1. Upload the training file
+training_file = client.files.create(
+    file=open("training_data.jsonl", "rb"),
+    purpose="fine-tune"
+)
+print(f"Uploaded: {training_file.id}")
+
+# 2. (Optional) Upload a validation file — OpenAI uses it during training
+#    to compute eval loss every epoch, helping you spot overfitting
+validation_file = client.files.create(
+    file=open("validation_data.jsonl", "rb"),
+    purpose="fine-tune"
+)
+
+# 3. Kick off the fine-tuning job
+job = client.fine_tuning.jobs.create(
+    training_file=training_file.id,
+    validation_file=validation_file.id,
+    model="gpt-4o-mini-2024-07-18",   # the base model to fine-tune
+    suffix="support-classifier-v1",    # appears in your model's name
+    hyperparameters={
+        "n_epochs": 3,                 # 'auto' usually works fine
+    }
+)
+print(f"Job started: {job.id}")`}</CB>
+
+          <SubH>Monitoring the job</SubH>
+
+          <CB>{`# Poll until done — or check the OpenAI dashboard
+import time
+
+while True:
+    job = client.fine_tuning.jobs.retrieve(job.id)
+    print(f"Status: {job.status}")
+    if job.status in ["succeeded", "failed", "cancelled"]:
+        break
+    time.sleep(60)
+
+if job.status == "succeeded":
+    print(f"\\nYour fine-tuned model: {job.fine_tuned_model}")
+    # e.g. ft:gpt-4o-mini-2024-07-18:your-org:support-classifier-v1:abc123`}</CB>
+
+          <SubH>Calling your model</SubH>
+
+          <CB>{`# Use it exactly like any other model
+response = client.chat.completions.create(
+    model=job.fine_tuned_model,
+    messages=[
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": "My WiFi keeps dropping every 10 minutes"},
+    ]
+)
+print(response.choices[0].message.content)  # → "Network"`}</CB>
+
+          <Callout color="var(--build-color)" icon="💸"><S>Cost reality check:</S> A typical small fine-tuning job (200 examples, gpt-4o-mini) costs around $5–$20 in training. Inference costs are roughly 2× the base model price per token — but because your prompts shrink dramatically (the task is now "baked in"), total per-call cost usually drops 5–10×.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 8: Evaluating ── */}
+        <section id="ft8" style={{paddingTop:"2rem"}}>
+          <ChH num="8" title="Did It Actually Help?" sub="Evaluating your fine-tuned model" color="var(--build-color)"/>
+
+          <P>The most common fine-tuning failure mode is shipping a model that <S>seems</S> better because the loss curve looked nice — but actually performs worse than the prompt-engineered baseline. Evaluation is non-negotiable.</P>
+
+          <SubH>The three checks every fine-tune needs</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {n:"1", t:"Held-out accuracy", c:"#10B981",
+                desc:"Run your fine-tuned model on the 20% you held out from training. Compare against the prompt-engineered baseline on the same examples. If the fine-tune isn't clearly better, you've gained nothing.",
+                code:`# Same 100 examples through both
+ft_correct = sum(predict_ft(x) == y for x, y in test_set)
+baseline_correct = sum(predict_baseline(x) == y for x, y in test_set)
+
+print(f"Fine-tuned: {ft_correct}/100")
+print(f"Baseline:   {baseline_correct}/100")`},
+              {n:"2", t:"Out-of-distribution check", c:"#F59E0B",
+                desc:"Test on examples that don't look like your training data — slightly weird phrasing, edge cases, adversarial inputs. A model that memorized your training set often falls apart here.",
+                code:`# Try inputs that are NOT in your training distribution
+weird_inputs = [
+    "Hi I have a question regarding my account thx",  # informal
+    "URGENT: SYSTEM DOWN ENTIRE TEAM AFFECTED",        # all caps
+    "我无法登录我的账户",                                 # different language
+]
+for x in weird_inputs:
+    print(f"{x[:40]}... → {predict_ft(x)}")`},
+              {n:"3", t:"Latency & cost", c:"#A78BFA",
+                desc:"Real per-call cost (in dollars) and latency (in milliseconds) on production-shaped inputs. The whole point of fine-tuning is usually that these go down.",
+                code:`import time
+start = time.time()
+preds = [predict_ft(x) for x in test_set[:50]]
+elapsed = time.time() - start
+print(f"Avg latency: {elapsed/50*1000:.0f}ms")
+print(f"Avg cost:    ~$0.0008 / call (vs $0.012 baseline)")`},
+            ].map((c,i)=>(
+              <div key={i} style={{padding:"14px 16px",background:"white",borderRadius:10,border:"1px solid "+c.c+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <div style={{width:28,height:28,borderRadius:7,background:c.c+"22",color:c.c,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.88rem"}}>{c.n}</div>
+                  <span style={{fontWeight:700,fontSize:"0.95rem"}}>{c.t}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",marginBottom:8,lineHeight:1.7}}>{c.desc}</div>
+                <pre style={{background:"#1A1D27",color:"#E2E8F0",padding:"0.6rem 0.85rem",borderRadius:6,fontSize:"0.76rem",fontFamily:"'JetBrains Mono'",margin:0,overflow:"auto"}}>{c.code}</pre>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--red)" icon="⚠️"><S>The fine-tuning regret:</S> The most common regret isn't "I should have fine-tuned" — it's "I fine-tuned without measuring properly, and now I'm stuck supporting a model that's only marginally better than a prompt I could update in seconds."</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 9: Why full FT fails ── */}
+        <section id="ft9" style={{paddingTop:"2rem"}}>
+          <ChH num="9" title="Why Full Fine-Tuning Fails (For Most Of Us)" sub="The 8 billion weight problem" color="var(--work-color)"/>
+
+          <P>OpenAI hides the GPU complexity behind their API. Once you move to open-source models, you face it directly. Let's understand the problem before seeing the elegant solution.</P>
+
+          <SubH>The math</SubH>
+
+          <P>Take Llama 3.1 8B. That's <S>8 billion weights</S>, each typically stored as a 16-bit number (2 bytes). To <S>load</S> the model for inference: 16 GB of GPU memory.</P>
+
+          <P>To <S>train</S> it via standard backpropagation, you need to keep around, for every weight:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>The weight itself</S> — 16 GB</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>The gradient</S> — another 16 GB</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Optimizer state</S> (Adam keeps 2 moments per weight, in fp32) — 64 GB</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Activations</S> (intermediate values needed for backprop) — 10–40 GB depending on batch size</div>
+          </div>
+
+          <P>Total: <S color="var(--red)">~120+ GB of GPU memory</S> for an 8B model. That's a multi-GPU server costing tens of dollars an hour. To fine-tune a 70B model: hundreds of GB. To fine-tune the 405B: a data center.</P>
+
+          <SubH>The realization</SubH>
+
+          <P>Here's the question that changed everything: do we really need to update <S>all</S> 8 billion weights to teach a new behavior? Most fine-tuning tasks change the model only a little — adjusting tone, learning a few new categories, picking up a domain's terminology.</P>
+
+          <P>What if we could update just <S>0.1% of the weights</S> — and somehow get most of the benefit? That's what LoRA does.</P>
+
+          <Callout color="var(--work-color)" icon="💡">The intuition that motivates LoRA: fine-tuning isn't building a new model. It's nudging an existing one. Nudges live in a much smaller space than the full weight matrix.</Callout>
+        </section>
+
+        {/* ── Chapter 10: LoRA ── */}
+        <section id="ft10" style={{paddingTop:"2rem"}}>
+          <ChH num="10" title="LoRA — The Trick That Made Fine-Tuning Accessible" sub="Low-Rank Adaptation, visually" color="var(--work-color)"/>
+
+          <P>LoRA (Low-Rank Adaptation) was published in 2021 and changed the economics of fine-tuning permanently. The math is simpler than the name suggests.</P>
+
+          <SubH>The setup</SubH>
+
+          <P>Inside a transformer, the "weights" are mostly giant matrices — for an 8B model, many of them are 4096 × 4096 (about 16 million numbers each). Fine-tuning normally means updating these matrices directly.</P>
+
+          <P>LoRA's trick: <S>freeze the original matrix W, and learn a small "patch" alongside it</S>. The patch is the product of two thin matrices A and B, where the inner dimension (called the <S>rank</S>) is small — typically 8 or 16.</P>
+
+          <LoRARankDemo />
+
+          <LoRAWhyCollapsible />
+
+          <P>In practice, LoRA fine-tunes match or come within 1–2% of full fine-tuning quality on most tasks, while training <S>~100× fewer parameters</S> and using <S>~10× less memory</S>.</P>
+
+          <SubH>What you store and serve</SubH>
+
+          <P>The final artifact is a tiny file (often under 100 MB) containing just the A and B matrices for each layer. At inference time, you load the original model once and apply any of dozens of different LoRA adapters on top — switching tasks without reloading the base model.</P>
+
+          <Callout color="var(--work-color)" icon="🎯">LoRA's significance: in 2020, fine-tuning a 7B model required a $10k/month server. In 2024, the same task runs on a $1.50/hour rented GPU. Same model, same quality — the math just got smarter.</Callout>
+        </section>
+
+        {/* ── Chapter 11: QLoRA ── */}
+        <section id="ft11" style={{paddingTop:"2rem"}}>
+          <ChH num="11" title="QLoRA — LoRA + Quantization" sub="Fine-tuning on your laptop" color="var(--work-color)"/>
+
+          <P>LoRA freezes the base weights, but they still have to live in GPU memory. For a 70B model, that's 140 GB. <S>Quantization</S> compresses the frozen weights to 4-bit precision — cutting memory ~4× — without losing much quality during inference.</P>
+
+          <SubH>The full pipeline</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",alignItems:"stretch",gap:8,flexWrap:"wrap"}}>
+            {[
+              {step:"1", t:"Load model in 4-bit", d:"Base weights compressed 4×. 70B fits in ~35 GB instead of 140.", color:"#3B82F6"},
+              {step:"2", t:"Freeze the base", d:"Don't compute gradients for it. No optimizer state needed.", color:"#3B82F6"},
+              {step:"3", t:"Attach LoRA adapters", d:"Small trainable matrices in fp16 alongside the frozen base.", color:"#A78BFA"},
+              {step:"4", t:"Train", d:"Only the LoRA weights update. Memory + compute drops dramatically.", color:"#10B981"},
+            ].map((s,i)=>(
+              <div key={i} style={{flex:"1 1 200px",padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid "+s.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                  <div style={{width:26,height:26,borderRadius:6,background:s.color+"22",color:s.color,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.85rem"}}>{s.step}</div>
+                  <span style={{fontWeight:700,fontSize:"0.86rem"}}>{s.t}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.78rem",lineHeight:1.6}}>{s.d}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>What QLoRA lets you do</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.86rem"}}>Fine-tune a <S>3B model on a free Colab T4</S> (16 GB)</div>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.86rem"}}>Fine-tune a <S>7B model on a single RTX 4090</S> (24 GB)</div>
+            <div style={{padding:"8px 12px",background:"var(--work-bg)",borderRadius:6,borderLeft:"3px solid var(--work-color)",fontSize:"0.86rem"}}>Fine-tune a <S>70B model on a single A100</S> (80 GB) — was previously impossible without a cluster</div>
+          </div>
+
+          <Callout color="var(--work-color)" icon="🔬">QLoRA was the breakthrough that made fine-tuning truly democratized. The paper came out in May 2023, and within months, every serious open-source fine-tuning project moved to it. It's now the default approach.</Callout>
+        </section>
+
+        {/* ── Chapter 12: PEFT in 20 lines ── */}
+        <section id="ft12" style={{paddingTop:"2rem"}}>
+          <ChH num="12" title="PEFT — LoRA in 20 Lines" sub="What the code actually looks like" color="var(--work-color)"/>
+
+          <P>The <Code>peft</Code> library from Hugging Face wraps LoRA into a clean API. Adding LoRA to any Hugging Face model is genuinely about 20 lines.</P>
+
+          <CB>{`from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+import torch
+
+MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
+
+# 1. Quantization config — load the base model in 4-bit
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4",          # the QLoRA paper's recommended scheme
+)
+
+# 2. Load model + tokenizer
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=bnb_config,
+    device_map="auto",
+)
+
+# 3. Prepare for training (handles fp32 layer norms, gradient checkpointing, etc.)
+model = prepare_model_for_kbit_training(model)
+
+# 4. Configure LoRA
+lora_config = LoraConfig(
+    r=16,                                  # rank — how thin the trainable matrices are
+    lora_alpha=32,                         # scaling factor (rule of thumb: 2 × r)
+    target_modules=["q_proj", "v_proj"],   # which layers to attach LoRA to
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+
+# 5. Wrap the model
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()
+# → "trainable params: 6,815,744 || all params: 3,213,815,808 || trainable%: 0.21%"`}</CB>
+
+          <P>That's it. The model is now ready for training — only the LoRA adapters will update. Six million trainable parameters out of three billion total — a 99.79% reduction in what needs to fit in memory as gradients and optimizer state.</P>
+
+          <SubH>The training loop is unchanged</SubH>
+
+          <P>Once you call <Code>get_peft_model</Code>, the result acts like any Hugging Face model. You can use the standard <Code>Trainer</Code> API, or write your own training loop. The framework handles which parameters need gradients automatically.</P>
+
+          <CB>{`from transformers import Trainer, TrainingArguments
+
+trainer = Trainer(
+    model=model,
+    tokenizer=tokenizer,
+    train_dataset=train_data,
+    eval_dataset=val_data,
+    args=TrainingArguments(
+        output_dir="./out",
+        per_device_train_batch_size=4,
+        num_train_epochs=3,
+        learning_rate=2e-4,    # higher than full FT — LoRA prefers larger steps
+        fp16=True,
+        logging_steps=10,
+        save_steps=200,
+    ),
+)
+trainer.train()
+
+# Save the adapter (small — maybe 50 MB)
+model.save_pretrained("./my-lora-adapter")`}</CB>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 13: Loading open models ── */}
+        <section id="ft13" style={{paddingTop:"2rem"}}>
+          <ChH num="13" title="Loading Open-Source Models" sub="From the Hub to your GPU" color="var(--build-color)"/>
+
+          <P>Before fine-tuning anything, you need to load and run a model. The Transformers library makes this remarkably uniform — the same three lines work across Llama, Mistral, Phi, Qwen, and Gemma.</P>
+
+          <CB>{`from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+# Pick a model — the Hub ID is the only thing that changes between families
+MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
+# Could also be:
+#   "mistralai/Mistral-7B-Instruct-v0.3"
+#   "microsoft/Phi-3-mini-4k-instruct"
+#   "Qwen/Qwen2.5-7B-Instruct"
+#   "google/gemma-2-9b-it"
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    torch_dtype=torch.float16,   # half precision halves memory
+    device_map="auto",            # put it on GPU if available
+)
+
+# Run inference
+prompt = "Explain RAG in one sentence."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+outputs = model.generate(**inputs, max_new_tokens=100, do_sample=False)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))`}</CB>
+
+          <SubH>Authentication</SubH>
+
+          <P>Some models (notably Llama) require accepting a license on the Hub before you can download them. After accepting on the website, run:</P>
+
+          <CB>{`# CLI login (do this once per machine)
+huggingface-cli login
+# Paste your access token from huggingface.co/settings/tokens`}</CB>
+
+          <Callout color="var(--build-color)" icon="🔐">If you see <Code>403 Forbidden</Code> errors loading Llama or Gemma, that's the license issue — visit the model page on the Hub and click "Accept terms". Phi, Qwen, and Mistral are typically open without that step.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 14: Pipeline API ── */}
+        <section id="ft14" style={{paddingTop:"2rem"}}>
+          <ChH num="14" title="The Transformers Pipeline API" sub="Inference in three lines" color="var(--build-color)"/>
+
+          <P>For inference-only use cases, Hugging Face's <Code>pipeline</Code> API hides almost all the boilerplate. It's the equivalent of OpenAI's client for open-source models.</P>
+
+          <CB>{`from transformers import pipeline
+
+# One line — auto-loads model, tokenizer, picks GPU, sets up generation config
+pipe = pipeline(
+    "text-generation",
+    model="meta-llama/Llama-3.2-3B-Instruct",
+    torch_dtype="float16",
+    device_map="auto",
+)
+
+# Chat-style messages, just like OpenAI
+messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "What's the capital of France?"},
+]
+
+result = pipe(messages, max_new_tokens=100, do_sample=False)
+print(result[0]["generated_text"][-1]["content"])
+# → "The capital of France is Paris."`}</CB>
+
+          <SubH>Tasks the pipeline supports</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.84rem"}}><Code>text-generation</Code> — chat and completion</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.84rem"}}><Code>text-classification</Code> — sentiment, topic, intent</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.84rem"}}><Code>token-classification</Code> — named-entity recognition, POS tagging</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.84rem"}}><Code>summarization</Code>, <Code>translation</Code>, <Code>question-answering</Code></div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.84rem"}}><Code>feature-extraction</Code> — get embeddings (the underlying primitive behind RAG)</div>
+          </div>
+
+          <Callout color="var(--build-color)" icon="🛠️">For production, you'll usually outgrow the pipeline API — you'll want explicit control over batching, streaming, and GPU memory. But for prototyping and quick benchmarks, <Code>pipeline()</Code> is unbeatable.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 15: Model Cards ── */}
+        <section id="ft15" style={{paddingTop:"2rem"}}>
+          <ChH num="15" title="Reading Model Cards" sub="What to look for before you commit" color="var(--build-color)"/>
+
+          <P>Every model on the Hub has a "card" — a markdown document on its model page. The good cards tell you everything you need to know in 60 seconds. The bad cards bury landmines. Knowing what to scan for matters.</P>
+
+          <SubH>The five things to check, in order</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {n:"1", t:"License", color:"#EF4444",
+                why:"Apache 2.0 and MIT are the most permissive — use for almost anything. Llama's license restricts use by very large companies and some named use cases. Some research models have non-commercial licenses. Read this first — it's a deal-breaker if wrong."},
+              {n:"2", t:"Intended use", color:"#F59E0B",
+                why:"Is this a base model (raw next-token predictor, awkward to chat with) or an instruct model (chat-tuned)? Use instruct variants unless you're doing your own SFT from scratch. Look for '-Instruct' or '-it' (instruction-tuned) in the name."},
+              {n:"3", t:"Training data summary", color:"#A78BFA",
+                why:"Was it trained on web crawl, on code, on multilingual data, on a curated synthetic corpus? This tells you what the model is good at out of the box. Phi-3 is trained on curated 'textbook-quality' data; Llama is trained on broad web data. Different strengths."},
+              {n:"4", t:"Benchmarks", color:"#10B981",
+                why:"Most cards list MMLU, GSM8K, HumanEval scores. These are useful for sanity-checking — a 'small but mighty' model claiming to beat GPT-4 on MMLU is probably overstating things. Compare against the model's stated peers."},
+              {n:"5", t:"Limitations & biases", color:"#1E6091",
+                why:"Reputable cards list known failure modes — refusal behavior, language gaps, hallucination tendencies. If this section is empty or generic, the model has likely had less safety scrutiny than peers."},
+            ].map(c=>(
+              <div key={c.n} style={{padding:"12px 16px",background:"white",borderRadius:10,border:"1px solid "+c.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <div style={{width:28,height:28,borderRadius:7,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:"0.85rem"}}>{c.n}</div>
+                  <span style={{fontWeight:700,fontSize:"0.95rem"}}>{c.t}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.7}}>{c.why}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--build-color)" icon="📋"><S>Red flag:</S> a model card with no license listed, no training data description, and no benchmarks. That's an unreviewed dump — possibly fine, possibly broken, possibly not what it claims to be. Stick to models from labs with reputation (Meta, Mistral, Microsoft, Google, Alibaba, Qwen) unless you have time to evaluate carefully.</Callout>
+        </section>
+
+        {/* ── Chapter 16: Capstone ── */}
+        <section id="ft16" style={{paddingTop:"2rem"}}>
+          <ChH num="16" title="Capstone — Fine-Tune Llama 3.2 with LoRA" sub="Customer-support ticket classifier" color="var(--purple)"/>
+
+          <P>Everything in this section comes together now. You'll fine-tune Llama 3.2 3B on a customer-support classification task using QLoRA, then evaluate it against the prompt-engineered baseline from Section 2.</P>
+
+          <SubH>The setup</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"var(--purple-bg)",borderRadius:10,border:"1px solid var(--purple-border)"}}>
+            <div style={{fontWeight:700,fontSize:"0.9rem",color:"var(--purple)",marginBottom:8}}>What we're building</div>
+            <div style={{fontSize:"0.86rem",color:"var(--text)",lineHeight:1.7}}>A model that takes a customer-support ticket and outputs one of five categories: <S>Hardware, Software, Network, Account, Billing</S>. The fine-tuned version should match or beat a prompt-engineered baseline at a fraction of the cost.</div>
+          </div>
+
+          <SubH>The dataset</SubH>
+
+          <CB>{`# tickets.jsonl — 200 examples, ~40 per class, hand-labeled
+# Each line:
+{"ticket": "Excel crashes when I open large files", "category": "Software"}
+{"ticket": "WiFi disconnects every 10 minutes", "category": "Network"}
+{"ticket": "Wrong charge appeared on my statement", "category": "Billing"}
+# ... 197 more
+
+# Split into train / validation / test (60/20/20)
+import json, random
+data = [json.loads(l) for l in open("tickets.jsonl")]
+random.seed(42)
+random.shuffle(data)
+n = len(data)
+train_data = data[:int(0.6*n)]
+val_data   = data[int(0.6*n):int(0.8*n)]
+test_data  = data[int(0.8*n):]`}</CB>
+
+          <SubH>Format for training</SubH>
+
+          <CB>{`SYSTEM = "Classify the support ticket. Respond with exactly one of: Hardware, Software, Network, Account, Billing."
+
+def format_example(row):
+    return tokenizer.apply_chat_template([
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": row["ticket"]},
+        {"role": "assistant", "content": row["category"]},
+    ], tokenize=False)
+
+train_texts = [format_example(r) for r in train_data]`}</CB>
+
+          <SubH>Setup the model with LoRA (chapter 12 recap)</SubH>
+
+          <CB>{`from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+import torch
+
+MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4",
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+tokenizer.pad_token = tokenizer.eos_token
+model = AutoModelForCausalLM.from_pretrained(MODEL_ID, quantization_config=bnb_config, device_map="auto")
+model = prepare_model_for_kbit_training(model)
+
+model = get_peft_model(model, LoraConfig(
+    r=16, lora_alpha=32, target_modules=["q_proj","v_proj"],
+    lora_dropout=0.05, task_type="CAUSAL_LM",
+))
+model.print_trainable_parameters()`}</CB>
+
+          <SubH>Train it</SubH>
+
+          <CB>{`from transformers import Trainer, TrainingArguments
+from datasets import Dataset
+
+train_ds = Dataset.from_dict({"text": train_texts})
+train_ds = train_ds.map(lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=256), batched=True)
+
+trainer = Trainer(
+    model=model,
+    train_dataset=train_ds,
+    tokenizer=tokenizer,
+    args=TrainingArguments(
+        output_dir="./out",
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=2,
+        num_train_epochs=3,
+        learning_rate=2e-4,
+        fp16=True,
+        logging_steps=10,
+        save_strategy="epoch",
+    ),
+)
+trainer.train()
+model.save_pretrained("./llama32-tickets-lora")`}</CB>
+
+          <SubH>What to expect</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>Training time: <S>~15–25 minutes on a free Colab T4 GPU</S> for 200 examples × 3 epochs</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>Memory: <S>~7–9 GB</S> — fits comfortably in any 16 GB GPU</div>
+            <div style={{padding:"7px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}>Output: <S>a ~50 MB adapter file</S> — not a 6 GB model checkpoint</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="🎓">Full runnable code lives in the companion notebook. Run it end-to-end and you'll have a fine-tuned model artifact in under 30 minutes.</Callout>
+          <NotebookDemoLink />
+        </section>
+
+        {/* ── Chapter 17: Bake-Off ── */}
+        <section id="ft17" style={{paddingTop:"2rem"}}>
+          <ChH num="17" title="The Bake-Off — Prompt vs Fine-Tune" sub="Same task, measured fairly" color="var(--purple)"/>
+
+          <P>The capstone isn't done until you've measured. Let's compare the fine-tuned model against a well-engineered prompt baseline on the same held-out 40 test tickets.</P>
+
+          <BakeOffDemo />
+
+          <SubH>How to read the results</SubH>
+
+          <P>The numbers above are representative of what you'll actually see on a task like this. A few patterns worth noticing:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--purple)">Accuracy is similar.</S> A good prompt with few-shot examples on a strong model is genuinely hard to beat. Fine-tuning usually adds 1–4 percentage points on narrow tasks.</div>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--purple)",fontSize:"0.86rem"}}><S color="var(--purple)">Cost is where fine-tuning wins.</S> The prompt approach sends 400+ tokens every call (system + few-shot examples + ticket). The fine-tuned model only needs the ticket. At 100k calls/day, that's tens of dollars saved daily.</div>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--purple)">Latency improves meaningfully.</S> Shorter prompts mean fewer tokens to process. 3× speedup is common.</div>
+          </div>
+
+          <SubH>The verdict</SubH>
+
+          <P>If volume is low, the prompt-engineered baseline is the right answer — simpler, no training step, easy to update. If volume is high, fine-tuning starts paying for itself within weeks. The exact break-even depends on your traffic — chapter 19 has the math.</P>
+          <NotebookDemoLink />
+        </section>
+
+
+        {/* ── Chapter 18: Deployment ── */}
+        <section id="ft18" style={{paddingTop:"2rem"}}>
+          <ChH num="18" title="Deployment Options" sub="Once you have a fine-tuned model, where do you run it?" color="var(--orange)"/>
+
+          <P>Fine-tuning an open-source model leaves you with a question: how do you actually serve it in production? Three common paths, very different tradeoffs.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {icon:"☁️", name:"Managed inference APIs", color:"#60A5FA",
+                examples:"Together AI, Fireworks, Replicate, Anyscale",
+                pros:["No infrastructure work","Pay per token, like OpenAI","Most have one-click deployment for popular LoRAs"],
+                cons:["Limited model selection","Cold starts on smaller deployments","Still sending data to a third party"],
+                bestFor:"Most teams — fastest path to production"},
+              {icon:"⚡", name:"Self-hosted with vLLM", color:"#A78BFA",
+                examples:"vLLM, TGI (Text Generation Inference), SGLang",
+                pros:["Full control over latency and batching","Best $/token at scale","Data stays in your VPC"],
+                cons:["Requires GPU infrastructure","Operational overhead","Need to handle scaling, monitoring, updates"],
+                bestFor:"Teams with platform engineering and scale to justify it"},
+              {icon:"🏠", name:"On-device / edge", color:"#10B981",
+                examples:"Ollama, llama.cpp, MLX (Apple), ONNX Runtime",
+                pros:["Zero per-call cost","Complete data privacy","Works offline"],
+                cons:["Only small models (≤8B) are practical","Quality lower than cloud","Distribution and updates are hard"],
+                bestFor:"Privacy-critical apps, mobile, latency-bound use cases"},
+            ].map(d=>(
+              <div key={d.name} style={{padding:"12px 16px",background:"white",borderRadius:10,border:"1px solid "+d.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <span style={{fontSize:"1.4rem"}}>{d.icon}</span>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:"0.95rem",color:d.color}}>{d.name}</div>
+                    <div style={{color:"var(--text-muted)",fontSize:"0.76rem"}}>{d.examples}</div>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"6px 0",fontSize:"0.8rem"}}>
+                  <div>
+                    <div style={{color:"#10B981",fontWeight:700,fontSize:"0.72rem",marginBottom:3}}>✓ PROS</div>
+                    {d.pros.map((p,i)=>(<div key={i} style={{color:"var(--text-secondary)",padding:"2px 0"}}>• {p}</div>))}
+                  </div>
+                  <div>
+                    <div style={{color:"#EF4444",fontWeight:700,fontSize:"0.72rem",marginBottom:3}}>✗ CONS</div>
+                    {d.cons.map((c,i)=>(<div key={i} style={{color:"var(--text-secondary)",padding:"2px 0"}}>• {c}</div>))}
+                  </div>
+                </div>
+                <div style={{padding:"6px 10px",background:d.color+"15",borderRadius:6,borderLeft:"3px solid "+d.color,fontSize:"0.82rem"}}>
+                  <S color={d.color}>Best for: </S><span style={{color:"var(--text-secondary)"}}>{d.bestFor}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--orange)" icon="🚀">For most teams shipping their first fine-tuned model, <S>Together AI or Fireworks</S> is the right starting point. They accept your LoRA adapter, serve it via an OpenAI-compatible API, and bill per token. You can migrate to self-hosting later if economics demand.</Callout>
+        </section>
+
+        {/* ── Chapter 19: Cost Analysis ── */}
+        <section id="ft19" style={{paddingTop:"2rem"}}>
+          <ChH num="19" title="Cost Analysis — When Does Fine-Tuning Pay Off?" sub="The break-even math" color="var(--orange)"/>
+
+          <P>Fine-tuning costs money upfront (training) and yields savings per call (smaller prompts). The math is simple — adjust the sliders below and see where the lines cross.</P>
+
+          <CostCalcDemo />
+
+          <SubH>The patterns that emerge</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--orange)">Below ~1k calls/day:</S> training cost dominates. Don't fine-tune unless quality or privacy demands it.</div>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--orange)">1k–10k calls/day:</S> break-even within weeks. Worth doing if accuracy improves meaningfully.</div>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--orange)">10k+ calls/day:</S> fine-tuning almost always wins on cost. Often by 5–15×.</div>
+            <div style={{padding:"8px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S color="var(--orange)">100k+ calls/day:</S> consider open-source + self-hosting. Per-token costs drop another 5–10×.</div>
+          </div>
+
+          <Callout color="var(--orange)" icon="💰">Don't forget the hidden costs: <S>data labeling</S> (often the biggest line item), <S>evaluation infrastructure</S>, and <S>maintenance</S> when requirements drift. Budget for these explicitly before committing to fine-tuning.</Callout>
+        </section>
+
+        {/* ── Chapter 20: Maintenance ── */}
+        <section id="ft20" style={{paddingTop:"2rem"}}>
+          <ChH num="20" title="Maintenance & Drift" sub="What goes wrong over time" color="var(--orange)"/>
+
+          <P>Shipping a fine-tuned model isn't the end — it's the start of a new operational responsibility. Three failure modes show up over months and years.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {n:"1", t:"Distribution drift", color:"#F59E0B", icon:"🌊",
+                desc:"The data your model sees in production shifts away from your training data. New product categories appear, customer language evolves, edge cases multiply.",
+                signal:"Accuracy on recent production traffic drops while accuracy on the original test set stays high.",
+                fix:"Sample production logs monthly. Add the hard cases to your training set. Retrain quarterly."},
+              {n:"2", t:"Label drift", color:"#F59E0B", icon:"🏷️",
+                desc:"Your team changes how it labels things. 'Hardware' issues that used to include peripherals now exclude them. The model is now correct by yesterday's rules, wrong by today's.",
+                signal:"Disagreement between model and human reviewers increases — but the model isn't getting worse, the ground truth is moving.",
+                fix:"Re-label a sample of recent data quarterly. If labels have shifted, retrain. If they shift often, your taxonomy is too granular."},
+              {n:"3", t:"Base model deprecation", color:"#F59E0B", icon:"🪦",
+                desc:"For OpenAI fine-tunes: the underlying base model gets deprecated. For open-source: a newer, better base model is released, and your old fine-tune is now obsolete.",
+                signal:"OpenAI emails you. Or you notice newer base models outperform your fine-tune even without retraining.",
+                fix:"Rerun your fine-tuning recipe on the newer base. The same data, different starting point — usually 1-day turnaround."},
+            ].map(d=>(
+              <div key={d.n} style={{padding:"12px 16px",background:"white",borderRadius:10,border:"1px solid "+d.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <span style={{fontSize:"1.4rem"}}>{d.icon}</span>
+                  <span style={{fontWeight:700,fontSize:"0.95rem",color:d.color}}>{d.t}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",marginBottom:6,lineHeight:1.7}}>{d.desc}</div>
+                <div style={{color:"var(--text)",fontSize:"0.82rem",padding:"6px 10px",background:d.color+"12",borderRadius:6,borderLeft:"3px solid "+d.color,marginBottom:6}}><S color={d.color}>Signal: </S>{d.signal}</div>
+                <div style={{color:"#15803D",fontSize:"0.82rem",padding:"6px 10px",background:"#F0FDF4",borderRadius:6,border:"1px solid #BBF7D0"}}><S color="#15803D">Fix: </S>{d.fix}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>The maintenance loop</SubH>
+
+          <P>A healthy production fine-tuning practice looks like:</P>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Daily:</S> log every prediction with confidence + input + timestamp.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Weekly:</S> review a sample of low-confidence predictions and disagreements.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Monthly:</S> rerun the test set; alert if accuracy drops &gt; 2%.</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}><S>Quarterly:</S> retrain with augmented data; redo the bake-off against the latest base models.</div>
+          </div>
+
+          <Callout color="var(--orange)" icon="🔄">Fine-tuning is a commitment, not a project. Budget time for ongoing evaluation and retraining — typically 10-20% of the original effort, indefinitely. Teams that skip this end up with a model that silently degrades for months before someone notices.</Callout>
+        </section>
+
+        {/* ── Chapter 21: Practice OpenAI FT ── */}
+        <section id="ft21" style={{paddingTop:"2rem"}}>
+          <ChH num="21" title="Practice — Fine-Tune GPT-4o-mini" sub="Classification challenge" color="var(--purple)"/>
+
+          <P><S>Goal:</S> Fine-tune <Code>gpt-4o-mini</Code> on a real classification task of your choosing. Compare against a few-shot prompt baseline.</P>
+
+          <SubH>Dataset ideas</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>Customer review sentiment</S> with custom categories (e.g., 'shipping', 'quality', 'support', 'pricing')</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>Email priority classification</S> (urgent / soon / fyi / spam)</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>Code review tagging</S> (bug / style / question / approval)</div>
+            <div style={{padding:"8px 12px",background:"var(--purple-bg)",borderRadius:6,fontSize:"0.86rem"}}><S>News headline classification</S> by topic</div>
+          </div>
+
+          <SubH>Requirements</SubH>
+
+          <div style={{display:"flex",flexDirection:"column",gap:6,margin:"0.85rem 0 1.25rem"}}>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>✓ Minimum 150 labeled training examples, balanced across classes</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>✓ Separate 30-example test set, never seen during training</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>✓ Few-shot prompt baseline (8 examples in the prompt) measured on the same test set</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>✓ Compare: accuracy, cost per call, latency</div>
+            <div style={{padding:"7px 12px",background:"white",borderRadius:6,border:"1px solid var(--border)",fontSize:"0.86rem"}}>✓ One paragraph: would you ship the fine-tune? Why or why not?</div>
+          </div>
+
+          <Callout color="var(--purple)" icon="📝">The honest answer might be <S>"no, the prompt baseline is fine"</S>. That's a perfectly valid result — and arguably the most useful one. The skill is making the call with data.</Callout>
+        </section>
+
+        {/* ── Chapter 22: Decision Framework ── */}
+        <section id="ft22" style={{paddingTop:"2rem"}}>
+          <ChH num="22" title="Practice — Your Own Decision Framework" sub="Write the guide you wish existed" color="var(--purple)"/>
+
+          <P><S>Goal:</S> Write a 1–2 page decision framework that someone on your team could use to decide whether to fine-tune. Include real examples from your work.</P>
+
+          <SubH>What to include</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"A flowchart or decision tree", d:"Visual representation of the questions someone should ask, in order. Yours can build on (or improve) the one earlier in this section."},
+              {t:"Three real scenarios from your work", d:"For each, walk through the decision tree. Show what tool you'd recommend and why. At least one should end in 'don't fine-tune'."},
+              {t:"Cost thresholds for your context", d:"What's the call volume at which fine-tuning makes economic sense for your team? Use real numbers from your stack."},
+              {t:"Your taxonomy of common mistakes", d:"What are the ways your team or domain typically misuses fine-tuning? E.g., 'we keep trying to teach it our product specs — it's RAG, not FT'."},
+              {t:"An evaluation playbook", d:"How will you know if a fine-tune actually helped? What's your test set, your baselines, your kill criteria?"},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.92rem",marginBottom:4}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--purple)" icon="📄"><S>Why this exercise matters:</S> Six months from now, you'll forget half of this section. Future-you will benefit enormously from a personal decision framework written in your own words, with your own examples. This is the real deliverable.</Callout>
+        </section>
+
+        {/* ── Cheat Sheet ── */}
+        <section id="ft-cheat" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+            <div style={{display:"inline-block",padding:"3px 12px",background:"var(--accent-light)",borderRadius:5,marginBottom:10,border:"1px solid var(--work-border)"}}>
+              <span style={{color:"var(--accent)",fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>REFERENCE</span>
+            </div>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Cheat Sheet</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Which approach when</div>
+          </div>
+
+          <SubH>Decision flow</SubH>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {q:"Need facts the model doesn't have?", a:"RAG — never fine-tuning", color:"#1E6091"},
+              {q:"Need a specific output format or tone?", a:"Few-shot prompting first; fine-tune if volume justifies", color:"#1A6B4E"},
+              {q:"High-volume narrow classification (1k+/day)?", a:"Fine-tuning — likely big wins on cost", color:"#6D28D9"},
+              {q:"Brand voice, house style?", a:"Fine-tuning, with 200+ examples", color:"#6D28D9"},
+              {q:"Need better reasoning?", a:"Bigger base model, not fine-tuning", color:"#B45309"},
+              {q:"Have under 50 labeled examples?", a:"Few-shot prompting", color:"#1A6B4E"},
+              {q:"Privacy / data residency constraints?", a:"Open-source + self-hosted, LoRA if customization needed", color:"#A78BFA"},
+              {q:"Already shipping on GPT-4o, bills hurt?", a:"Distill to a fine-tuned mini model", color:"#6D28D9"},
+              {q:"Requirements still changing weekly?", a:"Stay in prompting — fine-tune later", color:"#1A6B4E"},
+              {q:"Hosting an 8B model yourself?", a:"vLLM or Together AI", color:"#C2410C"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr auto 1.5fr",gap:12,alignItems:"center",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"0.86rem",color:"var(--text)"}}>{r.q}</div>
+                <div style={{color:r.color,fontSize:"0.92rem"}}>→</div>
+                <div style={{fontSize:"0.86rem",color:r.color,fontWeight:600}}>{r.a}</div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Open-source model picker</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["General-purpose default", "Llama 3.1 8B Instruct"],
+              ["Edge / mobile / on-device", "Phi-3 mini (3.8B)"],
+              ["Multilingual / non-English", "Qwen 2.5 7B"],
+              ["European / GDPR", "Mistral 7B"],
+              ["Best per-parameter quality", "Phi-3 medium (14B)"],
+              ["Largest you can fine-tune on consumer GPU", "Llama 3.2 8B with QLoRA"],
+              ["Frontier open-source", "Llama 3.1 70B (multi-GPU)"],
+            ].map(([scenario, model],i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,padding:"6px 0",borderBottom:i<6?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--text-secondary)"}}>{scenario}</span>
+                <span style={{color:"var(--purple)",fontFamily:"'JetBrains Mono'",fontWeight:600}}>{model}</span>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Fine-tuning hyperparameter starting points</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["LoRA rank (r)", "8 or 16 — start with 8, bump to 16 if quality plateaus"],
+              ["LoRA alpha", "2 × r (so 16 or 32) — controls the strength of the adapter"],
+              ["Target modules", "q_proj, v_proj — the bare minimum. Add k_proj, o_proj for harder tasks"],
+              ["Learning rate", "2e-4 (LoRA tolerates higher LRs than full FT)"],
+              ["Epochs", "3 — start here, monitor validation loss for overfitting"],
+              ["Batch size", "4-8 on a single GPU, with gradient accumulation if needed"],
+              ["Dataset size", "Minimum ~150 examples; 500-2000 is the sweet spot"],
+            ].map(([k,v],i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:12,padding:"6px 0",borderBottom:i<6?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--purple)",fontWeight:600,fontFamily:"'JetBrains Mono'",fontSize:"0.8rem"}}>{k}</span>
+                <span style={{color:"var(--text-secondary)"}}>{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <SubH>Production checklist</SubH>
+
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "Prompt-engineered baseline measured on test set",
+              "Fine-tuned model beats baseline by a clear margin (not 1-2%)",
+              "Out-of-distribution test cases evaluated",
+              "Cost per call measured at expected production volume",
+              "Latency measured under realistic load",
+              "Held-out test set frozen — never used for training",
+              "Logging in place: input + prediction + confidence + timestamp",
+              "Drift detection: monthly accuracy check vs. baseline",
+              "Retraining cadence agreed (quarterly is typical)",
+              "Decision framework documented for future similar projects",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<9?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--purple)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--accent)" icon="🎓"><S>Section 8 complete.</S> You can now make informed decisions about fine-tuning — when it's the right tool, when it isn't, and how to actually do it end-to-end with both managed and open-source approaches. The next section moves into evaluation and observability — how to know whether any of this is actually working.</Callout>
+        </section>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
