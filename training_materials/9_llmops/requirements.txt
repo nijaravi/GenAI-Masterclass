@@ -1,0 +1,10 @@
+# Section 9 — LLMOps & Production Deployment
+# GenAI Decoded by Nij
+#
+# Install: pip install -r requirements.txt
+
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+openai>=1.30.0
+pydantic>=2.0.0
+python-dotenv==1.0.1
