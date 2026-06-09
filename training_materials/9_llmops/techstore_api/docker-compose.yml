@@ -1,0 +1,50 @@
+version: "3.9"
+
+# ============================================================
+# TechStore Support API — docker-compose
+#
+# Services:
+#   api   — FastAPI app (ChromaDB runs in-process inside it)
+#
+# Usage:
+#   docker-compose up --build          # first run
+#   docker-compose up                  # subsequent runs (uses cache)
+#   docker-compose down                # stop and remove containers
+#   docker-compose down -v             # also delete volumes
+#
+# ChromaDB data is persisted in the named volume chroma_data
+# so re-starting doesn't re-embed the knowledge base.
+# ============================================================
+
+services:
+
+  api:
+    build: .
+    container_name: techstore_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - app/.env
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHROMA_PATH=/app/chroma_data
+      - RAG_TOP_K=3
+      - RAG_MIN_RELEVANCE=0.35
+      - LOG_LEVEL=INFO
+    volumes:
+      # Persist ChromaDB embeddings across restarts
+      - chroma_data:/app/chroma_data
+      # Hot-reload source code during development (remove in prod)
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s   # give startup time for ChromaDB ingest
+
+volumes:
+  chroma_data:
+    driver: local

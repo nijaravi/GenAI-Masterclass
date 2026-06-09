@@ -85,7 +85,7 @@ const OPS_CHAPTERS = [
   { id: "ops1",  num: "1",  title: "What Is LLMOps?", sub: "The new discipline", group: "overview_ch" },
   { id: "ops2",  num: "2",  title: "Deployment Patterns", sub: "API wrapper to serverless", group: "deploy" },
   { id: "ops3",  num: "3",  title: "FastAPI for LLMs", sub: "Wrapping your app", group: "deploy" },
-  { id: "ops4",  num: "4",  title: "Docker Basics", sub: "Containerizing your service", group: "deploy" },
+  { id: "ops4",  num: "4",  title: "Production App Structure", sub: "Modular design + Docker + Compose", group: "deploy" },
   { id: "ops5",  num: "5",  title: "Cloud Deployment", sub: "Railway, Render, AWS Lambda", group: "deploy" },
   { id: "ops6",  num: "6",  title: "Monitoring — What to Track", sub: "Latency, cost, quality, drift", group: "monitor" },
   { id: "ops7",  num: "7",  title: "Structured Logging", sub: "Every call, captured", group: "monitor" },
@@ -1050,81 +1050,189 @@ uvicorn main:app --reload
 
         {/* ── Chapter 4: Docker ── */}
         <section id="ops4" style={{paddingTop:"2.5rem"}}>
-          <ChH num="4" title="Docker Basics" sub="Containerizing your LLM service for reliable deployment" />
+          <ChH num="4" title="Production App Structure" sub="Modular design, containerisation, and docker-compose" />
 
           <P>Docker packages your app and all its dependencies into a container — an isolated, reproducible environment that runs the same on your laptop, your teammate's machine, and the cloud. It's how "works on my machine" stops being an excuse.</P>
 
+          <SubH>From a single file to a real application</SubH>
+
+          <P>Chapter 3 used a single <Code>main.py</Code>. That's fine for a demo — but it doesn't scale. By the time you add RAG, guardrails, monitoring, routing, and eval, a single file becomes unmanageable. The production app you'll containerise here uses a <S color="var(--teal)">modular folder structure</S> where each concern lives in its own file.</P>
+
+          <div style={{margin:"1.25rem 0",background:"#1A1D27",borderRadius:12,padding:"1.25rem 1.5rem",border:"1px solid #2E3240"}}>
+            <div style={{color:"#2DD4BF",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,marginBottom:"1rem"}}>PROJECT STRUCTURE — techstore_api/</div>
+            <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.8rem",color:"#E2E8F0",lineHeight:2,margin:0,whiteSpace:"pre"}}>{`techstore_api/
+├── app/
+│   ├── main.py          ← FastAPI app — routes only, no business logic
+│   ├── rag.py           ← ChromaDB vector store: ingest + retrieve
+│   ├── guardrails.py    ← Input + output validation
+│   ├── llm.py           ← LLM call wrapper + LLM-as-judge
+│   ├── prompts.py       ← All prompt strings in one place
+│   ├── monitoring.py    ← Structured logging + metrics aggregation
+│   └── router.py        ← Model routing logic
+├── data/
+│   └── knowledge_base.py  ← 20 TechStore policy chunks (ground truth)
+├── tests/
+│   └── test_endpoints.py  ← Smoke tests for all endpoints
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── .env.example`}</pre>
+          </div>
+
+          <P>The key principle: <Code>app/main.py</Code> is a <S>thin orchestration layer</S> — it wires the pipeline together but contains no business logic itself. Each module has one job and can be read, tested, and changed independently.</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {file:"app/rag.py",       color:"#0D9488", what:"ChromaDB vector store",        why:"Embedding and retrieval are their own concern. Swapping ChromaDB for Pinecone later means editing one file."},
+              {file:"app/guardrails.py",color:"#B45309", what:"Input + output validation",    why:"Security layer is isolated. You can tighten rules, add patterns, or unit-test it without touching the API."},
+              {file:"app/llm.py",       color:"#6D28D9", what:"LLM call + judge",             why:"All OpenAI calls in one place. Change model, tweak temperature, or mock it for tests — one file."},
+              {file:"app/prompts.py",   color:"#1E6091", what:"All prompt strings",           why:"Prompts are effectively code. Centralising them makes versioning and A/B testing straightforward."},
+              {file:"app/monitoring.py",color:"#059669", what:"Logging + metrics",            why:"Every module calls log_event() — the aggregation logic stays out of the request path."},
+              {file:"data/knowledge_base.py",color:"#6B7280",what:"TechStore policy documents", why:"Knowledge is separated from code. Updating policies means editing this file only — no app changes."},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"200px auto 1fr",gap:12,alignItems:"flex-start",padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <span style={{fontFamily:"'JetBrains Mono'",color:r.color,fontSize:"0.78rem",fontWeight:700}}>{r.file}</span>
+                <span style={{color:"var(--text-muted)",fontSize:"0.75rem",paddingTop:1}}>→</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:"0.82rem",color:"var(--text)",marginBottom:2}}>{r.what}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.78rem",lineHeight:1.55}}>{r.why}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <SubH>The request pipeline — how the modules connect</SubH>
+
+          <P>Every call to <Code>POST /chat</Code> flows through all seven modules in sequence:</P>
+
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:0}}>
+            {[
+              {step:"1",label:"guardrails.check_input()",color:"#B45309",bg:"#FFF7ED",border:"#FCD34D44",desc:"Injection, PII, length — block before anything else runs"},
+              {step:"2",label:"guardrails.scrub_pii()",  color:"#B45309",bg:"#FFF7ED",border:"#FCD34D44",desc:"Redact any PII before it enters the RAG query"},
+              {step:"3",label:"rag.retrieve()",          color:"#0D9488",bg:"#E6FAF8",border:"#5EEAD444",desc:"Embed query → ChromaDB cosine search → top-3 policy chunks"},
+              {step:"4",label:"router.route_model()",    color:"#6D28D9",bg:"#F5F3FF",border:"#C4B5FD44",desc:"Task type + context length → gpt-4o-mini or gpt-4o"},
+              {step:"5",label:"llm.call_llm()",          color:"#6D28D9",bg:"#F5F3FF",border:"#C4B5FD44",desc:"System prompt + retrieved context + question → LLM response"},
+              {step:"6",label:"guardrails.validate_output()",color:"#B45309",bg:"#FFF7ED",border:"#FCD34D44",desc:"PII scrub on output, length check, refusal detection"},
+              {step:"7",label:"monitoring.log_event()",  color:"#059669",bg:"#F0FDF4",border:"#86EFAC44",desc:"Latency, tokens, cost, RAG chunks, issues — all logged as structured JSON"},
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:0,alignItems:"stretch"}}>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:28,flexShrink:0}}>
+                  <div style={{width:22,height:22,borderRadius:6,background:s.color,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:"0.66rem",fontWeight:700,flexShrink:0}}>{s.step}</div>
+                  {i<6 && <div style={{width:2,flex:1,background:s.color+"44",margin:"2px 0"}}/>}
+                </div>
+                <div style={{flex:1,padding:"6px 10px 10px",background:s.bg,border:"1px solid "+s.border,borderRadius:8,margin:"0 0 4px 8px"}}>
+                  <div style={{fontFamily:"'JetBrains Mono'",color:s.color,fontSize:"0.8rem",fontWeight:700,marginBottom:2}}>{s.label}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.78rem"}}>{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <SubH>Your Dockerfile</SubH>
 
-          <CB>{`# Use a slim Python base
-FROM python:3.11-slim
+          <CB>{`FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies first (cached layer)
+# ChromaDB (hnswlib) needs C build tools — install before pip
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+    build-essential \\
+    && rm -rf /var/lib/apt/lists/*
+
+# Dependency layer — cached as long as requirements.txt doesn't change
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Application source
 COPY . .
 
-# Expose the port FastAPI runs on
+# ChromaDB will persist embeddings here
+RUN mkdir -p /app/chroma_data
+
 EXPOSE 8000
 
-# Run with uvicorn (ASGI server for FastAPI)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]`}</CB>
+# app.main:app  →  app/ package, main.py module, app FastAPI instance
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \\
+  CMD curl -f http://localhost:8000/health || exit 1`}</CB>
+
+          <Callout color="var(--info-color)" icon="📦"><S>Why <Code>build-essential</Code>?</S> ChromaDB's vector index (hnswlib) is a C++ library that compiles on install. The <Code>python:3.11-slim</Code> base image strips build tools to save space — you have to add them back explicitly. Without this line, <Code>pip install chromadb</Code> fails inside Docker.</Callout>
+
+          <Callout color="var(--teal)" icon="💡"><S>CMD changed from Ch3.</S> The minimal app used <Code>uvicorn main:app</Code> because everything was in one file. The production app uses <Code>uvicorn app.main:app</Code> — meaning: the <Code>app</Code> Python package, the <Code>main</Code> module inside it, and the <Code>app</Code> FastAPI instance. This is standard for any project with a package structure.</Callout>
 
           <SubH>requirements.txt</SubH>
           <CB>{`fastapi==0.111.0
 uvicorn[standard]==0.29.0
 openai>=1.30.0
 pydantic>=2.0.0
+chromadb==0.5.3          # vector store — runs in-process, no separate container
 python-dotenv==1.0.1`}</CB>
 
-          <SubH>Build and run locally</SubH>
-          <CB>{`# Build the image
-docker build -t techstore-api .
-
-# Run the container (pass your API key as env var)
-docker run -p 8000:8000 -e OPENAI_API_KEY=sk-... techstore-api
-
-# Test it
-curl -X POST http://localhost:8000/chat \\
-  -H "Content-Type: application/json" \\
-  -d '{"message": "What is the return policy?", "session_id": "test-1"}'`}</CB>
-
-          <Callout color="var(--build-color)" icon="🔐"><S>Never bake secrets into your image.</S> API keys go in environment variables at runtime, not in the Dockerfile or source code. Use <Code>-e KEY=value</Code> when running locally; use platform secrets in cloud deployments.</Callout>
+          <P><Code>chromadb</Code> is the only new dependency vs the Ch3 minimal app. It runs <S>in-process</S> — no separate container, no server to manage. On first startup it reads the knowledge base, calls the OpenAI embeddings API once per document, and writes the vectors to <Code>./chroma_data/</Code>. Every restart after that loads from disk in milliseconds.</P>
 
           <SubH>docker-compose for local development</SubH>
-          <P>When your service grows to need a database or Redis, <Code>docker-compose</Code> manages multiple containers together:</P>
-          <CB>{`version: '3.8'
+          <P><Code>docker-compose</Code> is the recommended way to run the production app locally. It handles environment variables, mounts volumes, and — critically — persists the ChromaDB embeddings across restarts so you don't re-embed on every <Code>docker-compose up</Code>:</P>
+          <CB>{`version: "3.9"
+
 services:
   api:
     build: .
+    container_name: techstore_api
     ports:
       - "8000:8000"
     environment:
       - OPENAI_API_KEY=\${OPENAI_API_KEY}
+      - CHROMA_PATH=/app/chroma_data   # where ChromaDB writes vectors
+      - RAG_TOP_K=3                    # chunks to retrieve per query
+      - RAG_MIN_RELEVANCE=0.35         # cosine distance threshold
     volumes:
-      - .:/app         # live-reload during development
-    depends_on:
-      - redis
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"    # optional: for caching frequent queries`}</CB>
+      - chroma_data:/app/chroma_data   # named volume — survives restarts
+      - .:/app                          # source mount — hot-reload in dev
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s   # allow time for ChromaDB ingest on cold start
+
+volumes:
+  chroma_data:             # persists embeddings — no re-embed on restart
+    driver: local`}</CB>
+
+          <div style={{margin:"1.25rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {k:"CHROMA_PATH",       v:"=/app/chroma_data",  desc:"Tells rag.py where to read/write the ChromaDB vector index. Overridden here to match the Docker volume mount point."},
+              {k:"RAG_TOP_K",         v:"=3",                 desc:"How many document chunks to retrieve per query. Increase for complex questions, decrease to save tokens."},
+              {k:"RAG_MIN_RELEVANCE", v:"=0.35",              desc:"Cosine distance threshold. Chunks with distance > 0.35 are too far from the query and excluded. Lower = stricter filtering."},
+              {k:"start_period",      v:": 20s",              desc:"Healthcheck grace period. On the very first run, ChromaDB calls the OpenAI embeddings API for all 20 documents — give it time before declaring unhealthy."},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"190px 1fr",gap:12,padding:"7px 12px",background:"white",borderRadius:7,border:"1px solid var(--border)",alignItems:"flex-start"}}>
+                <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.78rem"}}>
+                  <span style={{color:"#0D9488",fontWeight:700}}>{r.k}</span>
+                  <span style={{color:"var(--text-muted)"}}>{r.v}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.79rem",lineHeight:1.6}}>{r.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <Callout color="var(--teal)" icon="💡"><S>Named volume vs bind mount.</S> The source code uses a bind mount (<Code>- .:/app</Code>) so file changes hot-reload instantly. The ChromaDB data uses a named volume (<Code>chroma_data:/app/chroma_data</Code>) so embeddings survive <Code>docker-compose down</Code>. If you run <Code>docker-compose down -v</Code> it deletes the volume and triggers a full re-embed on next start.</Callout>
 
           <SubH>Project files for this chapter</SubH>
           <div style={{background:"#1A1D27",borderRadius:12,padding:"1.25rem 1.5rem",margin:"1rem 0",border:"1px solid #2E3240"}}>
-            <div style={{color:"#2DD4BF",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,marginBottom:"0.85rem"}}>▶  RUN THIS — Chapter 4</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{color:"#2DD4BF",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,marginBottom:"0.85rem"}}>▶  RUN THIS — Chapter 4 · techstore_api/</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:"1rem"}}>
               {[
-                {file:"Dockerfile",badge:"DOCKER",color:"#2DD4BF",desc:"Slim Python 3.11 base, dependency layer cached, uvicorn CMD, HEALTHCHECK included"},
-                {file:"requirements.txt",badge:"CONFIG",color:"#6B7280",desc:"Same file as Ch3 — Docker installs these inside the container image"},
+                {file:"Dockerfile",         badge:"DOCKER", color:"#2DD4BF",desc:"Adds build-essential for ChromaDB, creates chroma_data dir, CMD points to app.main:app"},
+                {file:"docker-compose.yml", badge:"COMPOSE",color:"#2DD4BF",desc:"Named volume chroma_data persists embeddings. RAG_TOP_K and RAG_MIN_RELEVANCE tunable via env vars"},
+                {file:"requirements.txt",   badge:"CONFIG", color:"#6B7280",desc:"Adds chromadb==0.5.3 — the only new dependency vs the Ch3 minimal app"},
+                {file:".env.example",       badge:"CONFIG", color:"#6B7280",desc:"OPENAI_API_KEY required. CHROMA_PATH, RAG_TOP_K, RAG_MIN_RELEVANCE are optional overrides"},
               ].map((f,i)=>(
-                <div key={i} style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:12,alignItems:"flex-start",paddingBottom:i<1?"8px":"0",borderBottom:i<1?"1px solid #2E3240":"none"}}>
-                  <div style={{minWidth:150,display:"flex",gap:6,alignItems:"center"}}>
+                <div key={i} style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:12,alignItems:"flex-start",paddingBottom:i<3?"8px":"0",borderBottom:i<3?"1px solid #2E3240":"none"}}>
+                  <div style={{minWidth:170,display:"flex",gap:6,alignItems:"center"}}>
                     <span style={{fontFamily:"'JetBrains Mono'",color:"#E2E8F0",fontSize:"0.83rem",fontWeight:600}}>{f.file}</span>
                     <span style={{background:f.color+"22",color:f.color,fontSize:"0.6rem",fontWeight:700,padding:"1px 6px",borderRadius:3,border:"1px solid "+f.color+"44",letterSpacing:1,flexShrink:0}}>{f.badge}</span>
                   </div>
@@ -1132,13 +1240,35 @@ services:
                 </div>
               ))}
             </div>
-            <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid #2E3240"}}>
-              <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>TERMINAL</div>
-              <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",color:"#A78BFA",lineHeight:1.8,margin:0,whiteSpace:"pre"}}>{`docker build -t techstore-api .
-docker run -p 8000:8000 -e OPENAI_API_KEY=sk-... techstore-api
-# → http://localhost:8000/health   should return {"status":"ok"}`}</pre>
+            <div style={{paddingTop:"1rem",borderTop:"1px solid #2E3240"}}>
+              <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>OPTION A — docker-compose (recommended)</div>
+              <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",color:"#A78BFA",lineHeight:1.8,margin:0,marginBottom:"1rem",whiteSpace:"pre"}}>{`cd techstore_api
+cp .env.example .env          # add your OPENAI_API_KEY
+docker-compose up --build
+# First run:  builds image, embeds 20 docs into ChromaDB (~15s)
+# After that: loads from disk, starts in ~2s
+# → http://localhost:8000/docs`}</pre>
+              <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>OPTION B — docker run (without compose)</div>
+              <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",color:"#A78BFA",lineHeight:1.8,margin:0,marginBottom:"1rem",whiteSpace:"pre"}}>{`docker build -t techstore-api .
+docker run -p 8000:8000 \\
+  -e OPENAI_API_KEY=sk-... \\
+  -v $(pwd)/chroma_data:/app/chroma_data \\
+  techstore-api`}</pre>
+              <div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>VERIFY — test the RAG pipeline directly</div>
+              <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.78rem",color:"#A78BFA",lineHeight:1.8,margin:0,whiteSpace:"pre"}}>{`# Check RAG collection is populated
+curl http://localhost:8000/rag/info
+
+# See which chunks a question retrieves (no LLM call)
+curl "http://localhost:8000/rag/search?q=return+policy"
+
+# Full pipeline test
+curl -X POST http://localhost:8000/chat \\
+  -H "Content-Type: application/json" \\
+  -d '{"message": "How long do I have to return a product?"}'`}</pre>
             </div>
           </div>
+
+          <Callout color="var(--build-color)" icon="🔐"><S>Never bake secrets into your image.</S> API keys go in environment variables at runtime — either via <Code>-e</Code> flag, <Code>docker-compose</Code> env section, or platform secrets in Railway/Render. The <Code>.env</Code> file is in <Code>.gitignore</Code> and never copied into the image.</Callout>
         </section>
 
         {/* ── Chapter 5: Cloud Deployment ── */}
