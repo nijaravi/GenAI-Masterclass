@@ -6,12 +6,12 @@
 #   pip install fastapi uvicorn openai pydantic python-dotenv
 #   uvicorn main:app --reload
 #
-# Test:
-#   curl -X POST http://localhost:8000/chat \
-#     -H "Content-Type: application/json" \
-#     -d '{"message": "How long is the return window?"}'
+# Endpoints:
+#   GET  /          → redirects to /docs
+#   GET  /health    → liveness check
+#   POST /chat      → LLM-powered support response
 #
-# Docs (auto-generated):
+# Interactive docs:
 #   http://localhost:8000/docs
 # ============================================================
 
@@ -20,6 +20,7 @@ import time
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from openai import AsyncOpenAI
 
@@ -54,6 +55,12 @@ class ChatResponse(BaseModel):
     tokens_used: int
 
 # ── Endpoints ────────────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect browser visits to the interactive API docs."""
+    return RedirectResponse(url="/docs")
+
+
 @app.get("/health")
 async def health():
     """Liveness check — used by Docker, load balancers, Railway."""
@@ -82,7 +89,7 @@ async def chat(req: ChatRequest):
         logger.error(f"OpenAI call failed: {e}")
         raise HTTPException(status_code=502, detail="LLM call failed. Please retry.")
 
-    latency_ms = (time.monotonic() - start) * 1000
+    latency_ms  = (time.monotonic() - start) * 1000
     response_text = completion.choices[0].message.content
     tokens_used   = completion.usage.total_tokens
 
