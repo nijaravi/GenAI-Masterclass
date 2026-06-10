@@ -27,10 +27,7 @@ from pydantic import BaseModel
 
 from app import rag, guardrails, llm, router, monitoring
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-)
+monitoring.setup_logging()
 logger = logging.getLogger(__name__)
 
 # ── App setup ─────────────────────────────────────────────────
@@ -230,15 +227,35 @@ async def rag_info():
 @app.get("/rag/search")
 async def rag_search(q: str, top_k: int = 3):
     """
-    Debug endpoint: run a RAG query and see exactly what chunks
-    would be retrieved for a given question.
-    Useful for testing retrieval quality without calling the LLM.
+    Retrieve chunks for a query applying the current MIN_RELEVANCE threshold.
+    Empty results mean all chunks exceeded the threshold — use /rag/debug to see raw distances.
     """
     chunks = await rag.retrieve(q, top_k=top_k)
     return {
-        "query":   q,
-        "top_k":   top_k,
-        "results": chunks,
+        "query":             q,
+        "top_k":             top_k,
+        "threshold":         rag.MIN_RELEVANCE,
+        "chunks_returned":   len(chunks),
+        "results":           chunks,
+    }
+
+
+@app.get("/rag/debug")
+async def rag_debug(q: str, top_k: int = 10):
+    """
+    Raw retrieval — returns ALL top-k results with distances, NO threshold filtering.
+
+    Use this to calibrate MIN_RELEVANCE:
+      - Good matches should have distance ~0.3–0.6
+      - Unrelated chunks typically score > 0.8
+    Set RAG_MIN_RELEVANCE env var to a value that separates relevant from irrelevant.
+    """
+    raw = await rag.raw_retrieve(q, top_k=top_k)
+    return {
+        "query":            q,
+        "current_threshold": rag.MIN_RELEVANCE,
+        "tip": "Look at distances for relevant chunks. Set RAG_MIN_RELEVANCE to exclude noise.",
+        "results":          raw,
     }
 
 

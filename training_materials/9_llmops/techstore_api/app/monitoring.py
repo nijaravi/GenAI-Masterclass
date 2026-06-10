@@ -4,11 +4,53 @@
 # ============================================================
 
 import json
+import os
 import time
 import logging
+from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 _logger = logging.getLogger(__name__)
+
+# Relative to project root (techstore_api/). With docker-compose's .:/app
+# bind mount, this file appears on your machine at ./logs/techstore_api.log
+DEFAULT_LOG_FILE = "logs/techstore_api.log"
+
+
+def setup_logging() -> None:
+    """Console + rotating file. File path is on the host when using docker-compose.
+
+    Configures the root logger, so every module that uses
+    logging.getLogger(__name__) — main, llm, guardrails, rag, router —
+    automatically writes here via propagation.
+    """
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_file = os.getenv("LOG_FILE", DEFAULT_LOG_FILE)
+
+    log_dir = os.path.dirname(log_file)
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+
+    root = logging.getLogger()
+    if any(isinstance(h, RotatingFileHandler) for h in root.handlers):
+        return
+
+    root.setLevel(getattr(logging, log_level, logging.INFO))
+    fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+
+    if not any(
+        isinstance(h, logging.StreamHandler) and not isinstance(h, RotatingFileHandler)
+        for h in root.handlers
+    ):
+        console = logging.StreamHandler()
+        console.setFormatter(fmt)
+        root.addHandler(console)
+
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=5_000_000, backupCount=3, encoding="utf-8",
+    )
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
 
 # In-memory log store — swap for Postgres / ClickHouse / Loki in prod
 _log_store: list[dict] = []

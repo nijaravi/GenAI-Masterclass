@@ -12,6 +12,10 @@ venv/
 # ChromaDB local data
 chroma_data/
 
+# Application logs (written locally and via docker bind mount)
+logs/
+*.log
+
 # OS / editor
 .DS_Store
 .idea/
