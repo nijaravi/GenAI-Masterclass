@@ -203,10 +203,21 @@ async def retrieve(query: str, top_k: int = TOP_K) -> list[dict]:
             "relevance_score": round(1 - distance, 4),
         })
 
-    logger.info(
-        f"RAG: query='{query[:60]}' → "
-        f"{len(chunks)}/{top_k} chunks passed threshold ({MIN_RELEVANCE})"
-    )
+    if not chunks and results["ids"][0]:
+        best_dist = min(results["distances"][0])
+        best_title = results["metadatas"][0][
+            results["distances"][0].index(best_dist)
+        ]["title"]
+        logger.info(
+            f"RAG: query='{query[:60]}' → 0/{top_k} chunks passed threshold "
+            f"({MIN_RELEVANCE}). Closest: '{best_title}' distance={best_dist:.4f} "
+            f"— raise RAG_MIN_RELEVANCE to include it."
+        )
+    else:
+        logger.info(
+            f"RAG: query='{query[:60]}' → "
+            f"{len(chunks)}/{top_k} chunks passed threshold ({MIN_RELEVANCE})"
+        )
     return chunks
 
 

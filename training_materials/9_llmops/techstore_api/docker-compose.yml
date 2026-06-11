@@ -27,12 +27,11 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - app/.env
+      - app/.env          # OPENAI_API_KEY lives here — do not use .env.example
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CHROMA_PATH=/app/chroma_data
       - RAG_TOP_K=3
-      - RAG_MIN_RELEVANCE=0.35
+      - RAG_MIN_RELEVANCE=0.65
       - LOG_LEVEL=INFO
     volumes:
       # Persist ChromaDB embeddings across restarts
