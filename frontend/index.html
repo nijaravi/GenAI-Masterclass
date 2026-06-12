@@ -6,91 +6,613 @@
 <title>GenAI Decoded by Nij</title>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#FAFAF8;--card:#fff;--border:#E8E5E0;--text:#2D2B28;--muted:#7A746E;--build:#B45309;--work:#1A6B4E;--info:#1E6091;--rag:#6D28D9;--work-bg:#E8F5EE;--work-border:#6EE7B7;}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
-  .wrap{max-width:960px;margin:0 auto;padding:2.25rem 1.25rem 3rem}
-  h1{font-family:'Libre Baskerville',serif;font-size:2.2rem;margin:0 0 .75rem;line-height:1.2}
-  .tagline{color:var(--muted);font-size:1.08rem;line-height:1.5;margin:0 0 1.25rem;width:100%;white-space:nowrap}
-  .philosophy{width:100%;background:linear-gradient(135deg,var(--work-bg) 0%,#fff 42%);border:1px solid var(--border);border-left:4px solid var(--work);border-radius:12px;padding:1.1rem 1.35rem;margin:0 0 1.75rem;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-  .phil-label{font-size:0.62rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--work);margin:0 0 0.5rem}
-  .philosophy p{margin:0;font-size:1rem;line-height:1.7;color:var(--text)}
-  .philosophy strong{font-weight:700;color:var(--build)}
-  .build-things{color:var(--work);font-weight:700}
-  .module-hint{color:var(--muted);font-size:0.92rem;margin:0 0 1rem}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%}
-  @media (max-width:640px){
-    .tagline{white-space:normal;font-size:1rem}
-    .grid{grid-template-columns:1fr}
+  :root {
+    --bg: #FAFAF8;
+    --card: #FFFFFF;
+    --border: #E8E5E0;
+    --text: #2D2B28;
+    --muted: #7A746E;
+    --build: #B45309;
+    --work: #1A6B4E;
+    --info: #1E6091;
+    --rag: #6D28D9;
+    --p1: #1A6B4E;
+    --p2: #6D28D9;
+    --p3: #0D9488;
+    --p4: #B45309;
   }
-  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;text-decoration:none;color:inherit;display:block;transition:box-shadow .2s ease,transform .15s ease}
-  .card:hover{box-shadow:0 6px 20px rgba(45,43,40,0.08);transform:translateY(-1px)}
-  .tag{font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
-  .title{font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;margin-bottom:4px}
-  .desc{color:var(--muted);font-size:.92rem;line-height:1.6}
-  .build{border-left:4px solid var(--build)} .build .tag{color:var(--build)}
-  .work{border-left:4px solid var(--work)} .work .tag{color:var(--work)}
-  .info{border-left:4px solid var(--info)} .info .tag{color:var(--info)}
-  .rag{border-left:4px solid var(--rag)} .rag .tag{color:var(--rag)}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.75rem 1.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Heading (unchanged) ── */
+  .top {
+    margin-bottom: 1.1rem;
+    flex-shrink: 0;
+  }
+  .brand {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--work);
+    margin-bottom: 0.3rem;
+  }
+  h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: clamp(1.7rem, 3.5vw, 2.35rem);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .tagline {
+    margin-top: 0.35rem;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  /* ── Philosophy (unchanged) ── */
+  .phil {
+    background: linear-gradient(135deg, #E8F5EE 0%, var(--card) 50%);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--work);
+    border-radius: 10px;
+    padding: 0.85rem 1.15rem;
+    margin-bottom: 1.35rem;
+    flex-shrink: 0;
+  }
+  .phil-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--work);
+    margin-bottom: 0.35rem;
+  }
+  .phil p {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .phil strong { color: var(--build); font-weight: 700; }
+  .phil .accent { color: var(--work); font-weight: 700; }
+
+  /* ── Carousel ── */
+  .carousel-outer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .carousel-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+  }
+
+  .carousel-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  .phase-panel {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Phase header row */
+  .phase-intro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  .phase-intro-left { flex: 1; min-width: 0; }
+
+  .phase-eyebrow {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .phase-panel[data-phase="1"] .phase-eyebrow { color: var(--p1); }
+  .phase-panel[data-phase="2"] .phase-eyebrow { color: var(--p2); }
+  .phase-panel[data-phase="3"] .phase-eyebrow { color: var(--p3); }
+  .phase-panel[data-phase="4"] .phase-eyebrow { color: var(--p4); }
+
+  .phase-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+  }
+  .phase-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 520px;
+  }
+
+  @keyframes blue-halo {
+    0%, 100% {
+      opacity: 0.7;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+  }
+  @keyframes blue-shadow {
+    0%, 100% {
+      box-shadow:
+        0 4px 18px rgba(58, 99, 196, 0.35),
+        0 0 28px rgba(107, 159, 212, 0.3);
+    }
+    50% {
+      box-shadow:
+        0 6px 24px rgba(58, 99, 196, 0.5),
+        0 0 44px rgba(107, 159, 212, 0.45);
+    }
+  }
+  @keyframes arrow-nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+  }
+
+  /* Circular next control */
+  .phase-next-wrap {
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 24px 28px 16px 24px;
+    margin-right: 2px;
+    overflow: visible;
+  }
+  .phase-next-wrap::before {
+    content: '';
+    position: absolute;
+    top: calc(24px + 29px);
+    left: 50%;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(90, 140, 220, 0.6) 0%,
+      rgba(107, 159, 212, 0.3) 45%,
+      rgba(107, 159, 212, 0) 72%
+    );
+    pointer-events: none;
+    animation: blue-halo 2.8s ease-in-out infinite;
+    z-index: 0;
+  }
+  .phase-next {
+    position: relative;
+    z-index: 1;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #3A63C4 0%, #6B9FD4 100%);
+    color: #fff;
+    animation: blue-shadow 2.8s ease-in-out infinite;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .phase-next svg {
+    width: 22px;
+    height: 22px;
+    animation: arrow-nudge 1.8s ease-in-out infinite;
+  }
+  .phase-next:hover {
+    transform: scale(1.06);
+    filter: brightness(1.08);
+    animation: blue-shadow 1.6s ease-in-out infinite;
+  }
+  .phase-next:hover svg {
+    animation: arrow-nudge 1s ease-in-out infinite;
+  }
+  .phase-next:active {
+    transform: scale(0.96);
+  }
+  .phase-next-label {
+    position: relative;
+    z-index: 1;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #4A5D7A;
+  }
+
+  /* Footer prev only */
+  .nav-btn.prev {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 1rem;
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+  .nav-btn.prev:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(45,43,40,0.08);
+  }
+
+  /* Section cards — original style */
+  .section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .sec-card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .sec-card:hover:not(.soon) {
+    box-shadow: 0 6px 20px rgba(45,43,40,0.08);
+    transform: translateY(-1px);
+  }
+  .sec-card.soon {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .sec-card.build { border-left: 4px solid var(--build); }
+  .sec-card.work  { border-left: 4px solid var(--work); }
+  .sec-card.info  { border-left: 4px solid var(--info); }
+  .sec-card.rag   { border-left: 4px solid var(--rag); }
+  .sec-card.muted { border-left: 4px solid #A8A29E; }
+
+  .sec-card .tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .sec-card.build .tag { color: var(--build); }
+  .sec-card.work  .tag { color: var(--work); }
+  .sec-card.info  .tag { color: var(--info); }
+  .sec-card.rag   .tag { color: var(--rag); }
+  .sec-card.muted .tag { color: #A8A29E; }
+
+  .sec-card .title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .sec-card .desc {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  /* Bottom nav bar */
+  .carousel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+  }
+  .phase-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .dot.active {
+    transform: scale(1.25);
+  }
+  .dot[data-i="0"].active { background: var(--p1); }
+  .dot[data-i="1"].active { background: var(--p2); }
+  .dot[data-i="2"].active { background: var(--p3); }
+  .dot[data-i="3"].active { background: var(--p4); }
+
+  .footer-nav {
+    min-width: 90px;
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .carousel-footer.has-prev .footer-nav {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 600px) {
+    .phase-intro { flex-direction: column; }
+    .phase-next-wrap { align-self: flex-end; }
+  }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>GenAI Decoded By Nij</h1>
-    <p class="tagline">The complete journey from &ldquo;how does this work?&rdquo; to &ldquo;I can build with&nbsp;this.&rdquo;</p>
 
-    <div class="philosophy">
+    <header class="top">
+      <div>
+        <div class="brand">GenAI Decoded · by Nij</div>
+        <h1>The complete journey from curiosity to career.</h1>
+        <p class="tagline">15 sections across 4 phases — foundations to market readiness.</p>
+      </div>
+    </header>
+
+    <div class="phil">
       <div class="phil-label">Why I built this</div>
-      <p>I built this course because most GenAI tutorials either <strong>dumb it down</strong> (hiding the mechanics) or <strong>overcomplicate it</strong> (drowning you in math). Neither works if you want to actually <span class="build-things">build things</span>.</p>
+      <p>I built this course because most GenAI tutorials either <strong>dumb it down</strong> (hiding the mechanics) or <strong>overcomplicate it</strong> (drowning you in math). Neither works if you want to actually <span class="accent">build things</span>.</p>
     </div>
 
-    <p class="module-hint">Choose a module to continue learning.</p>
-    <div class="grid">
-      <a class="card build" href="./pages/1-how-llms-work.html">
-        <div class="tag">Section 1</div>
-        <div class="title">How LLMs Actually Work</div>
-        <div class="desc">Training to inference: tokenizer, embeddings, attention, feed-forward, generation, and sampling.</div>
-      </a>
-      <a class="card work" href="./pages/2-prompt-engineering.html">
-        <div class="tag">Section 2</div>
-        <div class="title">Prompt Engineering</div>
-        <div class="desc">Core techniques, production patterns, practice challenges, and methodology for professional prompting.</div>
-      </a>
-      <a class="card info" href="./pages/3-from-notebooks-to-apps.html">
-        <div class="tag">Section 3</div>
-        <div class="title">From Notebooks to Apps</div>
-        <div class="desc">Move from experiments to production-ready workflows, app architecture, and deployment thinking.</div>
-      </a>
-      <a class="card rag" href="./pages/4-rag-part1.html">
-        <div class="tag">Section 4</div>
-        <div class="title">RAG — Retrieval Augmented Generation (Part 1)</div>
-        <div class="desc">Why RAG, reading &amp; parsing documents, chunking, embeddings, vector search, grounded prompts, and common failure modes.</div>
-      </a>
-      <a class="card info" href="./pages/5-rag-part2.html">
-        <div class="tag">Section 5</div>
-        <div class="title">RAG — Advanced &amp; Production (Part 2)</div>
-        <div class="desc">Hybrid search, query transformation, HyDE, re-ranking, production patterns, evaluation, scaling, and operations.</div>
-      </a>
-      <a class="card work" href="./pages/6-frameworks-and-agents.html">
-        <div class="tag">Section 6</div>
-        <div class="title">Frameworks &amp; Agents</div>
-        <div class="desc">LangChain, LlamaIndex, and agent workflows for tool use, orchestration, and production AI application patterns.</div>
-      </a>
-      <a class="card build" href="./pages/7-function-calling.html">
-        <div class="tag">Section 7</div>
-        <div class="title">Function Calling &amp; Tools</div>
-        <div class="desc">Tool-use loops, schema design, structured output, reliability patterns, and a data-analyst capstone with practice challenges.</div>
-      </a>
-      <a class="card rag" href="./pages/8-fine-tuning.html">
-        <div class="tag">Section 8</div>
-        <div class="title">Fine-Tuning &amp; Open Source</div>
-        <div class="desc">When to fine-tune vs prompt or RAG, OpenAI jobs, LoRA/QLoRA, Hugging Face, deployment, cost analysis, and practice challenges.</div>
-      </a>
-      <a class="card work" href="./pages/9-llmops-deployment.html">
-        <div class="tag">Section 9</div>
-        <div class="title">LLMOps &amp; Production Deployment</div>
-        <div class="desc">FastAPI services, Docker, cloud deployment, monitoring, cost tracking, LLM-as-judge evaluation, guardrails, and production capstone challenges.</div>
-      </a>
+    <div class="carousel-outer">
+      <div class="carousel-viewport">
+        <div class="carousel-track" id="track">
+
+          <!-- Phase 1 -->
+          <div class="phase-panel" data-phase="1">
+            <div class="phase-intro">
+              <div class="phase-intro-left">
+                <div class="phase-eyebrow">Phase 1</div>
+                <div class="phase-title">Foundations</div>
+                <p class="phase-desc">Understand how LLMs work, master prompting, and build your first GenAI app — the base everything else sits on.</p>
+              </div>
+              <div class="phase-next-wrap">
+                <button class="phase-next" onclick="goPhase(1)" aria-label="Next phase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+                <span class="phase-next-label">Next</span>
+              </div>
+            </div>
+            <div class="section-list">
+              <a class="sec-card build" href="./pages/1-how-llms-work.html">
+                <div class="tag">Section 1</div>
+                <div class="title">How LLMs Actually Work</div>
+                <div class="desc">Training to inference: tokenizer, embeddings, attention, feed-forward, generation, and sampling.</div>
+              </a>
+              <a class="sec-card work" href="./pages/2-prompt-engineering.html">
+                <div class="tag">Section 2</div>
+                <div class="title">Prompt Engineering Deep Dive</div>
+                <div class="desc">Core techniques, production patterns, practice challenges, and methodology for professional prompting.</div>
+              </a>
+              <a class="sec-card info" href="./pages/3-from-notebooks-to-apps.html">
+                <div class="tag">Section 3</div>
+                <div class="title">APIs &amp; Building Your First GenAI App</div>
+                <div class="desc">Move from notebooks to production-ready workflows, app architecture, and deployment thinking.</div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="phase-panel" data-phase="2">
+            <div class="phase-intro">
+              <div class="phase-intro-left">
+                <div class="phase-eyebrow">Phase 2</div>
+                <div class="phase-title">Core GenAI Engineering</div>
+                <p class="phase-desc">RAG, frameworks, and tool use — the engineering skills that turn a demo into a real application.</p>
+              </div>
+              <div class="phase-next-wrap">
+                <button class="phase-next" onclick="goPhase(2)" aria-label="Next phase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+                <span class="phase-next-label">Next</span>
+              </div>
+            </div>
+            <div class="section-list">
+              <a class="sec-card rag" href="./pages/4-rag-part1.html">
+                <div class="tag">Section 4</div>
+                <div class="title">RAG — Retrieval Augmented Generation (Part 1)</div>
+                <div class="desc">Chunking, embeddings, vector search, grounded prompts, and common failure modes.</div>
+              </a>
+              <a class="sec-card info" href="./pages/5-rag-part2.html">
+                <div class="tag">Section 5</div>
+                <div class="title">RAG Part 2 + Vector Databases in Production</div>
+                <div class="desc">Hybrid search, HyDE, re-ranking, evaluation, scaling, and production operations.</div>
+              </a>
+              <a class="sec-card work" href="./pages/6-frameworks-and-agents.html">
+                <div class="tag">Section 6</div>
+                <div class="title">LangChain &amp; LlamaIndex Frameworks</div>
+                <div class="desc">Chains, agents, retrieval pipelines, and orchestration patterns for production AI apps.</div>
+              </a>
+              <a class="sec-card build" href="./pages/7-function-calling.html">
+                <div class="tag">Section 7</div>
+                <div class="title">Function Calling, Tool Use &amp; Structured Output</div>
+                <div class="desc">Tool-use loops, schema design, Pydantic validation, reliability patterns, and capstone challenges.</div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Phase 3 -->
+          <div class="phase-panel" data-phase="3">
+            <div class="phase-intro">
+              <div class="phase-intro-left">
+                <div class="phase-eyebrow">Phase 3</div>
+                <div class="phase-title">Advanced Topics &amp; Production</div>
+                <p class="phase-desc">Fine-tuning, LLMOps, agents, and multimodal — taking your systems from prototype to production scale.</p>
+              </div>
+              <div class="phase-next-wrap">
+                <button class="phase-next" onclick="goPhase(3)" aria-label="Next phase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+                <span class="phase-next-label">Next</span>
+              </div>
+            </div>
+            <div class="section-list">
+              <a class="sec-card rag" href="./pages/8-fine-tuning.html">
+                <div class="tag">Section 8</div>
+                <div class="title">Fine-Tuning &amp; Open-Source Models</div>
+                <div class="desc">When to fine-tune vs prompt or RAG, OpenAI jobs, LoRA/QLoRA, Hugging Face, and cost analysis.</div>
+              </a>
+              <a class="sec-card work" href="./pages/9-llmops-deployment.html">
+                <div class="tag">Section 9</div>
+                <div class="title">LLMOps &amp; Production Deployment</div>
+                <div class="desc">FastAPI, Docker, cloud deployment, monitoring, guardrails, LLM-as-judge, and the techstore_api capstone.</div>
+              </a>
+              <span class="sec-card muted soon">
+                <div class="tag">Section 10</div>
+                <div class="title">AI Agents &amp; Multi-Agent Systems</div>
+                <div class="desc">Planning, memory, tool orchestration, and multi-agent coordination patterns.</div>
+              </span>
+              <span class="sec-card muted soon">
+                <div class="tag">Section 11</div>
+                <div class="title">Multimodal AI &amp; Emerging Patterns</div>
+                <div class="desc">Vision, audio, document understanding, and where the field is heading next.</div>
+              </span>
+            </div>
+          </div>
+
+          <!-- Phase 4 -->
+          <div class="phase-panel" data-phase="4">
+            <div class="phase-intro">
+              <div class="phase-intro-left">
+                <div class="phase-eyebrow">Phase 4</div>
+                <div class="phase-title">Market Readiness</div>
+                <p class="phase-desc">Capstone projects, portfolio, interviews, and job search — everything you need to land a GenAI role.</p>
+              </div>
+              <div class="phase-next-wrap">
+                <button class="phase-next" onclick="goPhase(0)" aria-label="Back to start">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+                <span class="phase-next-label">Start</span>
+              </div>
+            </div>
+            <div class="section-list">
+              <span class="sec-card muted soon">
+                <div class="tag">Section 12</div>
+                <div class="title">Capstone Project (Part 1)</div>
+                <div class="desc">Design and build a full-stack GenAI application from requirements to working prototype.</div>
+              </span>
+              <span class="sec-card muted soon">
+                <div class="tag">Section 13</div>
+                <div class="title">Capstone Project (Part 2) + Portfolio</div>
+                <div class="desc">Polish, deploy, document, and present your project as a portfolio piece.</div>
+              </span>
+              <span class="sec-card muted soon">
+                <div class="tag">Section 14</div>
+                <div class="title">Interview Preparation</div>
+                <div class="desc">System design, coding challenges, and GenAI-specific interview questions.</div>
+              </span>
+              <span class="sec-card muted soon">
+                <div class="tag">Section 15</div>
+                <div class="title">Job Search Strategy &amp; Launch</div>
+                <div class="desc">Positioning, networking, applications, and launching your GenAI engineering career.</div>
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="carousel-footer" id="carouselFooter">
+        <div class="phase-dots" id="dots">
+          <button class="dot active" data-i="0" aria-label="Phase 1" onclick="setPhase(0)"></button>
+          <button class="dot" data-i="1" aria-label="Phase 2" onclick="setPhase(1)"></button>
+          <button class="dot" data-i="2" aria-label="Phase 3" onclick="setPhase(2)"></button>
+          <button class="dot" data-i="3" aria-label="Phase 4" onclick="setPhase(3)"></button>
+        </div>
+        <div class="footer-nav">
+          <button class="nav-btn prev" id="prevBtn" onclick="goPhase(current - 1)">← Prev</button>
+        </div>
+      </div>
     </div>
+
   </div>
+
+<script>
+  let current = 0;
+  const total = 4;
+  const track = document.getElementById('track');
+  const footer = document.getElementById('carouselFooter');
+
+  function setPhase(i) {
+    if (i < 0 || i >= total) return;
+    current = i;
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    document.querySelectorAll('.dot').forEach(d => {
+      d.classList.toggle('active', parseInt(d.dataset.i) === current);
+    });
+    footer.classList.toggle('has-prev', current > 0);
+  }
+
+  function goPhase(i) {
+    if (i < 0) i = 0;
+    if (i >= total) i = 0;
+    setPhase(i);
+  }
+
+  // Touch swipe support
+  let touchStartX = 0;
+  const viewport = document.querySelector('.carousel-viewport');
+  viewport.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  viewport.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0 && current < total - 1) goPhase(current + 1);
+      if (dx > 0 && current > 0) goPhase(current - 1);
+    }
+  });
+</script>
 </body>
 </html>

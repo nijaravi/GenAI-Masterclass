@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agents: Foundations, Architectures & Protocols — GenAI Decoded</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF8;--sidebar-bg:#FFF;--card-bg:#FFF;--border:#E8E5E0;--border-light:#F0EDE8;
+    --text:#2D2B28;--text-secondary:#6B6560;--text-muted:#9C9690;
+    --accent:#4F46E5;--accent-light:#EEF2FF;--accent-hover:#4338CA;
+    --build-color:#B45309;--build-bg:#FEF3C7;--build-border:#FCD34D;
+    --work-color:#4F46E5;--work-bg:#EEF2FF;--work-border:#A5B4FC;
+    --info-color:#1E6091;--info-bg:#EFF6FF;--info-border:#93C5FD;
+    --indigo:#4F46E5;--indigo-bg:#EEF2FF;--indigo-border:#A5B4FC;
+    --orange:#C2410C;--orange-bg:#FFF7ED;
+    --teal:#0D9488;--teal-bg:#E6FAF8;--teal-border:#5EEAD4;
+    --red:#B91C1C;--red-bg:#FEF2F2;
+    --violet:#6D28D9;--violet-bg:#F5F3FF;
+    --demo-bg:#1A1D27;--demo-border:#2E3240;--demo-text:#E2E8F0;
+    --sidebar-w:260px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.7}
+  ::selection{background:#4F46E533}
+  pre{white-space:pre-wrap;word-wrap:break-word}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);overflow-y:auto;z-index:50;padding:.75rem 0;scrollbar-width:thin;scrollbar-color:#D1D5DB transparent}
+  .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px}
+  .sidebar-logo{padding:0 1rem .85rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
+  .sidebar-logo h2{font-family:'Libre Baskerville',serif;font-size:.92rem;color:var(--text);line-height:1.35;margin-bottom:0}
+  .sidebar-logo .brand-by{font-size:.72rem;font-weight:700;color:var(--accent);margin-top:4px;letter-spacing:.02em}
+  .sidebar-section{padding:.25rem .75rem;margin-top:.25rem}
+  .sidebar-item{display:block;padding:5px 9px;border-radius:7px;text-decoration:none;font-size:.8rem;color:var(--text-secondary);transition:all .15s;cursor:pointer;margin-bottom:1px;border:1px solid transparent}
+  .sidebar-item:hover{background:var(--bg);color:var(--text)}
+  .sidebar-item.active{background:var(--indigo-bg);color:var(--indigo);font-weight:600;border-color:#A5B4FC55}
+  .sidebar-item .item-num{display:inline-block;width:20px;height:20px;border-radius:5px;text-align:center;line-height:20px;font-size:.66rem;font-weight:700;margin-right:7px;flex-shrink:0}
+  .sidebar-item .item-title{font-size:.8rem}.sidebar-item .item-sub{font-size:.66rem;color:var(--text-muted);margin-top:0;display:block}
+  .main{margin-left:var(--sidebar-w);min-height:100vh}.content{max-width:760px;margin:0 auto;padding:2rem 2.5rem 4rem}
+  @media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.content{padding:1.5rem 1rem 3rem}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+const CHAPTERS=[
+  {id:"ag-intro",num:"",title:"Overview",sub:"",group:"overview"},
+  {id:"ag-mental",num:"",title:"The Agent Mental Model",sub:"Chatbot → Copilot → Agent",group:"foundation"},
+  {id:"ag-landscape",num:"",title:"The 2025–26 Landscape",sub:"What changed in 12 months",group:"foundation"},
+  {id:"ag1",num:"1",title:"The Agent Loop",sub:"The while-loop that makes LLMs autonomous",group:"agent_core"},
+  {id:"ag2",num:"2",title:"Tools — The Agent's Hands",sub:"Function calling under the hood",group:"agent_core"},
+  {id:"ag3",num:"3",title:"When to Use an Agent",sub:"Pipeline vs agent decision",group:"agent_core"},
+  {id:"ag4",num:"4",title:"ReAct — Reason + Act",sub:"Think → Act → Observe → repeat",group:"arch"},
+  {id:"ag5",num:"5",title:"Plan-and-Execute",sub:"Plan first, then execute step by step",group:"arch"},
+  {id:"ag6",num:"6",title:"Reflexion — Self-Critique",sub:"Try → Evaluate → Reflect → Retry",group:"arch"},
+  {id:"ag7",num:"7",title:"Choosing an Architecture",sub:"Decision matrix for real projects",group:"arch"},
+  {id:"ag8",num:"8",title:"Why MCP Exists",sub:"The M×N integration problem",group:"mcp"},
+  {id:"ag9",num:"9",title:"MCP Architecture",sub:"Hosts, Clients, Servers, Transports",group:"mcp"},
+  {id:"ag10",num:"10",title:"MCP Tools",sub:"Defining, discovering, calling",group:"mcp"},
+  {id:"ag11",num:"11",title:"MCP Resources & Prompts",sub:"Exposing data and templates",group:"mcp"},
+  {id:"ag12",num:"12",title:"Building an MCP Server",sub:"Full Python walkthrough",group:"mcp"},
+  {id:"ag13",num:"13",title:"Connecting MCP to Agents",sub:"Same server, multiple clients",group:"mcp"},
+  {id:"ag14",num:"14",title:"Why A2A Exists",sub:"The agent interoperability problem",group:"a2a"},
+  {id:"ag15",num:"15",title:"A2A Core Concepts",sub:"Agent Cards, Tasks, Payloads",group:"a2a"},
+  {id:"ag16",num:"16",title:"MCP + A2A Together",sub:"The three-layer protocol stack",group:"a2a"},
+  {id:"ag17",num:"17",title:"Practice — ReAct Agent from Scratch",sub:"No framework, just Python",group:"practice"},
+  {id:"ag18",num:"18",title:"Practice — MCP Server + Client",sub:"Build and connect a tool server",group:"practice"},
+  {id:"ag-cheat",num:"",title:"Cheat Sheet",sub:"Architecture & protocol reference",group:"reference"},
+];
+
+// ── HELPERS ──
+function ChH({num,title,sub,color="var(--indigo)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--indigo)"||color==="var(--accent)"?"var(--indigo-bg)":color==="var(--teal)"?"var(--teal-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":color==="var(--violet)"?"var(--violet-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function SubH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+function Code({children}){return <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 5px",borderRadius:3,fontSize:"0.82rem",color:"#818CF8"}}>{children}</span>;}
+function NB(){return(<div style={{marginTop:"2rem",paddingTop:"1.25rem",borderTop:"1px solid var(--border-light)"}}><div role="note" style={{display:"inline-flex",alignItems:"center",gap:10,padding:"8px 20px",borderRadius:9999,background:"var(--indigo-bg)",border:"1px solid var(--indigo-border)",color:"var(--indigo)",fontWeight:700,fontSize:"0.88rem",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 1px 2px rgba(79,70,229,0.08)",cursor:"default",userSelect:"none"}}><span style={{fontSize:"1.1rem",lineHeight:1}} aria-hidden>📓</span>Hands-on in live notebook demo</div></div>);}
+function SectionTag({label,color,bg}){return(<div style={{display:"inline-block",padding:"3px 12px",background:bg,borderRadius:5,marginBottom:10,border:"1px solid "+color+"33"}}><span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>{label}</span></div>);}
+
+// ── DEMO 1: Agent Loop Simulator ──
+function AgentLoopDemo(){
+  const [step,setStep]=useState(-1);
+  const [running,setRunning]=useState(false);
+  const steps=[
+    {phase:"USER",color:"#6B7280",text:"\"What's the current Bitcoin price and is it up or down this week?\""},
+    {phase:"THINK",color:"#818CF8",text:"I need current data. Let me search for the latest Bitcoin price."},
+    {phase:"ACT",color:"#34D399",text:"search_web(\"Bitcoin price today June 2026\")"},
+    {phase:"OBSERVE",color:"#FBBF24",text:"Search returned: Bitcoin $68,420 as of June 11, 2026. But I also need weekly trend data."},
+    {phase:"THINK",color:"#818CF8",text:"I have today's price but need the weekly change. Let me search specifically for that."},
+    {phase:"ACT",color:"#34D399",text:"search_web(\"Bitcoin 7 day price change percentage\")"},
+    {phase:"OBSERVE",color:"#FBBF24",text:"Search returned: BTC is up 4.2% over the past 7 days, recovering from last week's dip."},
+    {phase:"THINK",color:"#818CF8",text:"I now have both pieces: current price ($68,420) and weekly trend (+4.2%). I can answer the user."},
+    {phase:"ANSWER",color:"#A78BFA",text:"Bitcoin is currently at $68,420, up 4.2% this week — recovering from a dip last week."},
+  ];
+  const run=()=>{setStep(-1);setRunning(true);steps.forEach((_,i)=>{setTimeout(()=>setStep(i),(i+1)*700)});setTimeout(()=>setRunning(false),(steps.length+1)*700)};
+  const phaseIcon={USER:"👤",THINK:"🧠",ACT:"⚡",OBSERVE:"👁",ANSWER:"✅"};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#818CF8",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The Agent Loop</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Watch an agent reason, act, observe, and decide — step by step.</div>
+      <button onClick={run} disabled={running} style={{padding:"6px 18px",borderRadius:6,border:"1px solid #818CF8",background:running?"#818CF822":"#818CF833",color:"#818CF8",fontSize:"0.8rem",fontWeight:700,cursor:running?"default":"pointer",marginBottom:"1.25rem"}}>{running?"⟳ Running…":"▶ Run Agent"}</button>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {steps.map((s,i)=>{
+          const vis=i<=step;
+          return(<div key={i} style={{opacity:vis?1:0.15,transform:vis?"none":"translateY(4px)",transition:"all 0.3s",display:"flex",gap:0}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:28,flexShrink:0}}>
+              <div style={{width:22,height:22,borderRadius:6,background:vis?s.color:"#2E3240",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem"}}>{phaseIcon[s.phase]}</div>
+              {i<steps.length-1&&<div style={{width:1.5,flex:1,background:s.color+"44",margin:"2px 0"}}/>}
+            </div>
+            <div style={{flex:1,padding:"0 0 8px 10px"}}>
+              <span style={{color:s.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1}}>{s.phase}</span>
+              <div style={{color:s.phase==="THINK"||s.phase==="OBSERVE"?"#C9CDD3":"#E2E8F0",fontSize:"0.82rem",lineHeight:1.55,fontStyle:s.phase==="THINK"?"italic":"normal"}}>{s.text}</div>
+            </div>
+          </div>);
+        })}
+      </div>
+      {step>=steps.length-1&&!running&&(
+        <div style={{marginTop:10,padding:"0.65rem 0.85rem",background:"#818CF815",borderRadius:8,border:"1px solid #818CF833",animation:"slideIn 0.3s ease"}}>
+          <span style={{color:"#818CF8",fontSize:"0.78rem",fontWeight:600}}>The pattern: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>The agent ran 3 iterations of the loop: Think → Act → Observe. It made two tool calls, evaluated the results after each, and stopped only when it had enough information to answer. This is the ReAct pattern — the most common agent architecture.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 2: Architecture Visualiser ──
+function ArchitectureDemo(){
+  const [arch,setArch]=useState(null);
+  const [step,setStep]=useState(0);
+  const [running,setRunning]=useState(false);
+  const archs={
+    react:{name:"ReAct",color:"#4F46E5",tagline:"Reason → Act → Observe → repeat",
+      steps:[
+        {label:"Think",type:"reason",detail:"\"I need to find quarterly revenue for Tesla. Let me search.\""},
+        {label:"Act",type:"action",detail:"search_web(\"Tesla Q4 2025 quarterly revenue\")"},
+        {label:"Observe",type:"observe",detail:"\"Got $25.7B revenue. But user also asked about profit margin. Need another search.\""},
+        {label:"Think",type:"reason",detail:"\"Let me search specifically for profit margin data.\""},
+        {label:"Act",type:"action",detail:"search_web(\"Tesla Q4 2025 operating profit margin\")"},
+        {label:"Observe",type:"observe",detail:"\"Found it: 8.2% operating margin, down from 9.2% YoY.\""},
+        {label:"Answer",type:"final",detail:"\"Tesla Q4 2025: $25.7B revenue, 8.2% operating margin — down from 9.2% YoY.\""},
+      ],insight:"ReAct interleaves reasoning and action in a tight loop. Simple, debuggable, and the default for most single-agent tasks. Downside: it can't plan ahead — each step only sees the previous result."},
+    plan:{name:"Plan-and-Execute",color:"#0D9488",tagline:"Plan all steps → execute one by one → replan if needed",
+      steps:[
+        {label:"Plan",type:"reason",detail:"\"To write a competitive analysis: 1) Research Company A, 2) Research Company B, 3) Compare metrics, 4) Write report.\""},
+        {label:"Execute Step 1",type:"action",detail:"search_web(\"Company A 2025 financials market share\")"},
+        {label:"Execute Step 2",type:"action",detail:"search_web(\"Company B 2025 financials market share\")"},
+        {label:"Checkpoint",type:"observe",detail:"\"Steps 1–2 complete. Both datasets collected. Step 3 next — no replan needed.\""},
+        {label:"Execute Step 3",type:"action",detail:"compare_data(company_a_data, company_b_data)"},
+        {label:"Execute Step 4",type:"action",detail:"generate_report(comparison, format=\"markdown\")"},
+        {label:"Done",type:"final",detail:"Complete competitive analysis delivered — 4 steps, 0 replans."},
+      ],insight:"Separates the thinker from the doer. The planner creates a roadmap, the executor follows it. Handles multi-step tasks much better than ReAct, but the plan can go stale if early steps change the problem."},
+    reflexion:{name:"Reflexion",color:"#B45309",tagline:"Try → evaluate → reflect → retry better",
+      steps:[
+        {label:"Attempt 1",type:"action",detail:"Write a function to parse nested JSON with error handling."},
+        {label:"Evaluate",type:"observe",detail:"Run test suite: 3/5 tests pass. Fails on nested arrays and empty objects."},
+        {label:"Reflect",type:"reason",detail:"\"My recursion didn't handle arrays inside objects. Missed the empty object edge case. Need isinstance checks.\""},
+        {label:"Attempt 2",type:"action",detail:"Rewrite with explicit type checking for list, dict, None at each level."},
+        {label:"Evaluate",type:"observe",detail:"Run test suite: 5/5 tests pass. All edge cases handled."},
+        {label:"Done",type:"final",detail:"Solution accepted after 2 attempts. Reflection memory saved for similar future tasks."},
+      ],insight:"Reflexion adds a self-critique loop. The agent tries, evaluates its output, reflects on what went wrong, and retries. Most useful for code generation and tasks with verifiable correctness."},
+  };
+  const run=(key)=>{setArch(key);setStep(0);setRunning(true);const a=archs[key];a.steps.forEach((_,i)=>{setTimeout(()=>setStep(i+1),(i+1)*600)});setTimeout(()=>setRunning(false),(a.steps.length+1)*600)};
+  const a=arch?archs[arch]:null;
+  const tc={reason:"#818CF8",action:"#34D399",observe:"#FBBF24",final:"#A78BFA"};
+  const tl={reason:"REASONING",action:"ACTION",observe:"OBSERVATION",final:"COMPLETE"};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#818CF8",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Agent Architecture Visualiser</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Pick an architecture. Watch the execution loop step by step.</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:"1.25rem"}}>
+        {Object.entries(archs).map(([k,v])=>(
+          <button key={k} onClick={()=>run(k)} style={{background:arch===k?v.color+"20":"#12141C",border:"1px solid "+(arch===k?v.color:"#2E3240"),borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",transition:"all 0.15s"}}>
+            <div style={{color:arch===k?v.color:"#E2E8F0",fontSize:"0.88rem",fontWeight:700,marginBottom:2}}>{v.name}</div>
+            <div style={{color:"#6B7280",fontSize:"0.7rem",lineHeight:1.4}}>{v.tagline}</div>
+          </button>
+        ))}
+      </div>
+      {a&&a.steps.map((s,i)=>{const vis=i<step;return(
+        <div key={i} style={{opacity:vis?1:0.15,transform:vis?"none":"translateY(4px)",transition:"all 0.3s",display:"flex",gap:0}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:28,flexShrink:0}}>
+            <div style={{width:22,height:22,borderRadius:6,background:vis?tc[s.type]:"#2E3240",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:"0.62rem",fontWeight:700}}>{i+1}</div>
+            {i<a.steps.length-1&&<div style={{width:1.5,flex:1,background:tc[s.type]+"44",margin:"2px 0"}}/>}
+          </div>
+          <div style={{flex:1,padding:"0 0 8px 10px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+              <span style={{color:tc[s.type],fontWeight:700,fontSize:"0.82rem"}}>{s.label}</span>
+              <span style={{background:tc[s.type]+"22",color:tc[s.type],fontSize:"0.58rem",fontWeight:700,padding:"1px 6px",borderRadius:3,letterSpacing:1}}>{tl[s.type]}</span>
+            </div>
+            <div style={{color:"#C9CDD3",fontSize:"0.8rem",lineHeight:1.55,fontStyle:s.type==="reason"?"italic":"normal"}}>{s.detail}</div>
+          </div>
+        </div>
+      )})}
+      {a&&step>=a.steps.length&&(
+        <div style={{padding:"0.75rem 1rem",background:a.color+"15",borderRadius:8,border:"1px solid "+a.color+"44",animation:"slideIn 0.3s ease"}}>
+          <span style={{color:a.color,fontSize:"0.78rem",fontWeight:600}}>The pattern: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>{a.insight}</span>
+        </div>
+      )}
+      {!arch&&<div style={{textAlign:"center",padding:"1.5rem 0",color:"#4B5563",fontSize:"0.85rem"}}>↑ Select an architecture to see it in action</div>}
+    </div>
+  );
+}
+
+// ── DEMO 3: Architecture Decision Guide ──
+function ArchDecisionDemo(){
+  const [q,setQ]=useState(0);const [ans,setAns]=useState([]);const [res,setRes]=useState(null);
+  const qs=[
+    {q:"What does your agent need to do?",opts:[
+      {l:"Answer questions using search/docs",v:"qa"},{l:"Execute a multi-step workflow",v:"workflow"},
+      {l:"Generate code and verify it works",v:"code"},{l:"Research a topic and produce a report",v:"research"}
+    ]},
+    {q:"Can you define all steps upfront?",opts:[
+      {l:"Yes — the steps are predictable",v:"fixed"},{l:"No — depends on intermediate results",v:"dynamic"},
+      {l:"Partially — I know the phases but not the details",v:"partial"}
+    ]},
+    {q:"Is there an automated way to check if the output is correct?",opts:[
+      {l:"Yes — tests, validation rules, or scoring",v:"verifiable"},
+      {l:"No — quality is subjective",v:"subjective"}
+    ]},
+  ];
+  const recs={
+    react:{name:"ReAct",color:"#4F46E5",why:"Your task is reactive — the agent needs to respond to what it finds. ReAct's tight think-act-observe loop handles this naturally.",when:"Q&A with search, customer support, data lookup, most single-agent tasks",warn:"Watch for loops on ambiguous queries. Set max_iterations."},
+    plan:{name:"Plan-and-Execute",color:"#0D9488",why:"Your task has clear phases that can be planned upfront. Separating planning from execution gives better results on multi-step workflows.",when:"Report generation, research pipelines, data processing workflows, anything with 4+ steps",warn:"Plans can go stale. Add a replan checkpoint after expensive steps."},
+    reflexion:{name:"Reflexion",color:"#B45309",why:"Your output is verifiable. Reflexion's self-critique loop will catch errors on the first attempt and improve on retry.",when:"Code generation, SQL queries, math, structured data extraction — anything testable",warn:"Each retry costs tokens. Set max_retries=3. Not worth it for simple tasks."},
+  };
+  const decide=(a)=>{const[task,steps,verify]=a;if(verify==="verifiable"&&(task==="code"))return"reflexion";if(steps==="fixed"||task==="workflow"||task==="research")return"plan";return"react"};
+  const answer=(v)=>{const na=[...ans,v];setAns(na);if(q+1<qs.length)setQ(q+1);else setRes(recs[decide(na)])};
+  const reset=()=>{setQ(0);setAns([]);setRes(null)};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#818CF8",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Architecture Decision Guide</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Answer 3 questions about your task. Get the right architecture.</div>
+      {!res?(<div>
+        <div style={{color:"#E2E8F0",fontSize:"0.9rem",fontWeight:600,marginBottom:12}}><span style={{color:"#818CF8",fontSize:"0.72rem",marginRight:8}}>Q{q+1}/{qs.length}</span>{qs[q].q}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>{qs[q].opts.map((o,i)=>(
+          <button key={i} onClick={()=>answer(o.v)} style={{padding:"10px 14px",borderRadius:8,border:"1px solid #2E3240",background:"#12141C",color:"#C9CDD3",fontSize:"0.82rem",textAlign:"left",cursor:"pointer",transition:"all 0.15s"}}>{o.l}</button>
+        ))}</div>
+      </div>):(
+        <div style={{animation:"slideIn 0.3s ease"}}>
+          <div style={{padding:"12px 16px",background:res.color+"18",borderRadius:10,border:"1px solid "+res.color+"44",marginBottom:12}}>
+            <div style={{color:res.color,fontFamily:"'JetBrains Mono'",fontSize:"1.1rem",fontWeight:700,marginBottom:4}}>{res.name}</div>
+            <div style={{color:"#C9CDD3",fontSize:"0.84rem",lineHeight:1.6}}>{res.why}</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+            <div style={{background:"#12141C",borderRadius:8,padding:"10px 12px",border:"1px solid #2E3240"}}>
+              <div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>BEST FOR</div>
+              <div style={{color:"#94A3B8",fontSize:"0.78rem",lineHeight:1.55}}>{res.when}</div>
+            </div>
+            <div style={{background:"#12141C",borderRadius:8,padding:"10px 12px",border:"1px solid #2E3240"}}>
+              <div style={{color:"#F87171",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>WATCH OUT</div>
+              <div style={{color:"#94A3B8",fontSize:"0.78rem",lineHeight:1.55}}>{res.warn}</div>
+            </div>
+          </div>
+          <button onClick={reset} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2E3240",background:"transparent",color:"#6B7280",fontSize:"0.75rem",cursor:"pointer"}}>↻ Try different answers</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 4: MCP Request/Response Explorer ──
+function MCPExplorerDemo(){
+  const [op,setOp]=useState(null);
+  const ops={
+    list_tools:{label:"List Tools",desc:"Client asks: what tools does this server have?",
+      req:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}},null,2),
+      res:JSON.stringify({jsonrpc:"2.0",id:1,result:{tools:[{name:"get_weather",description:"Get current weather for a city",inputSchema:{type:"object",properties:{city:{type:"string",description:"City name"}},required:["city"]}},{name:"search_products",description:"Search product catalog",inputSchema:{type:"object",properties:{query:{type:"string"},category:{type:"string"}},required:["query"]}}]}},null,2)},
+    call_tool:{label:"Call Tool",desc:"Client invokes a specific tool with arguments",
+      req:JSON.stringify({jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"get_weather",arguments:{city:"Abu Dhabi"}}},null,2),
+      res:JSON.stringify({jsonrpc:"2.0",id:2,result:{content:[{type:"text",text:"Abu Dhabi: 42°C, Clear sky, Humidity 35%"}],isError:false}},null,2)},
+    list_resources:{label:"List Resources",desc:"Client discovers data the server can expose",
+      req:JSON.stringify({jsonrpc:"2.0",id:3,method:"resources/list",params:{}},null,2),
+      res:JSON.stringify({jsonrpc:"2.0",id:3,result:{resources:[{uri:"file:///docs/refund-policy.md",name:"Refund Policy",mimeType:"text/markdown"},{uri:"db://products/catalog",name:"Product Catalog",mimeType:"application/json"}]}},null,2)},
+    read_resource:{label:"Read Resource",desc:"Client reads a specific resource by URI",
+      req:JSON.stringify({jsonrpc:"2.0",id:4,method:"resources/read",params:{uri:"file:///docs/refund-policy.md"}},null,2),
+      res:JSON.stringify({jsonrpc:"2.0",id:4,result:{contents:[{uri:"file:///docs/refund-policy.md",mimeType:"text/markdown",text:"# Refund Policy\n\nReturns accepted within 30 days of purchase...\n"}]}},null,2)},
+  };
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#818CF8",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>MCP Request / Response Explorer</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Pick an MCP operation. See the exact JSON-RPC messages between client and server.</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:"1.25rem"}}>
+        {Object.entries(ops).map(([k,v])=>(
+          <button key={k} onClick={()=>setOp(k)} style={{padding:"8px 12px",borderRadius:8,border:"1px solid "+(op===k?"#818CF8":"#2E3240"),background:op===k?"#818CF822":"#12141C",color:op===k?"#818CF8":"#C9CDD3",fontSize:"0.8rem",fontWeight:op===k?700:400,cursor:"pointer",textAlign:"left",transition:"all 0.15s"}}>{v.label}</button>
+        ))}
+      </div>
+      {op&&(
+        <div style={{animation:"slideIn 0.2s ease"}}>
+          <div style={{color:"#94A3B8",fontSize:"0.78rem",marginBottom:10}}>{ops[op].desc}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div><div style={{color:"#34D399",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>→ CLIENT REQUEST</div>
+              <pre style={{background:"#0D0F14",border:"1px solid #2E3240",borderRadius:8,padding:"10px",fontSize:"0.7rem",color:"#34D399",fontFamily:"'JetBrains Mono'",lineHeight:1.55,margin:0}}>{ops[op].req}</pre>
+            </div>
+            <div><div style={{color:"#818CF8",fontSize:"0.68rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>← SERVER RESPONSE</div>
+              <pre style={{background:"#0D0F14",border:"1px solid #2E3240",borderRadius:8,padding:"10px",fontSize:"0.7rem",color:"#818CF8",fontFamily:"'JetBrains Mono'",lineHeight:1.55,margin:0}}>{ops[op].res}</pre>
+            </div>
+          </div>
+          <div style={{marginTop:10,padding:"0.65rem 0.85rem",background:"#818CF815",borderRadius:8,border:"1px solid #818CF833"}}>
+            <span style={{color:"#818CF8",fontSize:"0.78rem",fontWeight:600}}>Under the hood: </span>
+            <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>Every MCP interaction is a JSON-RPC 2.0 message. The client sends a method + params, the server returns a result. This is the same protocol whether the transport is stdio (local) or HTTP (remote).</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 5: Protocol Stack Visualiser ──
+function ProtocolStackDemo(){
+  const [active,setActive]=useState(null);
+  const layers=[
+    {id:"a2a",label:"A2A — Agent ↔ Agent",color:"#7C3AED",y:0,
+      detail:"Agent-to-Agent protocol. Enables agents on different frameworks to discover each other (via Agent Cards), delegate tasks, and exchange results. Uses HTTP + JSON-RPC. Google-originated, now under Linux Foundation.",
+      example:"A LangGraph agent discovers a CrewAI agent's capabilities via its Agent Card, sends a 'research' task, and receives structured results — without knowing the other agent's framework."},
+    {id:"mcp",label:"MCP — Agent ↔ Tools",color:"#4F46E5",y:1,
+      detail:"Model Context Protocol. Standardises how agents connect to tools, data sources, and services. Any MCP-compatible agent can use any MCP server — write once, connect everywhere. Anthropic-originated.",
+      example:"Your custom MCP server exposes get_weather() and search_inventory(). Claude, ChatGPT, Cursor, and your LangGraph agent all connect to it with zero custom code."},
+    {id:"aaif",label:"AAIF — Governance",color:"#6B7280",y:2,
+      detail:"Agentic AI Foundation. A Linux Foundation initiative (Dec 2025) that governs both MCP and A2A. Co-founded by OpenAI, Anthropic, Google, Microsoft, AWS, and Block. Ensures neither protocol is controlled by a single vendor.",
+      example:"When MCP adds a new capability (like streaming resources), the spec change goes through AAIF governance — all major AI companies have a vote."},
+  ];
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#818CF8",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>The Agent Protocol Stack</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Click each layer to understand what it does and how it connects.</div>
+      <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:"1.25rem"}}>
+        {layers.map(l=>(
+          <button key={l.id} onClick={()=>setActive(active===l.id?null:l.id)} style={{
+            padding:"14px 18px",borderRadius:10,border:"2px solid "+(active===l.id?l.color:l.color+"44"),
+            background:active===l.id?l.color+"18":"#12141C",cursor:"pointer",textAlign:"left",transition:"all 0.2s"
+          }}>
+            <div style={{color:active===l.id?l.color:"#E2E8F0",fontSize:"0.95rem",fontWeight:700}}>{l.label}</div>
+          </button>
+        ))}
+      </div>
+      {active&&(()=>{const l=layers.find(x=>x.id===active);return(
+        <div style={{animation:"slideIn 0.2s ease"}}>
+          <div style={{padding:"12px 14px",background:"#12141C",borderRadius:8,border:"1px solid #2E3240",marginBottom:8}}>
+            <div style={{color:l.color,fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>WHAT IT DOES</div>
+            <div style={{color:"#C9CDD3",fontSize:"0.84rem",lineHeight:1.6}}>{l.detail}</div>
+          </div>
+          <div style={{padding:"12px 14px",background:l.color+"12",borderRadius:8,border:"1px solid "+l.color+"33"}}>
+            <div style={{color:l.color,fontSize:"0.72rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>REAL EXAMPLE</div>
+            <div style={{color:"#C9CDD3",fontSize:"0.84rem",lineHeight:1.6}}>{l.example}</div>
+          </div>
+        </div>
+      )})()}
+    </div>
+  );
+}
+
+// ── SIDEBAR ──
+function Sidebar({active,onNav}){
+  const [s,setS]=useState({f:true,c:true,a:true,m:true,a2:true,p:true});
+  const tog=(k)=>setS(v=>({...v,[k]:!v[k]}));
+  const groupBtn=(label,color,key)=>(
+    <button onClick={()=>tog(key)} style={{width:"100%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 9px 2px",marginTop:4,cursor:"pointer"}}>
+      <span style={{color,fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{label}</span>
+      <span style={{color,fontSize:"0.62rem"}}>{s[key]?"▼":"▶"}</span>
+    </button>
+  );
+  const renderGroup=(groupName,color,bgVar)=>CHAPTERS.filter(c=>c.group===groupName).map(c=>(
+    <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+      <span className="item-num" style={{background:bgVar,color}}>{c.num||"·"}</span>
+      <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+    </a>
+  ));
+  return(
+    <div className="sidebar">
+      <div className="sidebar-logo"><h2>GenAI Decoded</h2><div className="brand-by">by Nij</div></div>
+      <div className="sidebar-section">
+        <a className={"sidebar-item"+(active==="ag-intro"?" active":"")} onClick={()=>onNav("ag-intro")}><span className="item-title">Overview</span></a>
+        {groupBtn("Foundation","var(--info-color)","f")}
+        {s.f&&renderGroup("foundation","var(--info-color)","var(--info-bg)")}
+        {groupBtn("What Is an Agent","var(--indigo)","c")}
+        {s.c&&renderGroup("agent_core","var(--indigo)","var(--indigo-bg)")}
+        {groupBtn("Architectures","var(--build-color)","a")}
+        {s.a&&renderGroup("arch","var(--build-color)","var(--build-bg)")}
+        {groupBtn("MCP Protocol","var(--teal)","m")}
+        {s.m&&renderGroup("mcp","var(--teal)","var(--teal-bg)")}
+        {groupBtn("A2A Protocol","var(--violet)","a2")}
+        {s.a2&&renderGroup("a2a","var(--violet)","var(--violet-bg)")}
+        {groupBtn("Practice","var(--info-color)","p")}
+        {s.p&&renderGroup("practice","var(--info-color)","var(--info-bg)")}
+        <a className={"sidebar-item"+(active==="ag-cheat"?" active":"")} onClick={()=>onNav("ag-cheat")}><span className="item-title">📋 Cheat Sheet</span></a>
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN APP ──
+function App(){
+  const [active,setActive]=useState("ag-intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})};
+  useEffect(()=>{const h=window.location.hash.replace("#","");if(!h)return;const t=setTimeout(()=>{const el=document.getElementById(h);if(el){setActive(h);el.scrollIntoView({behavior:"auto",block:"start"})}},0);return()=>clearTimeout(t)},[]);
+
+  return(
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+        {/* SECTION HEADER */}
+        <div style={{padding:"3rem 0 1.5rem",borderTop:"3px solid var(--indigo)",marginTop:"3rem"}}>
+          <div style={{color:"var(--indigo)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Section 10</div>
+          <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>AI Agents: Foundations, Architectures & Protocols</h2>
+          <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>How agents think, connect to tools, and talk to each other</div>
+        </div>
+
+        {/* ── Overview ── */}
+        <section id="ag-intro">
+          <P>Everything you've built so far — RAG pipelines, function calling, FastAPI services — has one thing in common: the human decides what to do, and the model executes. The human writes the query, chooses the tool, triggers the action.</P>
+          <P>An agent flips that. You give it a <S color="var(--indigo)">goal</S>, and it figures out the steps: which tools to use, in what order, what to do when something fails, and when to stop. It's the difference between giving someone a recipe and asking them to cook dinner.</P>
+          <P>This section covers the first half of the agent engineering picture: what agents are, how they think (architectures), how they connect to tools (MCP), and how they talk to each other (A2A). Section 11 will build on this with frameworks, multi-agent patterns, and production guardrails.</P>
+          <Callout color="var(--indigo)" icon="🤖"><S>Why agents now:</S> models got good enough to plan multi-step workflows reliably. Tool-calling APIs became standardised. And protocols like MCP gave agents a universal way to connect to the outside world. The building blocks finally exist — this section teaches you how they work.</Callout>
+          <SubH>What you'll come away with</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {[
+              {icon:"🔄",title:"The agent loop",desc:"The core while-loop pattern that makes an LLM autonomous — built from scratch"},
+              {icon:"🧠",title:"Three architecture patterns",desc:"ReAct, Plan-and-Execute, Reflexion — deep understanding of when to use each"},
+              {icon:"🔌",title:"MCP from first principles",desc:"Build an MCP server, understand the protocol, connect it to multiple agents"},
+              {icon:"🤝",title:"A2A protocol literacy",desc:"How agents discover and delegate to each other across frameworks"},
+              {icon:"⚡",title:"Tool engineering",desc:"Designing tool schemas, structured output, and reliable function calling"},
+              {icon:"📐",title:"Architecture decision skills",desc:"Given a problem, choose the right agent architecture with confidence"},
+            ].map((o,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"1.3rem",marginBottom:4}}>{o.icon}</div>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{o.title}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.8rem",lineHeight:1.55}}>{o.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Mental Model ── */}
+        <section id="ag-mental" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="FOUNDATION" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The Agent Mental Model</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Chatbot → Copilot → Agent — what changes at each step</div>
+          </div>
+          <P>Think of a restaurant kitchen. A <S>chatbot</S> is a vending machine — you push a button, you get a fixed output. A <S>copilot</S> is a sous chef — you tell it what to prep, and it helps. An <S>agent</S> is the head chef — you say "dinner for 12, Mediterranean, one guest is gluten-free" and it plans the menu, assigns tasks, manages timing, and adjusts when the fish delivery is late.</P>
+          <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {level:"Chatbot",autonomy:"None",desc:"Fixed responses. No tools, no memory, no planning. Input → output. Think: FAQ bot.",color:"#6B7280",pct:10},
+              {level:"Copilot",autonomy:"Low",desc:"Can use tools when asked. Follows instructions step-by-step. Human drives every decision. Think: GitHub Copilot.",color:"#3B82F6",pct:30},
+              {level:"Single Agent",autonomy:"Medium",desc:"Given a goal, plans its own steps. Chooses tools, retries on failure, knows when to stop. Think: a research assistant that you give a question and it comes back with an answer.",color:"#4F46E5",pct:60},
+              {level:"Multi-Agent System",autonomy:"High",desc:"Multiple specialised agents collaborate. One orchestrates, others execute. Handles complex workflows no single agent could. Think: a team with a manager, researcher, analyst, and writer.",color:"#7C3AED",pct:85},
+            ].map((l,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{color:l.color,fontWeight:700,fontSize:"0.92rem"}}>{l.level}</span>
+                    <span style={{color:l.color,fontSize:"0.68rem",fontWeight:700,padding:"1px 8px",background:l.color+"14",borderRadius:4,border:"1px solid "+l.color+"33"}}>AUTONOMY: {l.autonomy}</span>
+                  </div>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6,marginBottom:6}}>{l.desc}</div>
+                <div style={{height:4,background:"var(--border-light)",borderRadius:2}}><div style={{height:4,width:l.pct+"%",background:l.color,borderRadius:2}}/></div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--indigo)" icon="🔑">The defining feature of an agent is the <S>loop</S>. A copilot does one thing and returns. An agent plans, acts, observes the result, and decides what to do next — repeating until the goal is met or it hits a limit. Everything else (tools, memory, multi-agent) is built on top of this loop.</Callout>
+        </section>
+
+        {/* ── Landscape ── */}
+        <section id="ag-landscape" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="FOUNDATION" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The 2025–26 Agent Landscape</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>What changed — and why it matters for what you'll build</div>
+          </div>
+          <P>The agent space moved fast in the past 18 months. Here's the timeline that shaped the tools you'll use in this section and the next:</P>
+          <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:6}}>
+            {[
+              {date:"Nov 2024",event:"Anthropic releases MCP",detail:"Model Context Protocol — a universal standard for connecting agents to tools. 97M monthly SDK downloads by early 2026.",color:"#4F46E5"},
+              {date:"Mar 2025",event:"OpenAI ships Agents SDK",detail:"Replaces experimental Swarm. Production-grade with handoffs, guardrails, built-in MCP support.",color:"#10B981"},
+              {date:"Apr 2025",event:"Google launches ADK + A2A",detail:"Agent Development Kit with hierarchical agent trees. A2A protocol for cross-framework agent communication.",color:"#3B82F6"},
+              {date:"Late 2025",event:"LangGraph hits v1.0",detail:"Becomes the default runtime for LangChain agents. Production deployments at LinkedIn, Uber, 400+ companies.",color:"#4F46E5"},
+              {date:"Late 2025",event:"Microsoft merges AutoGen + Semantic Kernel",detail:"Unified Microsoft Agent Framework. One SDK for .NET and Python agent development on Azure.",color:"#3B82F6"},
+              {date:"Dec 2025",event:"Agentic AI Foundation formed",detail:"Linux Foundation houses both MCP and A2A. OpenAI, Anthropic, Google, Microsoft all sign on. Neither protocol is owned by a single vendor.",color:"#7C3AED"},
+            ].map((e,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"90px 1fr",gap:12,alignItems:"flex-start"}}>
+                <div style={{padding:"5px 10px",background:e.color+"14",borderRadius:6,border:"1px solid "+e.color+"33",textAlign:"center"}}>
+                  <span style={{color:e.color,fontSize:"0.74rem",fontWeight:700}}>{e.date}</span>
+                </div>
+                <div>
+                  <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:2}}>{e.event}</div>
+                  <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.55}}>{e.detail}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="📌">The practical impact: agents now have a <S>standard way to connect to tools</S> (MCP), a <S>standard way to talk to each other</S> (A2A), and <S>production-grade frameworks</S> that aren't experiments anymore. This section teaches you MCP and A2A in depth. Section 11 covers the frameworks.</Callout>
+        </section>
+
+        {/* ── Ch1: The Agent Loop ── */}
+        <section id="ag1" style={{paddingTop:"2.5rem"}}>
+          <ChH num="1" title="The Agent Loop" sub="The while-loop that turns an LLM from a responder into a doer"/>
+          <P>Every agent — regardless of framework, architecture, or complexity — runs the same core loop. The LLM receives the current state, decides what to do next (call a tool or give an answer), executes that action, and feeds the result back in. This repeats until the agent decides it's done.</P>
+          <AgentLoopDemo/>
+          <SubH>The loop in code</SubH>
+          <CB>{`import openai, json
+
+tools = [{"type": "function", "function": {
+    "name": "search_web",
+    "description": "Search the web for current information",
+    "parameters": {"type": "object", "properties": {
+        "query": {"type": "string", "description": "The search query"}
+    }, "required": ["query"]}
+}}]
+
+def execute_tool(name, args):
+    """Your tool implementations go here."""
+    if name == "search_web":
+        return fake_search(json.loads(args)["query"])
+    return f"Unknown tool: {name}"
+
+messages = [
+    {"role": "system", "content": "You are a research assistant. Use tools to find information."},
+    {"role": "user", "content": "What's the current price of Bitcoin?"}
+]
+
+# ─── THE AGENT LOOP ───
+MAX_ITERATIONS = 10
+for i in range(MAX_ITERATIONS):
+    response = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        tools=tools,
+    )
+    msg = response.choices[0].message
+    messages.append(msg)
+    
+    # Decision point: does the model want to use a tool or respond?
+    if msg.tool_calls:
+        for tc in msg.tool_calls:
+            print(f"  [Tool] {tc.function.name}({tc.function.arguments})")
+            result = execute_tool(tc.function.name, tc.function.arguments)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": result,
+            })
+    else:
+        # No tool call = the agent decided it has enough info to answer
+        print(f"  [Answer] {msg.content}")
+        break
+else:
+    print("  [Limit] Max iterations reached — returning best effort")`}</CB>
+
+          <P>Three things to notice about this code:</P>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"The for loop with MAX_ITERATIONS",d:"Not while True. Every agent needs a ceiling. Without it, a confused agent loops forever and burns through your API budget. This is the single most important safety mechanism."},
+              {t:"The if/else branch on msg.tool_calls",d:"This is where the agent makes its decision. If the model returns tool calls, the loop continues. If it returns text (no tool calls), the agent is done. The model itself decides when to stop."},
+              {t:"The messages array grows every iteration",d:"Each tool call and result gets appended. This is the agent's short-term memory — it can see everything that happened so far. But it also means cost grows with each iteration (more tokens per turn)."},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"var(--indigo-bg)",borderRadius:8,border:"1px solid var(--indigo-border)"}}>
+                <S color="var(--indigo)">{r.t}</S><span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}> — {r.d}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--indigo)" icon="💡"><S>The mental shortcut:</S> if your code has a loop where the LLM decides when to stop, you have an agent. If the loop runs a fixed number of times regardless of the LLM's output, you have a pipeline. Every agent framework you'll learn in Section 11 is a more sophisticated version of this 30-line pattern.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch2: Tools ── */}
+        <section id="ag2" style={{paddingTop:"2.5rem"}}>
+          <ChH num="2" title="Tools — The Agent's Hands" sub="Function calling, tool schemas, and structured output — how agents interact with the world"/>
+          <P>Without tools, an agent is just a chatbot that thinks out loud. Tools are what let it <S>do things</S> — search the web, query a database, send an email, create a file. You covered function calling in Section 7. Here's the deeper picture of how tools work in an agent context.</P>
+          <SubH>What the model actually sees</SubH>
+          <P>When you pass tools to the API, the model doesn't see Python functions. It sees <S color="var(--indigo)">JSON schemas</S> that describe what each tool does, what arguments it accepts, and what it returns. The model then generates a structured JSON object that says "call this tool with these arguments."</P>
+          <CB>{`# What you write:
+tools = [{"type": "function", "function": {
+    "name": "get_order_status",
+    "description": "Look up the current status of a customer order by order ID",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "order_id": {
+                "type": "string",
+                "description": "The order ID, e.g. ORD-12345"
+            }
+        },
+        "required": ["order_id"]
+    }
+}}]
+
+# What the model generates when it decides to use this tool:
+# {
+#   "tool_calls": [{
+#     "id": "call_abc123",
+#     "function": {
+#       "name": "get_order_status",
+#       "arguments": "{\"order_id\": \"ORD-12345\"}"
+#     }
+#   }]
+# }
+#
+# The model NEVER executes the tool. YOUR code does.
+# The model just says "I want to call X with Y arguments."`}</CB>
+          <SubH>Tool design principles for agents</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"Descriptive names and descriptions",d:"The model decides which tool to use based on the description. 'search' is vague. 'search_product_catalog_by_name_or_category' tells the model exactly when to use it. Spend time on descriptions — they're your agent's instruction manual."},
+              {t:"Strict schemas with required fields",d:"Use 'strict': true (OpenAI) to enforce exact schema compliance. Without it, the model might add extra fields, skip required ones, or use wrong types. Strict mode catches these at the API level."},
+              {t:"Return structured, parseable results",d:"Tool results go back into the agent's context. Return clean strings, not raw HTML or massive JSON blobs. If a search returns 10 pages, summarise to the top 3 results."},
+              {t:"Handle errors gracefully",d:"If a tool fails, return an error message the agent can understand — not a stack trace. 'Order ORD-99999 not found. The customer may have the wrong order ID.' gives the agent something to work with."},
+              {t:"Keep the tool set small",d:"More tools = more decisions = more chances for the agent to pick the wrong one. Start with 3–5 tools. Only add more when the agent frequently can't complete tasks."},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{r.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{r.d}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--build-color)" icon="⚠️"><S>The most common agent bug:</S> the agent calls a tool that doesn't exist — a "hallucinated tool call." This happens when the tool descriptions are vague or when the task requires a capability the available tools don't cover. Always validate tool names before execution: <Code>if name not in ALLOWED_TOOLS: return error</Code></Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch3: When to Use an Agent ── */}
+        <section id="ag3" style={{paddingTop:"2.5rem"}}>
+          <ChH num="3" title="When to Use an Agent" sub="Not everything needs a loop — sometimes a pipeline is better"/>
+          <P>Agents add cost, complexity, and unpredictability. Every iteration of the loop costs tokens. Every autonomous decision is a chance for the agent to go off course. Before building an agent, ask: <S color="var(--indigo)">does this task actually need one?</S></P>
+          <SubH>Pipeline vs. agent — the decision framework</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{padding:"14px",background:"var(--teal-bg)",borderRadius:10,border:"1px solid var(--teal-border)"}}>
+              <div style={{color:"var(--teal)",fontWeight:700,fontSize:"0.95rem",marginBottom:8}}>✓ Use a Pipeline when…</div>
+              {["Steps are known in advance","Same steps every time, regardless of input","No branching or conditional logic","Speed and cost are critical","You can define the exact sequence: A → B → C"].map((s,i)=>(
+                <div key={i} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"3px 0"}}>{s}</div>
+              ))}
+            </div>
+            <div style={{padding:"14px",background:"var(--indigo-bg)",borderRadius:10,border:"1px solid var(--indigo-border)"}}>
+              <div style={{color:"var(--indigo)",fontWeight:700,fontSize:"0.95rem",marginBottom:8}}>✓ Use an Agent when…</div>
+              {["Next step depends on previous result","Task might need 2 steps or 10 — you don't know","Different inputs require different tool combinations","The agent needs to retry or adapt on failure","You'd need dozens of if/else branches in a pipeline"].map((s,i)=>(
+                <div key={i} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"3px 0"}}>{s}</div>
+              ))}
+            </div>
+          </div>
+          <SubH>Real examples</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {task:"Summarise an uploaded document",answer:"Pipeline",why:"Fixed sequence: parse → chunk → summarise → combine. No branching needed.",color:"var(--teal)"},
+              {task:"Answer customer questions using a knowledge base",answer:"Agent",why:"Some questions need search, some need order lookup, some need escalation. The tool choice depends on the question.",color:"var(--indigo)"},
+              {task:"Translate a document to 3 languages",answer:"Pipeline",why:"translate(text, 'fr') → translate(text, 'es') → translate(text, 'ar'). Same steps every time.",color:"var(--teal)"},
+              {task:"Research a company and write an investment memo",answer:"Agent",why:"Needs multiple searches, might find conflicting data, must decide what's relevant. Step count varies wildly by company.",color:"var(--indigo)"},
+              {task:"Extract names and dates from a contract",answer:"Pipeline",why:"One LLM call with structured output. No looping, no tool calls, no decisions.",color:"var(--teal)"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 80px 2fr",gap:12,alignItems:"flex-start",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"0.84rem"}}>{r.task}</div>
+                <div style={{color:r.color,fontWeight:700,fontSize:"0.82rem",textAlign:"center"}}>{r.answer}</div>
+                <div style={{fontSize:"0.82rem",color:"var(--text-secondary)"}}>{r.why}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--indigo)" icon="💡"><S>The litmus test:</S> if you can write out every step before seeing the input, use a pipeline. If the steps depend on what the model finds along the way, use an agent. Start with a pipeline — upgrade to an agent only when the pipeline can't handle the variability.</Callout>
+        </section>
+
+        {/* ── Ch4: ReAct ── */}
+        <section id="ag4" style={{paddingTop:"2.5rem"}}>
+          <ChH num="4" title="ReAct — Reason + Act" sub="The most common agent architecture: think, act, observe, repeat" color="var(--build-color)"/>
+          <P>ReAct (Reasoning + Acting) is the default agent architecture. Published in 2022, it introduced a simple but powerful idea: instead of having the model <S>either</S> reason <S>or</S> act, let it <S>interleave</S> both in a single loop. The model thinks out loud about what to do, takes an action, observes the result, and reasons about what to do next.</P>
+          <SubH>The ReAct trace format</SubH>
+          <P>A ReAct agent produces a trace that alternates between three phases:</P>
+          <CB>{`# A ReAct trace looks like this:
+
+Thought: I need to find the population of Abu Dhabi. Let me search for this.
+Action: search_web("Abu Dhabi population 2025")
+Observation: Abu Dhabi has a population of approximately 1.57 million (2025 est.)
+
+Thought: I have the population. The user also asked about area. Let me search.
+Action: search_web("Abu Dhabi area square kilometers")
+Observation: Abu Dhabi emirate covers 67,340 km², the city itself is about 972 km².
+
+Thought: I now have population (1.57M) and area (972 km² for city). I can answer.
+Answer: Abu Dhabi has a population of ~1.57 million and the city covers about 
+        972 km², making it one of the most spacious capital cities in the world.`}</CB>
+          <P>In modern implementations (OpenAI, Anthropic), the "Thought" step is implicit — it's the model's chain-of-thought before generating a tool call. The "Action" is a function call. The "Observation" is the tool result appended back to the messages.</P>
+          <SubH>Building ReAct from first principles</SubH>
+          <CB>{`def react_agent(question: str, tools: list, max_iter: int = 10) -> str:
+    """A ReAct agent built from scratch — no framework needed."""
+    messages = [
+        {"role": "system", "content": 
+            "You are a helpful research assistant. "
+            "Think step by step. Use tools when you need information. "
+            "When you have enough information, respond directly."},
+        {"role": "user", "content": question}
+    ]
+    
+    for iteration in range(max_iter):
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            tools=tools,
+        )
+        msg = response.choices[0].message
+        messages.append(msg)
+        
+        if not msg.tool_calls:
+            return msg.content  # Agent decided it's done
+        
+        # Execute each tool call
+        for tc in msg.tool_calls:
+            try:
+                result = execute_tool(tc.function.name, tc.function.arguments)
+            except Exception as e:
+                result = f"Error: {e}. Try a different approach."
+            
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": str(result),
+            })
+    
+    # Safety: if we hit max iterations, return what we have
+    return "I wasn't able to fully answer this. Here's what I found: " + \\
+           messages[-1].get("content", "No results")`}</CB>
+          <SubH>When ReAct breaks</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {problem:"Loops on ambiguous results",symptom:"Same search, same result, agent keeps saying 'let me try again'",fix:"Track action history. If the same tool+args appears twice, force a different action or final answer."},
+              {problem:"Can't plan multi-step tasks",symptom:"Agent solves step 1, forgets about steps 2–5, gives a partial answer",fix:"Use Plan-and-Execute for tasks with 4+ steps. ReAct is better for reactive tasks."},
+              {problem:"Too many tool calls on simple queries",symptom:"User asks a factual question, agent searches 5 times before answering",fix:"Add to system prompt: 'For common knowledge questions, answer directly without tools.'"},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"#FFF7ED",borderRadius:8,border:"1px solid #FCD34D55"}}>
+                <S color="var(--build-color)">{r.problem}</S>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}><S>Symptom:</S> {r.symptom}</div>
+                <div style={{color:"var(--teal)",fontSize:"0.82rem"}}><S color="var(--teal)">Fix:</S> {r.fix}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--build-color)" icon="🏗️">ReAct is the right starting point for 70% of agent tasks. It's simple to build, easy to debug (just read the trace), and supported by every framework. Learn it deeply before moving to more complex architectures — most "agent failures" in production are actually ReAct agents that need better tool descriptions or iteration limits, not a different architecture.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch5: Plan-and-Execute ── */}
+        <section id="ag5" style={{paddingTop:"2.5rem"}}>
+          <ChH num="5" title="Plan-and-Execute" sub="Separate the thinker from the doer — plan first, then execute step by step" color="var(--build-color)"/>
+          <P>ReAct is reactive — the agent only sees one step ahead. Plan-and-Execute is <S>deliberate</S>: a planner LLM creates the full roadmap, then an executor follows it step by step, with optional replanning when something changes.</P>
+          <SubH>The two-phase design</SubH>
+          <CB>{`def plan_and_execute(question: str, tools: list) -> str:
+    # Phase 1: PLAN — one LLM call to create the roadmap
+    plan_prompt = f"""Break this task into steps. Return a JSON list of steps.
+    Each step should have: "description" and "tool" (or "none" if no tool needed).
+    Task: {question}"""
+    
+    plan_response = call_llm(plan_prompt, model="gpt-4o")  # Use stronger model for planning
+    steps = json.loads(plan_response)
+    # Example output: [
+    #   {"description": "Search for Company A financials", "tool": "search_web"},
+    #   {"description": "Search for Company B financials", "tool": "search_web"},
+    #   {"description": "Compare the two datasets", "tool": "none"},
+    #   {"description": "Write the comparison report", "tool": "none"},
+    # ]
+    
+    # Phase 2: EXECUTE — work through each step
+    context = []
+    for i, step in enumerate(steps):
+        print(f"  Step {i+1}/{len(steps)}: {step['description']}")
+        
+        if step["tool"] != "none":
+            result = execute_tool(step["tool"], step["description"])
+            context.append(f"Step {i+1} result: {result}")
+        else:
+            # Reasoning step — use LLM with accumulated context
+            reasoning = call_llm(
+                f"Context so far:\\n{'\\n'.join(context)}\\n\\n"
+                f"Now do this step: {step['description']}",
+                model="gpt-4o-mini"  # Cheaper model for execution
+            )
+            context.append(f"Step {i+1} result: {reasoning}")
+        
+        # Optional: replan checkpoint every N steps
+        if (i + 1) % 3 == 0 and i < len(steps) - 1:
+            should_replan = call_llm(
+                f"Given what we've learned:\\n{'\\n'.join(context)}\\n\\n"
+                f"Remaining steps: {steps[i+1:]}\\n"
+                f"Should we change the plan? Answer YES or NO only."
+            )
+            if "YES" in should_replan:
+                steps = replan(question, context, steps[i+1:])
+    
+    return context[-1]  # Final step's output is the answer`}</CB>
+          <P>Notice the <S>model routing</S>: the planner uses <Code>gpt-4o</Code> (stronger model for decomposition) while the executor uses <Code>gpt-4o-mini</Code> (cheaper for following instructions). This is a common production pattern — spend your token budget where it matters.</P>
+          <SubH>When to use Plan-and-Execute over ReAct</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["Criterion","ReAct","Plan-and-Execute"],
+              ["Step count","1–4 steps, unpredictable","4+ steps, roughly predictable"],
+              ["Task type","Reactive (search, answer)","Deliberate (research, report)"],
+              ["Planning cost","None (implicit)","1 extra LLM call upfront"],
+              ["Debugging","Read the trace linearly","Check plan quality + execution separately"],
+              ["Failure mode","Loops on ambiguous results","Plan goes stale mid-execution"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.2fr 1.4fr 1.4fr",gap:8,padding:"6px 0",borderBottom:i<5?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.82rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                {row.map((cell,j)=><span key={j} style={{color:j===0&&i>0?"var(--text)":undefined,fontWeight:j===0&&i>0?600:undefined}}>{cell}</span>)}
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--teal)" icon="📐"><S>The practical rule:</S> if you find yourself wishing your ReAct agent would "think about the whole task first," that's the signal to switch to Plan-and-Execute. The upfront planning cost (one extra LLM call) pays for itself in fewer wasted tool calls downstream.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch6: Reflexion ── */}
+        <section id="ag6" style={{paddingTop:"2.5rem"}}>
+          <ChH num="6" title="Reflexion — Self-Critique Loops" sub="Try, evaluate, reflect on what went wrong, try again better" color="var(--build-color)"/>
+          <P>Reflexion adds a feedback loop that neither ReAct nor Plan-and-Execute have: after the agent produces output, it <S>evaluates its own work</S>, reflects on what went wrong, and retries with that reflection in context. It's most powerful when the output is <S color="var(--indigo)">verifiable</S> — code that can be tested, SQL that can be validated, math that can be checked.</P>
+          <SubH>The three-step loop</SubH>
+          <CB>{`def reflexion_agent(task: str, max_attempts: int = 3) -> str:
+    reflections = []  # Accumulate learnings across attempts
+    
+    for attempt in range(1, max_attempts + 1):
+        # Step 1: ATTEMPT — generate a solution
+        prompt = f"Task: {task}"
+        if reflections:
+            prompt += f"\\n\\nPrevious attempts and reflections:\\n"
+            for r in reflections:
+                prompt += f"- Attempt {r['attempt']}: {r['reflection']}\\n"
+            prompt += "\\nUse these reflections to produce a better solution."
+        
+        solution = call_llm(prompt, model="gpt-4o-mini")
+        
+        # Step 2: EVALUATE — test the output
+        eval_result = evaluate(solution, task)
+        # evaluate() could be: run unit tests, validate SQL, check math, etc.
+        
+        if eval_result["passed"]:
+            print(f"  ✓ Attempt {attempt} passed ({eval_result['score']}/100)")
+            return solution
+        
+        # Step 3: REFLECT — what went wrong?
+        reflection = call_llm(
+            f"My solution:\\n{solution}\\n\\n"
+            f"Test results:\\n{eval_result['feedback']}\\n\\n"
+            f"What specifically went wrong? What should I change on the next attempt?"
+        )
+        reflections.append({"attempt": attempt, "reflection": reflection})
+        print(f"  ✗ Attempt {attempt} failed — reflecting: {reflection[:100]}...")
+    
+    return solution  # Return best effort after max attempts`}</CB>
+          <P>The key insight is that <Code>reflections</Code> accumulate. On attempt 3, the agent sees what went wrong in attempts 1 and 2 — so it doesn't repeat the same mistakes. This is a form of <S>episodic memory</S> within a single task.</P>
+          <SubH>When Reflexion is worth the cost</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {task:"Generate Python code",eval:"Run pytest — pass/fail is binary",worth:"Yes — each retry fixes specific failing tests. 3 attempts often gets you from 60% to 100%.",color:"var(--teal)"},
+              {task:"Write a marketing email",eval:"No automated evaluation",worth:"No — without a measurable evaluator, the agent has nothing to reflect on. Just regenerate or edit manually.",color:"var(--red)"},
+              {task:"Generate SQL queries",eval:"Execute against test DB — check row counts and values",worth:"Yes — failed SQL gives clear error messages. The agent learns from 'column not found' or 'syntax error'.",color:"var(--teal)"},
+              {task:"Summarise a document",eval:"Subjective quality",worth:"Maybe — if you have an LLM-as-judge from Section 9, you can auto-evaluate. Otherwise, not worth the token cost.",color:"var(--build-color)"},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <S>{r.task}</S><span style={{color:r.color,fontWeight:700,fontSize:"0.78rem"}}>{r.worth.split("—")[0]}</span>
+                </div>
+                <div style={{fontSize:"0.82rem",color:"var(--text-secondary)",lineHeight:1.6}}><S>Evaluator:</S> {r.eval}. <S>Worth it?</S> {r.worth}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--build-color)" icon="💰"><S>The cost trade-off:</S> Reflexion uses 2–3x the tokens of a single attempt. On gpt-4o-mini at $0.15/1M input tokens, that's still cheap. On gpt-4o, it adds up fast. Use Reflexion when the cost of a wrong answer (production bug, bad SQL) exceeds the cost of 2–3 extra LLM calls.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch7: Choosing an Architecture ── */}
+        <section id="ag7" style={{paddingTop:"2.5rem"}}>
+          <ChH num="7" title="Choosing an Architecture" sub="Given a real task, which pattern fits? A decision framework." color="var(--build-color)"/>
+          <P>You now know three architectures. The skill isn't knowing how they work — it's knowing <S>which one to pick</S> when a real task lands on your desk. Here's the decision framework.</P>
+          <ArchDecisionDemo/>
+          <ArchitectureDemo/>
+          <SubH>The decision matrix</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["","ReAct","Plan-and-Execute","Reflexion"],
+              ["Best for","Q&A, search, support","Reports, research, workflows","Code gen, SQL, math"],
+              ["Step count","1–4, unpredictable","4+, roughly known","1–3 attempts at same task"],
+              ["Evaluator needed?","No","No","Yes (tests, validation)"],
+              ["Token cost","Low–Medium","Medium","Medium–High (2–3x)"],
+              ["Complexity","Low","Medium","Medium"],
+              ["When to upgrade","Task needs planning","Plan goes stale → add replan","No evaluator → drop to ReAct"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr 1fr",gap:8,padding:"6px 0",borderBottom:i<6?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.78rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                {row.map((cell,j)=><span key={j} style={{color:j===0&&i>0?"var(--text)":j===1?"var(--indigo)":j===2?"var(--teal)":j===3?"var(--build-color)":undefined,fontWeight:j===0&&i>0?600:i===0?700:400}}>{cell}</span>)}
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--indigo)" icon="🧭"><S>The honest recommendation:</S> start every agent project with ReAct. Build it, run it on 20 test queries, and see where it struggles. If it struggles on multi-step tasks → add planning. If it struggles on output quality → add Reflexion. Architecture selection should be driven by observed failures, not anticipated complexity.</Callout>
+        </section>
+
+        {/* ── Ch8: Why MCP Exists ── */}
+        <section id="ag8" style={{paddingTop:"2.5rem"}}>
+          <ChH num="8" title="Why MCP Exists" sub="The M×N integration problem — and how one protocol solved it" color="var(--teal)"/>
+          <P>Before MCP, connecting an AI agent to an external tool required custom integration code for every combination. OpenAI had its own function calling format. Anthropic had a different one. LangChain had yet another. If you built a weather tool, you needed separate wrappers for each platform.</P>
+          <SubH>The M×N problem</SubH>
+          <P>Imagine 10 AI applications (Claude, ChatGPT, Cursor, your custom agent…) and 100 tools (GitHub, Slack, databases, APIs…). Without a standard, you need <S color="var(--red)">10 × 100 = 1,000 custom integrations</S>. Each one needs to be built, tested, and maintained separately.</P>
+          <P>MCP collapses this to <S color="var(--teal)">10 + 100 = 110 standard connections</S>. Each application implements the MCP client protocol once. Each tool implements the MCP server protocol once. Any client can talk to any server.</P>
+          <div style={{margin:"1.5rem 0",display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:16,alignItems:"center"}}>
+            <div style={{padding:"14px",background:"#FEF2F2",borderRadius:10,border:"1px solid #FCA5A555"}}>
+              <div style={{color:"var(--red)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Before MCP</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>10 apps × 100 tools = <S color="var(--red)">1,000 integrations</S>. Every app needs custom code for every tool. Adding one new tool means updating 10 apps.</div>
+            </div>
+            <div style={{color:"var(--teal)",fontSize:"1.5rem",fontWeight:700}}>→</div>
+            <div style={{padding:"14px",background:"var(--teal-bg)",borderRadius:10,border:"1px solid var(--teal-border)"}}>
+              <div style={{color:"var(--teal)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>With MCP</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>10 clients + 100 servers = <S color="var(--teal)">110 connections</S>. Each speaks the same protocol. Adding one new tool means writing 1 MCP server. All 10 apps can use it immediately.</div>
+            </div>
+          </div>
+          <SubH>The USB-C analogy (and where it breaks)</SubH>
+          <P>Everyone calls MCP the "USB-C for AI" — one port, everything plugs in. That's directionally correct but misses nuance. USB-C is a physical connector; MCP is a <S>communication protocol</S>. A better analogy: MCP is like HTTP for web APIs. It standardises how clients make requests and how servers respond — but it doesn't dictate what the tool does, just how to talk to it.</P>
+          <SubH>Adoption timeline</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:6}}>
+            {[
+              {date:"Nov 2024",event:"Anthropic open-sources MCP, 100K downloads in first month"},
+              {date:"Mar 2025",event:"OpenAI adds MCP support across Agents SDK, Responses API, ChatGPT Desktop"},
+              {date:"Apr 2025",event:"Google DeepMind adopts MCP for Gemini and ADK"},
+              {date:"Dec 2025",event:"MCP donated to Agentic AI Foundation (Linux Foundation)"},
+              {date:"Feb 2026",event:"97 million monthly SDK downloads. Every major provider supports it."},
+            ].map((e,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"90px 1fr",gap:12,padding:"6px 0",borderBottom:i<4?"1px solid var(--border-light)":"none"}}>
+                <span style={{color:"var(--teal)",fontWeight:700,fontSize:"0.78rem"}}>{e.date}</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.84rem"}}>{e.event}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--teal)" icon="🔌"><S>Why you should care:</S> if you're building any tool that AI agents will use, MCP is the interface you should expose. If you're building agents, MCP is how you connect to the tools your agents need. It's no longer optional — it's the standard.</Callout>
+        </section>
+
+        {/* ── Ch9: MCP Architecture ── */}
+        <section id="ag9" style={{paddingTop:"2.5rem"}}>
+          <ChH num="9" title="MCP Architecture" sub="Hosts, Clients, Servers, Transports — the components and how they connect" color="var(--teal)"/>
+          <P>MCP has four layers: <S color="var(--teal)">Hosts</S> (the application the user interacts with), <S color="var(--teal)">Clients</S> (the connector inside the host), <S color="var(--teal)">Servers</S> (the tool provider), and <S color="var(--teal)">Transports</S> (how messages travel between client and server).</P>
+          <SubH>The component model</SubH>
+          <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:6}}>
+            {[
+              {layer:"Host",color:"#7C3AED",bg:"#F5F3FF",desc:"The application the user sees — Claude Desktop, Cursor, your LangGraph app. A host can run multiple MCP clients simultaneously.",example:"Claude Desktop is a host. It manages connections to your weather server, your database server, and your GitHub server — all at once."},
+              {layer:"Client",color:"#4F46E5",bg:"var(--indigo-bg)",desc:"Lives inside the host. Maintains a 1:1 connection with one MCP server. Handles protocol negotiation, capability discovery, and message routing.",example:"When Claude Desktop connects to your weather server, it creates one MCP client for that connection. A separate client handles the GitHub server."},
+              {layer:"Server",color:"#0D9488",bg:"var(--teal-bg)",desc:"Exposes tools, resources, and prompts via the MCP protocol. Can be local (same machine) or remote (HTTP endpoint). Runs independently of the host.",example:"Your weather MCP server exposes get_weather() and get_forecast(). It runs as a separate process — the client discovers and calls its tools."},
+              {layer:"Transport",color:"#B45309",bg:"var(--build-bg)",desc:"How messages travel between client and server. Three options: stdio (local pipes, simplest), SSE (Server-Sent Events, for web), Streamable HTTP (newest, bidirectional).",example:"stdio for local dev (client starts server as subprocess). HTTP+SSE for deployed servers. Streamable HTTP for production with bidirectional communication."},
+            ].map((l,i)=>(
+              <div key={i} style={{padding:"14px",background:l.bg,borderRadius:10,border:"1px solid "+l.color+"33"}}>
+                <div style={{color:l.color,fontWeight:700,fontSize:"0.92rem",marginBottom:4}}>{l.layer}</div>
+                <div style={{color:"var(--text)",fontSize:"0.86rem",lineHeight:1.7,marginBottom:6}}>{l.desc}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.82rem",fontStyle:"italic"}}>{l.example}</div>
+              </div>
+            ))}
+          </div>
+          <SubH>The JSON-RPC foundation</SubH>
+          <P>Every MCP message is a JSON-RPC 2.0 request or response. The client sends a method name + params, the server returns a result. This is the same protocol used by language servers in VS Code — proven, simple, and well-understood.</P>
+          <MCPExplorerDemo/>
+          <SubH>The request lifecycle</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:4}}>
+            {[
+              {step:"1. Initialize",desc:"Client sends initialize with protocol version and capabilities. Server responds with its capabilities (tools? resources? prompts?).",color:"#7C3AED"},
+              {step:"2. Discover",desc:"Client calls tools/list, resources/list, or prompts/list to see what the server offers. Each returns schemas the LLM can understand.",color:"#4F46E5"},
+              {step:"3. Invoke",desc:"When the LLM decides to use a tool, the client sends tools/call with the tool name and arguments. Server executes and returns the result.",color:"#0D9488"},
+              {step:"4. Respond",desc:"The tool result goes back into the LLM's context. The agent decides whether to call another tool or give a final answer.",color:"#B45309"},
+            ].map((s,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"130px 1fr",gap:12,padding:"8px 0",borderBottom:i<3?"1px solid var(--border-light)":"none"}}>
+                <span style={{color:s.color,fontWeight:700,fontSize:"0.84rem"}}>{s.step}</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.84rem"}}>{s.desc}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--teal)" icon="💡"><S>The key insight:</S> MCP servers are <S>stateful</S>. Unlike REST APIs where each request is independent, an MCP connection maintains state across the session. The server remembers the initialization handshake and can send notifications to the client. This is what enables features like live resource updates.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch10: MCP Tools ── */}
+        <section id="ag10" style={{paddingTop:"2.5rem"}}>
+          <ChH num="10" title="MCP Tools" sub="Defining, discovering, and calling tools through the MCP protocol" color="var(--teal)"/>
+          <P>Tools are the most common MCP capability. An MCP server exposes tools, the LLM discovers them, and the agent calls them during execution. Here's how each phase works in detail.</P>
+          <SubH>Defining a tool</SubH>
+          <CB>{`from mcp.server import Server
+from mcp.types import TextContent
+
+server = Server("techstore-tools")
+
+@server.tool()
+async def check_inventory(
+    product_name: str,
+    include_price: bool = True,
+) -> list[TextContent]:
+    """Check if a product is in stock and optionally return its price.
+    
+    Use this when a customer asks about product availability,
+    stock levels, or pricing for a specific item.
+    """
+    # The docstring becomes the tool description — the LLM reads this
+    # to decide when to use the tool. Write it clearly.
+    
+    result = await db.query(
+        "SELECT * FROM products WHERE name ILIKE %s",
+        [f"%{product_name}%"]
+    )
+    
+    if not result:
+        return [TextContent(
+            type="text",
+            text=f"No product found matching '{product_name}'. "
+                 f"Try a different name or check spelling."
+        )]
+    
+    product = result[0]
+    text = f"{product['name']}: {'In Stock' if product['qty'] > 0 else 'Out of Stock'}"
+    text += f" ({product['qty']} units)"
+    if include_price:
+        text += f" — \${product['price']:.2f}"
+    
+    return [TextContent(type="text", text=text)]`}</CB>
+          <P>Three things matter here: the <S>function name</S> (the LLM sees this — make it descriptive), the <S>docstring</S> (becomes the tool description — the LLM decides when to use the tool based on this), and the <S>type annotations</S> (automatically become the input schema). The MCP SDK handles the JSON Schema generation from your Python types.</P>
+          <SubH>What the client sees during discovery</SubH>
+          <P>When a client calls <Code>tools/list</Code>, the server returns a list of tool definitions with their names, descriptions, and input schemas. This is what gets passed to the LLM as available tools:</P>
+          <CB>{`# The server auto-generates this from your @server.tool() decorator:
+{
+  "tools": [{
+    "name": "check_inventory",
+    "description": "Check if a product is in stock and optionally return its price.\\n\\n"
+                   "Use this when a customer asks about product availability, "
+                   "stock levels, or pricing for a specific item.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "product_name": {"type": "string"},
+        "include_price": {"type": "boolean", "default": true}
+      },
+      "required": ["product_name"]
+    }
+  }]
+}`}</CB>
+          <SubH>Return types</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {type:"TextContent",desc:"Plain text result. The most common return type. The LLM reads this as a string in its context.",code:'TextContent(type="text", text="Abu Dhabi: 42°C, Clear")'},
+              {type:"ImageContent",desc:"Base64-encoded image. The LLM can see the image if it's multimodal. Useful for charts, screenshots, diagrams.",code:'ImageContent(type="image", data=base64_png, mimeType="image/png")'},
+              {type:"EmbeddedResource",desc:"A reference to a resource (file, DB record, API response) with its content embedded. Richer than plain text — includes URI and MIME type.",code:'EmbeddedResource(type="resource", resource={"uri": "db://orders/123", "text": "...", "mimeType": "application/json"})'},
+            ].map((r,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <S color="var(--teal)">{r.type}</S><span style={{color:"var(--text-secondary)",fontSize:"0.88rem"}}> — {r.desc}</span>
+                <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:6,padding:"6px 10px",fontSize:"0.74rem",fontFamily:"'JetBrains Mono'",color:"#A78BFA",margin:"6px 0 0"}}>{r.code}</pre>
+              </div>
+            ))}
+          </div>
+          <SubH>Error handling</SubH>
+          <CB>{`@server.tool()
+async def get_order(order_id: str) -> list[TextContent]:
+    """Look up order status by order ID."""
+    try:
+        order = await db.get_order(order_id)
+        if not order:
+            # Return a helpful message — not an exception
+            # The agent can use this to ask the user for the correct ID
+            return [TextContent(
+                type="text",
+                text=f"Order {order_id} not found. "
+                     f"Order IDs start with 'ORD-' followed by 5 digits."
+            )]
+        return [TextContent(type="text", text=format_order(order))]
+    except DatabaseError as e:
+        # Return error as text — the agent sees this and can retry or escalate
+        return [TextContent(
+            type="text",
+            text=f"Database error looking up {order_id}: {e}. "
+                 f"This is a temporary issue. Try again in a moment."
+        )]
+    # NEVER let unhandled exceptions bubble up — the agent can't debug stack traces`}</CB>
+          <Callout color="var(--teal)" icon="🔧"><S>The golden rule for MCP tool errors:</S> return a message the agent can act on. "Order not found — IDs start with ORD-" lets the agent ask the user to double-check. A Python traceback is useless. Error messages are part of the agent's reasoning context — write them accordingly.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch11: MCP Resources & Prompts ── */}
+        <section id="ag11" style={{paddingTop:"2.5rem"}}>
+          <ChH num="11" title="MCP Resources & Prompts" sub="Exposing data and templates — the other two MCP capabilities" color="var(--teal)"/>
+          <P>MCP servers can expose three types of capabilities: <S color="var(--teal)">Tools</S> (actions the agent can take), <S color="var(--teal)">Resources</S> (data the agent can read), and <S color="var(--teal)">Prompts</S> (templates the agent can use). Tools get all the attention, but resources and prompts are equally important for building complete agent experiences.</P>
+          <SubH>Resources — exposing data</SubH>
+          <P>A resource is data the server makes available for the agent to read — files, database records, API responses, configuration. Unlike tools (which the LLM triggers), resources are typically <S>user-initiated</S> or pre-loaded by the host application.</P>
+          <CB>{`@server.resource("file://docs/{filename}")
+async def read_doc(filename: str) -> str:
+    """Expose documentation files as MCP resources."""
+    path = DOCS_DIR / filename
+    if not path.exists():
+        raise FileNotFoundError(f"Document {filename} not found")
+    return path.read_text()
+
+# The client discovers this via resources/list:
+# {
+#   "resources": [{
+#     "uri": "file://docs/refund-policy.md",
+#     "name": "Refund Policy",
+#     "mimeType": "text/markdown"
+#   }, {
+#     "uri": "file://docs/shipping-guide.md",
+#     "name": "Shipping Guide",
+#     "mimeType": "text/markdown"
+#   }]
+# }
+#
+# Resource templates (like "file://docs/{filename}") let the client
+# construct URIs dynamically — the {filename} is a parameter.`}</CB>
+          <SubH>When to use resources vs. tools</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["","Resources","Tools"],
+              ["Purpose","Read data","Perform actions"],
+              ["Triggered by","User/host (pre-loaded context)","LLM (agent decides)"],
+              ["Idempotent?","Always (read-only)","Not necessarily (can modify state)"],
+              ["Example","Load product catalog, read a policy doc","Search inventory, place an order, send email"],
+              ["Use when","Agent needs background context","Agent needs to take action"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.2fr 1.5fr 1.5fr",gap:8,padding:"6px 0",borderBottom:i<5?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.82rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                {row.map((cell,j)=><span key={j} style={{color:j===0&&i>0?"var(--text)":undefined,fontWeight:j===0&&i>0?600:undefined}}>{cell}</span>)}
+              </div>
+            ))}
+          </div>
+          <SubH>Prompts — server-side templates</SubH>
+          <P>MCP prompts are reusable prompt templates that the server offers to clients. They're useful for standardising how agents interact with specific domains — instead of the agent writing its own analysis prompt, it can use a curated template from the server.</P>
+          <CB>{`@server.prompt()
+async def analyze_order(order_id: str) -> list:
+    """Analyze an order for potential issues.
+    
+    Returns a structured prompt the LLM can use to review the order.
+    """
+    order = await db.get_order(order_id)
+    return [
+        {"role": "system", "content": 
+            "You are an order analyst. Review the following order for: "
+            "1) Unusual quantities, 2) Price discrepancies, 3) Shipping risks."},
+        {"role": "user", "content": 
+            f"Order {order_id}:\\n{json.dumps(order, indent=2)}\\n\\n"
+            f"Provide your analysis with risk level (LOW/MEDIUM/HIGH) for each."},
+    ]
+# The client can list available prompts via prompts/list
+# and retrieve one via prompts/get with arguments`}</CB>
+          <Callout color="var(--teal)" icon="📌"><S>In practice:</S> most MCP servers start with just tools. Add resources when the agent needs background context (documentation, policies, catalogs). Add prompts when you want to standardise complex interactions. Don't over-engineer — you can add capabilities incrementally.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch12: Building an MCP Server ── */}
+        <section id="ag12" style={{paddingTop:"2.5rem"}}>
+          <ChH num="12" title="Building an MCP Server" sub="Full Python walkthrough — from setup to testing" color="var(--teal)"/>
+          <P>Let's build a complete MCP server for TechStore — the same domain we've used throughout the course. This server will expose three tools (inventory check, order status, product search) and one resource (the refund policy document).</P>
+          <SubH>Project setup</SubH>
+          <CB>{`# Install the MCP Python SDK
+pip install mcp
+
+# Project structure:
+# techstore_mcp/
+# ├── server.py          ← The MCP server
+# ├── data.py            ← Mock product/order data
+# ├── docs/
+# │   └── refund-policy.md
+# └── requirements.txt`}</CB>
+          <SubH>The server — complete implementation</SubH>
+          <CB>{`# server.py
+from mcp.server import Server
+from mcp.types import TextContent
+import json
+
+server = Server("techstore")
+
+# ── Mock data (in production, this would be a database) ──
+PRODUCTS = {
+    "laptop-pro": {"name": "TechStore Laptop Pro", "price": 1299.99, "qty": 23, "category": "laptops"},
+    "wireless-mouse": {"name": "ErgoClick Wireless Mouse", "price": 49.99, "qty": 156, "category": "accessories"},
+    "usb-hub": {"name": "USB-C Hub 7-in-1", "price": 34.99, "qty": 0, "category": "accessories"},
+    "monitor-4k": {"name": "UltraView 4K Monitor 27\\"", "price": 449.99, "qty": 12, "category": "monitors"},
+    "keyboard-mech": {"name": "MechType Pro Keyboard", "price": 129.99, "qty": 67, "category": "accessories"},
+}
+ORDERS = {
+    "ORD-10001": {"status": "delivered", "items": ["laptop-pro"], "total": 1299.99, "date": "2025-12-15"},
+    "ORD-10002": {"status": "shipped", "items": ["wireless-mouse", "usb-hub"], "total": 84.98, "date": "2026-01-03"},
+    "ORD-10003": {"status": "processing", "items": ["monitor-4k"], "total": 449.99, "date": "2026-01-10"},
+}
+
+# ── Tool 1: Check Inventory ──
+@server.tool()
+async def check_inventory(product_name: str) -> list[TextContent]:
+    """Check if a product is in stock. Returns stock level and price.
+    
+    Use when a customer asks about product availability or pricing.
+    Accepts partial product names (e.g., 'laptop', 'mouse').
+    """
+    matches = [p for k, p in PRODUCTS.items() 
+               if product_name.lower() in p["name"].lower()]
+    
+    if not matches:
+        return [TextContent(type="text",
+            text=f"No products matching '{product_name}'. "
+                 f"Available categories: laptops, accessories, monitors.")]
+    
+    lines = []
+    for p in matches:
+        status = "In Stock" if p["qty"] > 0 else "OUT OF STOCK"
+        lines.append(f"• {p['name']}: \${p['price']:.2f} — {status} ({p['qty']} units)")
+    
+    return [TextContent(type="text", text="\\n".join(lines))]
+
+# ── Tool 2: Order Status ──
+@server.tool()
+async def get_order_status(order_id: str) -> list[TextContent]:
+    """Look up the current status of a customer order.
+    
+    Use when a customer asks about their order, delivery, or shipment.
+    Order IDs have the format ORD-XXXXX.
+    """
+    order_id = order_id.upper().strip()
+    order = ORDERS.get(order_id)
+    
+    if not order:
+        return [TextContent(type="text",
+            text=f"Order {order_id} not found. "
+                 f"Please verify the order ID (format: ORD-XXXXX).")]
+    
+    items = ", ".join(PRODUCTS.get(i, {"name": i})["name"] for i in order["items"])
+    return [TextContent(type="text",
+        text=f"Order {order_id}:\\n"
+             f"  Status: {order['status'].upper()}\\n"
+             f"  Items: {items}\\n"
+             f"  Total: \${order['total']:.2f}\\n"
+             f"  Date: {order['date']}")]
+
+# ── Tool 3: Product Search ──
+@server.tool()
+async def search_products(
+    query: str = "",
+    category: str = "",
+    in_stock_only: bool = False,
+) -> list[TextContent]:
+    """Search the product catalog by name or category.
+    
+    Use when a customer wants to browse products, compare options,
+    or find items in a specific category.
+    """
+    results = list(PRODUCTS.values())
+    if query:
+        results = [p for p in results if query.lower() in p["name"].lower()]
+    if category:
+        results = [p for p in results if p["category"] == category.lower()]
+    if in_stock_only:
+        results = [p for p in results if p["qty"] > 0]
+    
+    if not results:
+        return [TextContent(type="text", text="No products match your search.")]
+    
+    lines = [f"Found {len(results)} product(s):"]
+    for p in results:
+        stock = "In Stock" if p["qty"] > 0 else "Out of Stock"
+        lines.append(f"• {p['name']} — \${p['price']:.2f} ({stock})")
+    
+    return [TextContent(type="text", text="\\n".join(lines))]
+
+# ── Resource: Refund Policy ──
+@server.resource("docs://refund-policy")
+async def refund_policy() -> str:
+    """The TechStore refund and returns policy."""
+    return """# TechStore Refund Policy
+    
+Returns accepted within 30 days of delivery.
+Items must be in original packaging.
+Refund processed within 5-7 business days.
+Digital products: no refunds after download.
+Shipping costs are non-refundable."""`}</CB>
+          <SubH>Testing your MCP server</SubH>
+          <CB>{`# Option 1: MCP Inspector (interactive testing)
+mcp dev server.py
+# Opens a browser UI where you can list tools, call them, inspect responses
+
+# Option 2: Run and test from Python
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async def test():
+    server_params = StdioServerParameters(command="python", args=["server.py"])
+    
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            
+            # List available tools
+            tools = await session.list_tools()
+            print(f"Available tools: {[t.name for t in tools.tools]}")
+            
+            # Call a tool
+            result = await session.call_tool("check_inventory", {"product_name": "laptop"})
+            print(f"Result: {result.content[0].text}")
+
+import asyncio
+asyncio.run(test())`}</CB>
+          <Callout color="var(--teal)" icon="🏗️"><S>This is a complete, working MCP server.</S> It exposes 3 tools and 1 resource. Any MCP-compatible agent — Claude, ChatGPT, Cursor, or your own — can discover and call these tools. You wrote the tool logic once. The protocol handles everything else.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch13: Connecting MCP to Agents ── */}
+        <section id="ag13" style={{paddingTop:"2.5rem"}}>
+          <ChH num="13" title="Connecting MCP to Agents" sub="Same server, three different clients — the protocol's power" color="var(--teal)"/>
+          <P>The whole point of MCP is that your server works with <S>any compatible client</S>. Let's connect the TechStore server from Chapter 12 to three different agents — Claude Desktop, OpenAI Agents SDK, and a custom Python agent.</P>
+          <SubH>Option 1: Claude Desktop</SubH>
+          <CB>{`// Add to: ~/Library/Application Support/Claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "techstore": {
+      "command": "python",
+      "args": ["/path/to/techstore_mcp/server.py"]
+    }
+  }
+}
+// Restart Claude Desktop — it discovers your tools automatically.
+// Ask: "Check if the laptop is in stock" → Claude calls check_inventory()`}</CB>
+          <SubH>Option 2: OpenAI Agents SDK</SubH>
+          <CB>{`from agents import Agent, Runner
+from agents.mcp import MCPServerStdio
+
+async def main():
+    # Connect to your MCP server
+    mcp_server = MCPServerStdio(
+        command="python",
+        args=["server.py"],
+    )
+    
+    agent = Agent(
+        name="TechStore Assistant",
+        instructions="Help customers with product info, orders, and returns. "
+                     "Use the available tools to look up real data.",
+        mcp_servers=[mcp_server],  # Agent discovers tools automatically
+    )
+    
+    async with mcp_server:
+        result = await Runner.run(agent, "Is the 4K monitor in stock?")
+        print(result.final_output)
+        # → "UltraView 4K Monitor 27": $449.99 — In Stock (12 units)`}</CB>
+          <SubH>Option 3: Custom Python agent</SubH>
+          <CB>{`# Wire MCP tools into our ReAct agent from Chapter 1
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async def run_agent_with_mcp():
+    server_params = StdioServerParameters(command="python", args=["server.py"])
+    
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            
+            # Get MCP tools as OpenAI-compatible function schemas
+            mcp_tools = await session.list_tools()
+            openai_tools = [
+                {"type": "function", "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.inputSchema,
+                }} for tool in mcp_tools.tools
+            ]
+            
+            # Now run our ReAct loop with MCP tools
+            answer = await react_agent(
+                question="What's in stock in the accessories category?",
+                tools=openai_tools,
+                tool_executor=lambda name, args: session.call_tool(name, json.loads(args)),
+            )
+            print(answer)`}</CB>
+          <Callout color="var(--indigo)" icon="🔑"><S>This is the MCP promise delivered:</S> you built one server (Chapter 12), and it works with Claude, OpenAI, and a custom agent — zero changes to the server code. When you add a new tool to the server, all three clients get it immediately. This is why MCP matters.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch14: Why A2A Exists ── */}
+        <section id="ag14" style={{paddingTop:"2.5rem"}}>
+          <ChH num="14" title="Why A2A Exists" sub="MCP connects agents to tools. A2A connects agents to each other." color="var(--violet)"/>
+          <P>MCP solved the agent-to-tool problem. But what about agent-to-agent? If you have a LangGraph agent that's great at research and a CrewAI agent that's great at writing, how do they collaborate? Without a standard, you'd need custom integration code for every agent-to-agent combination — the same M×N problem all over again.</P>
+          <P>Google introduced the Agent-to-Agent (A2A) protocol in April 2025 to solve exactly this. A2A standardises how agents <S color="var(--violet)">discover each other's capabilities</S>, <S color="var(--violet)">delegate tasks</S>, and <S color="var(--violet)">exchange results</S> — regardless of what framework they're built on.</P>
+          <SubH>MCP vs A2A — they're complementary, not competing</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{padding:"14px",background:"var(--teal-bg)",borderRadius:10,border:"1px solid var(--teal-border)"}}>
+              <div style={{color:"var(--teal)",fontWeight:700,fontSize:"0.92rem",marginBottom:4}}>MCP — Vertical</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6}}>Agent connects <S>down</S> to tools and data. Like an employee accessing company systems. One agent, many tools.</div>
+            </div>
+            <div style={{padding:"14px",background:"var(--violet-bg)",borderRadius:10,border:"1px solid "+("var(--violet)"+"33")}}>
+              <div style={{color:"var(--violet)",fontWeight:700,fontSize:"0.92rem",marginBottom:4}}>A2A — Horizontal</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6}}>Agent connects <S>across</S> to other agents. Like employees collaborating between departments. Agent to agent.</div>
+            </div>
+          </div>
+          <Callout color="var(--violet)" icon="🤝"><S>When you need A2A:</S> when your system has agents built on different frameworks that need to work together. A LangGraph orchestrator that delegates research to a CrewAI agent team. An OpenAI agent that hands off to a specialised analysis agent built with a custom framework. A2A is the glue.</Callout>
+        </section>
+
+        {/* ── Ch15: A2A Core Concepts ── */}
+        <section id="ag15" style={{paddingTop:"2.5rem"}}>
+          <ChH num="15" title="A2A Core Concepts" sub="Agent Cards, Tasks, and Payloads — the three building blocks" color="var(--violet)"/>
+          <P>A2A is built on three concepts: <S color="var(--violet)">Agent Cards</S> for discovery, <S color="var(--violet)">Tasks</S> for delegation, and <S color="var(--violet)">Payloads</S> for data exchange. All of it runs over HTTP with JSON-RPC — familiar infrastructure, new protocol.</P>
+          <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:12}}>
+            {[
+              {concept:"Agent Cards",color:"#7C3AED",icon:"🪪",
+                desc:"A machine-readable description of what an agent can do. Published at a well-known URL (like /.well-known/agent.json). Other agents read this to discover capabilities, input/output formats, and authentication requirements.",
+                example:`{
+  "name": "Research Agent",
+  "description": "Researches topics using web search and document analysis",
+  "url": "https://research-agent.example.com",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false
+  },
+  "skills": [
+    {"name": "web_research", "description": "Search and synthesize web sources"},
+    {"name": "document_analysis", "description": "Analyze uploaded documents"}
+  ],
+  "authentication": {"schemes": ["bearer"]}
+}`},
+              {concept:"Tasks",color:"#4F46E5",icon:"📋",
+                desc:"A unit of work with a defined lifecycle. A client agent creates a task, the remote agent processes it, and the task progresses through states: submitted → working → input-required → completed / failed / canceled.",
+                example:`// Client sends a task
+POST /tasks/send
+{
+  "id": "task-abc-123",
+  "message": {
+    "role": "user",
+    "parts": [{"type": "text", "text": "Research the latest EV market trends in Southeast Asia"}]
+  }
+}
+
+// Server responds with task status
+{
+  "id": "task-abc-123",
+  "status": {"state": "working"},
+  "history": [...]
+}`},
+              {concept:"Payloads (Parts & Artifacts)",color:"#0D9488",icon:"📦",
+                desc:"Tasks carry structured content. Parts are inline data (text, files, structured data) sent in messages. Artifacts are outputs the agent produces — like a completed report or analysis. Both support multiple content types.",
+                example:`// Task completion with an artifact
+{
+  "id": "task-abc-123",
+  "status": {"state": "completed"},
+  "artifacts": [{
+    "name": "ev_market_report",
+    "parts": [
+      {"type": "text", "text": "# EV Market in Southeast Asia\\n\\n..."},
+      {"type": "file", "file": {"name": "data.csv", "mimeType": "text/csv", "bytes": "..."}}
+    ]
+  }]
+}`},
+            ].map((c,i)=>(
+              <div key={i} style={{padding:"14px 16px",background:"white",borderRadius:12,border:"1px solid "+c.color+"33"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <span style={{fontSize:"1.3rem"}}>{c.icon}</span>
+                  <span style={{fontWeight:700,fontSize:"1rem",color:c.color}}>{c.concept}</span>
+                </div>
+                <div style={{color:"var(--text)",fontSize:"0.86rem",marginBottom:10,lineHeight:1.7}}>{c.desc}</div>
+                <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:8,padding:"10px 12px",fontSize:"0.72rem",fontFamily:"'JetBrains Mono'",color:"#C9CDD3",lineHeight:1.55,margin:0,overflowX:"auto"}}>{c.example}</pre>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--violet)" icon="💡"><S>Think of it like microservices for agents.</S> Agent Cards are like API documentation (OpenAPI spec). Tasks are like HTTP requests with a lifecycle. Payloads are the request/response bodies. If you've built REST APIs, A2A's mental model will feel familiar.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch16: MCP + A2A Together ── */}
+        <section id="ag16" style={{paddingTop:"2.5rem"}}>
+          <ChH num="16" title="MCP + A2A Together" sub="The three-layer protocol stack for agentic AI" color="var(--violet)"/>
+          <P>MCP and A2A form a protocol stack. Together with the Agentic AI Foundation (AAIF) governance layer, they create the infrastructure for an ecosystem where any agent can use any tool and collaborate with any other agent.</P>
+          <ProtocolStackDemo/>
+          <SubH>A real-world example: cross-framework research team</SubH>
+          <P>Imagine you have a research orchestrator (LangGraph), a web researcher (custom Python), and a report writer (CrewAI). Here's how the protocols connect them:</P>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:6}}>
+            {[
+              {step:"1",desc:"Orchestrator reads the Web Researcher's Agent Card → discovers it has 'web_research' skill",protocol:"A2A",color:"#7C3AED"},
+              {step:"2",desc:"Orchestrator sends a research Task to Web Researcher via A2A",protocol:"A2A",color:"#7C3AED"},
+              {step:"3",desc:"Web Researcher calls search_web() and fetch_page() via its MCP server",protocol:"MCP",color:"#0D9488"},
+              {step:"4",desc:"Web Researcher returns completed Task with research data as artifacts",protocol:"A2A",color:"#7C3AED"},
+              {step:"5",desc:"Orchestrator reads the Report Writer's Agent Card → discovers 'report_writing' skill",protocol:"A2A",color:"#7C3AED"},
+              {step:"6",desc:"Orchestrator sends writing Task to Report Writer, passing research artifacts as context",protocol:"A2A",color:"#7C3AED"},
+              {step:"7",desc:"Report Writer saves the report via its MCP file-system server",protocol:"MCP",color:"#0D9488"},
+              {step:"8",desc:"Report Writer returns completed Task with the final report as artifact",protocol:"A2A",color:"#7C3AED"},
+            ].map((s,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"30px 1fr 60px",gap:8,padding:"6px 0",borderBottom:i<7?"1px solid var(--border-light)":"none",alignItems:"center"}}>
+                <span style={{color:"var(--text-muted)",fontWeight:700,fontSize:"0.82rem",textAlign:"center"}}>{s.step}</span>
+                <span style={{color:"var(--text-secondary)",fontSize:"0.82rem"}}>{s.desc}</span>
+                <span style={{color:s.color,fontWeight:700,fontSize:"0.68rem",padding:"2px 6px",background:s.color+"14",borderRadius:4,textAlign:"center"}}>{s.protocol}</span>
+              </div>
+            ))}
+          </div>
+          <P>Notice: MCP handles steps 3 and 7 (agent ↔ tools). A2A handles steps 1, 2, 4, 5, 6, 8 (agent ↔ agent). Neither protocol knows or cares about the other — they're independent layers that compose naturally.</P>
+          <Callout color="var(--violet)" icon="🌐"><S>The bigger picture:</S> MCP + A2A together mean that a LangGraph agent, a CrewAI agent, and an OpenAI agent can collaborate on a task — each using their own MCP tool servers — without any of them knowing what framework the others use. This is the infrastructure vision that the Agentic AI Foundation is governing. You're learning the protocols that will define how AI systems work together for years to come.</Callout>
+        </section>
+
+        {/* ── Practice 1: ReAct Agent ── */}
+        <section id="ag17" style={{paddingTop:"2.5rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="PRACTICE" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Practice — Build a ReAct Agent from Scratch</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>No framework. Just Python + OpenAI API + the agent loop.</div>
+          </div>
+          <P>Build a complete ReAct agent without any agent framework. This exercise forces you to understand every piece of the agent loop before frameworks abstract it away.</P>
+          <SubH>What to build</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"The agent loop",d:"Implement the while-loop from Chapter 1. Use gpt-4o-mini. Support multiple tool calls per iteration. Track iteration count."},
+              {t:"3 tools minimum",d:"search_web (simulated), calculate (eval math expressions safely), get_current_date. Each with a proper JSON schema."},
+              {t:"Tool validation",d:"Before executing any tool call, verify the tool name exists in your tool registry. Return a helpful error if the model hallucinates a tool."},
+              {t:"Max iteration safety",d:"Hard cap at 10 iterations. If reached, return the best partial answer with a note that the agent hit its limit."},
+              {t:"Conversation logging",d:"Print every Think/Act/Observe step as the agent runs. After completion, print total iterations, tool calls made, and tokens used."},
+              {t:"Test on 5 queries",d:"'What is 2^10 + 3^5?' (needs calculate), 'What day is it?' (needs date), 'What's the capital of UAE and its population?' (needs search), 'Hello!' (should answer directly — no tools), 'What's 15% tip on $85.50?' (needs calculate, possibly two steps)."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="📄"><S>Why this exercise matters:</S> every agent framework you'll use in Section 11 is an abstraction over this loop. If you can build it from scratch, you'll understand what LangGraph's nodes and edges actually do, why CrewAI's max_iter matters, and where to look when an agent misbehaves in production.</Callout>
+        </section>
+
+        {/* ── Practice 2: MCP Server ── */}
+        <section id="ag18" style={{paddingTop:"2.5rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="PRACTICE" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Practice — Build an MCP Server + Client</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Create a tool server, connect it to an agent, test end-to-end</div>
+          </div>
+          <P>Build your own MCP server (extending or modifying the TechStore example from Chapter 12), then connect it to an agent and verify the full discovery → invocation → response loop.</P>
+          <SubH>What to build</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"An MCP server with 3+ tools",d:"Extend the TechStore server or build a new one for a domain you're interested in (weather, news, personal finance, code analysis). Each tool must have: descriptive name, clear docstring, typed parameters, proper error handling."},
+              {t:"At least 1 resource",d:"Expose a static resource (documentation, policy, configuration). Verify it shows up in resources/list."},
+              {t:"Test with mcp dev",d:"Run mcp dev server.py and use the MCP Inspector to: list tools, call each tool with valid inputs, call with invalid inputs (verify error handling), list and read resources."},
+              {t:"Connect to an agent",d:"Wire your MCP server to either: (a) Claude Desktop via config, (b) OpenAI Agents SDK, or (c) your ReAct agent from Practice 1. The agent should discover tools automatically."},
+              {t:"End-to-end test",d:"Ask the agent a question that requires your custom tool. Verify: agent discovers tool → calls it with correct args → receives result → uses result in answer."},
+              {t:"Error scenario",d:"Test what happens when the agent calls a tool with bad input. Your server should return a clear error message, and the agent should handle it gracefully (retry or ask the user)."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="📄"><S>Why this exercise matters:</S> MCP is the standard interface between agents and the outside world. Building a server teaches you the protocol from the tool-provider side — which is exactly the perspective you'll need when exposing your company's internal APIs to AI agents. This skill will only become more valuable as agent adoption grows.</Callout>
+        </section>
+
+        {/* ── Cheat Sheet ── */}
+        <section id="ag-cheat" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="REFERENCE" color="var(--indigo)" bg="var(--indigo-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Cheat Sheet</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Architecture & protocol quick reference</div>
+          </div>
+          <SubH>Architecture decision guide</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {q:"Task: answer questions using search + docs",a:"ReAct. The default. Tight think-act-observe loop. Start here.",color:"#4F46E5"},
+              {q:"Task: multi-step workflow with 5+ steps",a:"Plan-and-Execute. Upfront planning prevents wasted tool calls.",color:"#0D9488"},
+              {q:"Task: generate code that needs to pass tests",a:"Reflexion. Self-critique catches bugs. Worth the extra tokens.",color:"#B45309"},
+              {q:"Not sure which architecture to use",a:"Start with ReAct. Run 20 test queries. Switch only when you see specific failures.",color:"#4F46E5"},
+              {q:"Need to expose internal APIs to agents",a:"Build an MCP server. Write it once, connect to any agent.",color:"#0D9488"},
+              {q:"Need agents on different frameworks to collaborate",a:"A2A protocol. Agent Cards for discovery, Tasks for delegation.",color:"#7C3AED"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr auto 1.5fr",gap:12,alignItems:"flex-start",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"0.84rem",color:"var(--text)"}}>{r.q}</div>
+                <div style={{color:r.color,fontSize:"0.92rem",paddingTop:2}}>→</div>
+                <div style={{fontSize:"0.83rem",color:r.color,fontWeight:600,lineHeight:1.55}}>{r.a}</div>
+              </div>
+            ))}
+          </div>
+          <SubH>MCP quick reference</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["Capability","Method","When to use"],
+              ["Tools","tools/list, tools/call","Agent needs to take action (search, create, update)"],
+              ["Resources","resources/list, resources/read","Agent needs background data (docs, configs, catalogs)"],
+              ["Prompts","prompts/list, prompts/get","Standardise complex interactions with curated templates"],
+              ["Transport: stdio","Local process","Development, local tools, CLI integrations"],
+              ["Transport: SSE","HTTP + Server-Sent Events","Web-deployed servers, remote tools"],
+              ["Transport: Streamable HTTP","Bidirectional HTTP","Production systems needing server-initiated messages"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.4fr 1.2fr 2fr",gap:8,padding:"6px 0",borderBottom:i<6?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.82rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                {row.map((c,j)=><span key={j} style={{color:j===0&&i>0?"var(--teal)":undefined,fontWeight:j===0&&i>0?600:undefined,fontFamily:j===1&&i>0?"'JetBrains Mono'":undefined,fontSize:j===1&&i>0?"0.76rem":undefined}}>{c}</span>)}
+              </div>
+            ))}
+          </div>
+          <SubH>Agent safety essentials</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "Max iteration limit on every agent loop (recommended: 10–15)",
+              "Tool call validation — reject hallucinated tool names before execution",
+              "Error messages agents can act on — not stack traces",
+              "Tool descriptions that are specific and unambiguous",
+              "Structured output for tool arguments (not free-text parsing)",
+              "Track total tokens per agent session for cost visibility",
+              "For loop with range(max_iter) — never while True",
+              "Test your agent on 20+ queries before deploying, including adversarial inputs",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<7?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--indigo)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--accent)" icon="🎓"><S>Section 10 complete.</S> You now understand agent architectures at a deep level — ReAct, Plan-and-Execute, and Reflexion — and the protocol stack (MCP + A2A) that connects agents to the world. You've built an agent loop from scratch and an MCP server that any AI client can use. The next section moves into <S>Agent Frameworks & Multi-Agent Systems</S> — where you'll build with LangGraph, CrewAI, and OpenAI's SDK, and learn how multiple agents collaborate in production.</Callout>
+        </section>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
