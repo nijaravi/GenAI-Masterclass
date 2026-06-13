@@ -20,6 +20,13 @@ import random
 import uuid
 import time
 import logging
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Must run before `from app import ...` — rag.py creates OpenAI() at import time.
+# Key lives in app/.env (same folder as this file), not techstore_api/.env.
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse

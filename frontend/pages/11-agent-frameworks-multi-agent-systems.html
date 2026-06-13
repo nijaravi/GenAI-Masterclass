@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Frameworks & Multi-Agent Systems — GenAI Decoded</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF8;--sidebar-bg:#FFF;--card-bg:#FFF;--border:#E8E5E0;--border-light:#F0EDE8;
+    --text:#2D2B28;--text-secondary:#6B6560;--text-muted:#9C9690;
+    --accent:#059669;--accent-light:#ECFDF5;--accent-hover:#047857;
+    --build-color:#B45309;--build-bg:#FEF3C7;--build-border:#FCD34D;
+    --info-color:#1E6091;--info-bg:#EFF6FF;--info-border:#93C5FD;
+    --indigo:#4F46E5;--indigo-bg:#EEF2FF;--indigo-border:#A5B4FC;
+    --emerald:#059669;--emerald-bg:#ECFDF5;--emerald-border:#6EE7B7;
+    --orange:#C2410C;--orange-bg:#FFF7ED;
+    --teal:#0D9488;--teal-bg:#E6FAF8;--teal-border:#5EEAD4;
+    --red:#B91C1C;--red-bg:#FEF2F2;
+    --violet:#6D28D9;--violet-bg:#F5F3FF;
+    --blue:#2563EB;--blue-bg:#EFF6FF;
+    --demo-bg:#1A1D27;--demo-border:#2E3240;--demo-text:#E2E8F0;
+    --sidebar-w:260px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.7}
+  ::selection{background:#05966933}
+  pre{white-space:pre-wrap;word-wrap:break-word}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);overflow-y:auto;z-index:50;padding:.75rem 0;scrollbar-width:thin;scrollbar-color:#D1D5DB transparent}
+  .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px}
+  .sidebar-logo{padding:0 1rem .85rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
+  .sidebar-logo h2{font-family:'Libre Baskerville',serif;font-size:.92rem;color:var(--text);line-height:1.35}
+  .sidebar-logo .brand-by{font-size:.72rem;font-weight:700;color:var(--accent);margin-top:4px;letter-spacing:.02em}
+  .sidebar-section{padding:.25rem .75rem;margin-top:.25rem}
+  .sidebar-item{display:block;padding:5px 9px;border-radius:7px;text-decoration:none;font-size:.8rem;color:var(--text-secondary);transition:all .15s;cursor:pointer;margin-bottom:1px;border:1px solid transparent}
+  .sidebar-item:hover{background:var(--bg);color:var(--text)}
+  .sidebar-item.active{background:var(--emerald-bg);color:var(--emerald);font-weight:600;border-color:#6EE7B755}
+  .sidebar-item .item-num{display:inline-block;width:20px;height:20px;border-radius:5px;text-align:center;line-height:20px;font-size:.66rem;font-weight:700;margin-right:7px}
+  .sidebar-item .item-title{font-size:.8rem}.sidebar-item .item-sub{font-size:.66rem;color:var(--text-muted);display:block}
+  .main{margin-left:var(--sidebar-w);min-height:100vh}.content{max-width:760px;margin:0 auto;padding:2rem 2.5rem 4rem}
+  @media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.content{padding:1.5rem 1rem 3rem}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+const CHAPTERS=[
+  {id:"s11-intro",num:"",title:"Overview",sub:"",group:"overview"},
+  {id:"s11-multi",num:"",title:"Single → Multi-Agent",sub:"When one agent isn't enough",group:"foundation"},
+  {id:"s11-fw",num:"",title:"Framework Landscape",sub:"The four that matter",group:"foundation"},
+  {id:"s1",num:"1",title:"LangGraph Core",sub:"State, Nodes, Edges",group:"langgraph"},
+  {id:"s2",num:"2",title:"Conditional Routing",sub:"Branching based on state",group:"langgraph"},
+  {id:"s3",num:"3",title:"Checkpointing & Persistence",sub:"Pause, persist, resume",group:"langgraph"},
+  {id:"s4",num:"4",title:"Human-in-the-Loop",sub:"Interrupt nodes & approval gates",group:"langgraph"},
+  {id:"s5",num:"5",title:"Sub-graphs & Multi-Agent",sub:"Agents as nodes in a graph",group:"langgraph"},
+  {id:"s6",num:"6",title:"CrewAI Core",sub:"Agents, Tasks, Crews",group:"crewai"},
+  {id:"s7",num:"7",title:"CrewAI Advanced",sub:"Tools, memory, callbacks",group:"crewai"},
+  {id:"s8",num:"8",title:"CrewAI vs LangGraph",sub:"Same problem, two frameworks",group:"crewai"},
+  {id:"s9",num:"9",title:"OpenAI Agents SDK",sub:"Handoffs and guardrails",group:"openai_sdk"},
+  {id:"s10",num:"10",title:"OpenAI SDK — MCP & Tracing",sub:"Connecting tools + observability",group:"openai_sdk"},
+  {id:"s11",num:"11",title:"The Orchestrator Pattern",sub:"Decompose, delegate, assemble",group:"patterns"},
+  {id:"s12",num:"12",title:"Debate & Consensus",sub:"Agents argue, judge decides",group:"patterns"},
+  {id:"s13",num:"13",title:"Pipeline vs Dynamic Routing",sub:"Fixed sequence vs adaptive flow",group:"patterns"},
+  {id:"s14",num:"14",title:"Short-term Memory",sub:"Conversation history management",group:"memory"},
+  {id:"s15",num:"15",title:"Long-term Memory",sub:"Vector store for agent knowledge",group:"memory"},
+  {id:"s16",num:"16",title:"Episodic Memory",sub:"Learning from past attempts",group:"memory"},
+  {id:"s17",num:"17",title:"Agent Observability",sub:"LangSmith & Langfuse deep dive",group:"production"},
+  {id:"s18",num:"18",title:"Agent Evaluation",sub:"Measuring if agents actually work",group:"production"},
+  {id:"s19",num:"19",title:"Failure Modes & Guardrails",sub:"Loops, cost, hallucinated tools",group:"production"},
+  {id:"s20",num:"20",title:"Cost Control",sub:"Budgets, limits, monitoring",group:"production"},
+  {id:"s21",num:"21",title:"Capstone — Research Team",sub:"Multi-agent collaboration",group:"capstone"},
+  {id:"s22",num:"22",title:"Practice — CrewAI Team",sub:"Same problem, different framework",group:"practice"},
+  {id:"s23",num:"23",title:"Practice — Code Reviewer",sub:"Agent reads, reviews, reports",group:"practice"},
+  {id:"s11-cheat",num:"",title:"Cheat Sheet",sub:"Framework & production reference",group:"reference"},
+];
+
+// ── HELPERS ──
+function ChH({num,title,sub,color="var(--emerald)"}){return(
+  <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}>
+    <div style={{display:"inline-block",padding:"3px 12px",background:color+"15",borderRadius:5,marginBottom:10,border:"1px solid "+color+"25"}}>
+      <span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>CHAPTER {num}</span>
+    </div>
+    <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>{title}</h3>
+    <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>{sub}</div>
+  </div>
+);}
+function Callout({children,color="var(--accent)",bg,icon="💡"}){
+  const bgC=bg||(color==="var(--build-color)"?"var(--build-bg)":color==="var(--info-color)"?"var(--info-bg)":color==="var(--emerald)"||color==="var(--accent)"?"var(--emerald-bg)":color==="var(--teal)"?"var(--teal-bg)":color==="var(--red)"?"var(--red-bg)":color==="var(--orange)"?"var(--orange-bg)":color==="var(--violet)"?"var(--violet-bg)":color==="var(--blue)"?"var(--blue-bg)":color==="var(--indigo)"?"var(--indigo-bg)":"var(--accent-light)");
+  return(<div style={{background:bgC,borderRadius:10,padding:"1rem 1.25rem",margin:"1.25rem 0",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid "+color+"22"}}>
+    <span style={{fontSize:"1.1rem",flexShrink:0}}>{icon}</span>
+    <div style={{color:"var(--text)",fontSize:"0.92rem",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function CB({children}){return <pre style={{background:"#1A1D27",border:"1px solid #2E3240",borderRadius:10,padding:"1.1rem 1.3rem",margin:"1rem 0",fontSize:"0.82rem",lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace",color:"#E2E8F0",overflowX:"auto"}}>{children}</pre>;}
+function P({children}){return <p style={{color:"var(--text)",fontSize:"1.02rem",lineHeight:1.8,margin:"0.85rem 0"}}>{children}</p>;}
+function S({children,color="var(--text)"}){return <strong style={{color,fontWeight:700}}>{children}</strong>;}
+function SubH({children}){return <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.15rem",color:"var(--text)",fontWeight:700,margin:"2rem 0 0.75rem",paddingTop:"0.75rem",borderTop:"1px solid var(--border-light)"}}>{children}</div>;}
+function Code({children}){return <span style={{fontFamily:"'JetBrains Mono'",background:"#252833",padding:"1px 5px",borderRadius:3,fontSize:"0.82rem",color:"#34D399"}}>{children}</span>;}
+function NB(){return(<div style={{marginTop:"2rem",paddingTop:"1.25rem",borderTop:"1px solid var(--border-light)"}}><div role="note" style={{display:"inline-flex",alignItems:"center",gap:10,padding:"8px 20px",borderRadius:9999,background:"var(--emerald-bg)",border:"1px solid var(--emerald-border)",color:"var(--emerald)",fontWeight:700,fontSize:"0.88rem",cursor:"default",userSelect:"none"}}><span style={{fontSize:"1.1rem",lineHeight:1}}>📓</span>Hands-on in live notebook demo</div></div>);}
+function Tag({label,color,bg}){return(<div style={{display:"inline-block",padding:"3px 12px",background:bg,borderRadius:5,marginBottom:10,border:"1px solid "+color+"33"}}><span style={{color,fontSize:"0.75rem",fontWeight:700,letterSpacing:1}}>{label}</span></div>);}
+
+
+// ── DEMO 1: Framework Decision Guide ──
+function FrameworkGuideDemo(){
+  const [q,setQ]=useState(0);const [ans,setAns]=useState([]);const [res,setRes]=useState(null);
+  const qs=[
+    {q:"What's your primary need?",opts:[
+      {l:"Complex workflow with fine-grained control",v:"complex"},
+      {l:"Team of agents collaborating on tasks",v:"team"},
+      {l:"Quick prototype, minimal boilerplate",v:"quick"},
+      {l:"Enterprise, Azure/.NET stack",v:"enterprise"},
+    ]},
+    {q:"How much control over execution?",opts:[
+      {l:"Full — every branch, checkpoint, retry",v:"full"},
+      {l:"Some — define roles, let framework orchestrate",v:"some"},
+      {l:"Minimal — working agents fast",v:"minimal"},
+    ]},
+    {q:"Your team's background?",opts:[
+      {l:"Strong Python, comfortable with graph concepts",v:"strong"},
+      {l:"Python proficient, prefer high-level abstractions",v:"mid"},
+      {l:"Mixed team, need approachable APIs",v:"mixed"},
+    ]},
+  ];
+  const recs={
+    langgraph:{name:"LangGraph",color:"#059669",desc:"Fine-grained state management, conditional routing, checkpointing, HITL. The production default for serious agent systems.",pros:["Explicit state at every node","Conditional edges for branching","Built-in persistence + replay","LangSmith integration"],cons:["Steep learning curve (2–4 weeks)","More boilerplate (~120 lines for ReAct)","Graph design needs upfront thought"]},
+    crewai:{name:"CrewAI",color:"#B45309",desc:"Role-based multi-agent collaboration. Fastest time-to-value (~35 lines). Intuitive team mental model.",pros:["Intuitive role/task model","~35 lines for a working crew","Great for business automation","Growing enterprise adoption"],cons:["Less control over execution order","Harder to debug complex flows","Abstraction hides orchestration"]},
+    openai:{name:"OpenAI Agents SDK",color:"#2563EB",desc:"Native OpenAI integration with handoffs, built-in guardrails, and automatic tracing.",pros:["Native OpenAI model integration","Elegant handoff pattern","Built-in guardrails + tracing","Production-ready since launch"],cons:["Locked to OpenAI models","Smaller community ecosystem","Fewer orchestration patterns"]},
+    microsoft:{name:"Microsoft Agent Framework",color:"#6D28D9",desc:"Azure-native with .NET + Python support. Merged AutoGen + Semantic Kernel.",pros:["Azure-native deployment","Multi-language (Python, .NET, Java)","Conversation-driven orchestration","Enterprise governance"],cons:["Azure-centric","Merger docs still settling","Heavier for simple use cases"]},
+  };
+  const decide=(a)=>{const[uc,ctrl,team]=a;if(uc==="complex"||ctrl==="full")return"langgraph";if(uc==="team"&&ctrl!=="full")return"crewai";if(uc==="quick"&&team==="mixed")return"openai";if(uc==="enterprise")return"microsoft";if(ctrl==="minimal")return"crewai";if(team==="strong")return"langgraph";return"crewai"};
+  const answer=(v)=>{const na=[...ans,v];setAns(na);if(q+1<qs.length)setQ(q+1);else setRes(recs[decide(na)])};
+  const reset=()=>{setQ(0);setAns([]);setRes(null)};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Framework Decision Guide</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Answer 3 questions. Get a framework recommendation with trade-offs.</div>
+      {!res?(<div>
+        <div style={{color:"#E2E8F0",fontSize:"0.9rem",fontWeight:600,marginBottom:12}}><span style={{color:"#34D399",fontSize:"0.72rem",marginRight:8}}>Q{q+1}/{qs.length}</span>{qs[q].q}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>{qs[q].opts.map((o,i)=>(<button key={i} onClick={()=>answer(o.v)} style={{padding:"10px 14px",borderRadius:8,border:"1px solid #2E3240",background:"#12141C",color:"#C9CDD3",fontSize:"0.82rem",textAlign:"left",cursor:"pointer",transition:"all 0.15s"}}>{o.l}</button>))}</div>
+      </div>):(
+        <div style={{animation:"slideIn 0.3s ease"}}>
+          <div style={{padding:"12px 16px",background:res.color+"18",borderRadius:10,border:"1px solid "+res.color+"44",marginBottom:12}}>
+            <div style={{color:res.color,fontFamily:"'JetBrains Mono'",fontSize:"1.1rem",fontWeight:700,marginBottom:4}}>{res.name}</div>
+            <div style={{color:"#C9CDD3",fontSize:"0.84rem",lineHeight:1.6}}>{res.desc}</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+            <div style={{background:"#12141C",borderRadius:8,padding:"10px 12px",border:"1px solid #2E3240"}}><div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>STRENGTHS</div>{res.pros.map((p,i)=><div key={i} style={{color:"#94A3B8",fontSize:"0.76rem",marginBottom:3}}>✓ {p}</div>)}</div>
+            <div style={{background:"#12141C",borderRadius:8,padding:"10px 12px",border:"1px solid #2E3240"}}><div style={{color:"#F87171",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:6}}>TRADE-OFFS</div>{res.cons.map((c,i)=><div key={i} style={{color:"#94A3B8",fontSize:"0.76rem",marginBottom:3}}>⚠ {c}</div>)}</div>
+          </div>
+          <button onClick={reset} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2E3240",background:"transparent",color:"#6B7280",fontSize:"0.75rem",cursor:"pointer"}}>↻ Try again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 2: LangGraph State Machine ──
+function LangGraphDemo(){
+  const [step,setStep]=useState(-1);const [running,setRunning]=useState(false);
+  const nodes=[
+    {id:"classify",label:"classify_query",color:"#34D399",desc:"Classify: search, direct, or escalate"},
+    {id:"search",label:"search_docs",color:"#34D399",desc:"Retrieve docs from vector store"},
+    {id:"answer",label:"generate_answer",color:"#818CF8",desc:"Generate response from context"},
+    {id:"escalate",label:"escalate_human",color:"#FBBF24",desc:"Route to human — confidence too low"},
+    {id:"guard",label:"check_guardrails",color:"#F87171",desc:"Validate: no PII, no hallucination"},
+    {id:"end",label:"END",color:"#6B7280",desc:"Return response"},
+  ];
+  const exec=[
+    {node:"classify",state:{query:"What's your refund policy?",classification:"needs_search",confidence:0.87}},
+    {node:"search",state:{docs_retrieved:3,top_score:0.91,source:"refund_policy_v2.md"}},
+    {node:"answer",state:{response:"Our refund policy allows returns within 30 days...",tokens:142}},
+    {node:"guard",state:{pii_check:"pass",hallucination_check:"pass",on_topic:true}},
+    {node:"end",state:{final:"Returns accepted within 30 days of delivery.",latency:"1.2s"}},
+  ];
+  const run=()=>{setStep(-1);setRunning(true);exec.forEach((_,i)=>{setTimeout(()=>setStep(i),(i+1)*800)});setTimeout(()=>setRunning(false),(exec.length+1)*800)};
+  const activeNode=step>=0&&step<exec.length?exec[step].node:null;
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>LangGraph State Machine</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>A support agent workflow. Click Run to watch state flow through each node.</div>
+      <button onClick={run} disabled={running} style={{padding:"6px 18px",borderRadius:6,border:"1px solid #34D399",background:running?"#34D39922":"#34D39933",color:"#34D399",fontSize:"0.8rem",fontWeight:700,cursor:running?"default":"pointer",marginBottom:"1.25rem"}}>{running?"⟳ Executing…":"▶ Run Workflow"}</button>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:"1.25rem"}}>
+        {nodes.map(n=>{const isActive=activeNode===n.id;const isPast=step>=0&&exec.findIndex(e=>e.node===n.id)<=step&&exec.findIndex(e=>e.node===n.id)>=0;return(
+          <div key={n.id} style={{padding:"10px 12px",borderRadius:8,background:isActive?n.color+"22":"#12141C",border:"1.5px solid "+(isActive?n.color:isPast?n.color+"55":"#2E3240"),transition:"all 0.3s",boxShadow:isActive?"0 0 12px "+n.color+"33":"none"}}>
+            <div style={{fontFamily:"'JetBrains Mono'",fontSize:"0.74rem",fontWeight:700,color:isActive?n.color:isPast?n.color+"AA":"#6B7280",marginBottom:3}}>{n.label}</div>
+            <div style={{fontSize:"0.68rem",color:"#6B7280",lineHeight:1.45}}>{n.desc}</div>
+          </div>
+        )})}
+      </div>
+      {step>=0&&step<exec.length&&(
+        <div style={{background:"#12141C",borderRadius:8,padding:"12px 14px",border:"1px solid #2E3240",animation:"slideIn 0.2s ease"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+            <span style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:1}}>STATE AT</span>
+            <span style={{fontFamily:"'JetBrains Mono'",color:"#E2E8F0",fontSize:"0.82rem",fontWeight:700}}>{exec[step].node}</span>
+            <span style={{color:"#4B5563",fontSize:"0.7rem"}}>step {step+1}/{exec.length}</span>
+          </div>
+          <pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.74rem",color:"#A78BFA",lineHeight:1.65,margin:0}}>{JSON.stringify(exec[step].state,null,2)}</pre>
+        </div>
+      )}
+      {step>=exec.length-1&&!running&&step>=0&&(
+        <div style={{marginTop:10,padding:"0.65rem 0.85rem",background:"#34D39915",borderRadius:8,border:"1px solid #34D39933"}}>
+          <span style={{color:"#34D399",fontSize:"0.78rem",fontWeight:600}}>The insight: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>Every node receives the full state, modifies it, and passes it forward. Conditional edges (classify → search vs. classify → escalate) are just Python functions inspecting the state. This is what makes LangGraph debuggable — you can inspect state at every step.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 3: Multi-Agent Collaboration ──
+function MultiAgentDemo(){
+  const [running,setRunning]=useState(false);const [idx,setIdx]=useState(-1);
+  const msgs=[
+    {agent:"User",color:"#6B7280",icon:"👤",text:"Write a competitive analysis of Tesla vs BYD in the EV market."},
+    {agent:"Orchestrator",color:"#34D399",icon:"🎯",text:"Breaking into subtasks. Researcher → gather data. Analyst → compare metrics. Writer → produce report."},
+    {agent:"Researcher",color:"#818CF8",icon:"🔍",text:"Tesla: 1.79M deliveries, $97.7B revenue. BYD: 4.27M deliveries (incl. hybrids), $107B revenue. BYD surpassed Tesla in total revenue for the first time."},
+    {agent:"Researcher",color:"#818CF8",icon:"🔍",text:"Tesla leads in US/EU. BYD dominates China/SEA. Tesla margin 8.2%, BYD margin 5.1%. Average selling price: Tesla $42K, BYD $18K."},
+    {agent:"Analyst",color:"#FBBF24",icon:"📊",text:"Key insight: BYD wins on volume through aggressive pricing. Tesla wins on per-unit profit and brand premium. BYD is Toyota, Tesla is BMW."},
+    {agent:"Writer",color:"#A78BFA",icon:"✍️",text:"Draft: 'EV Market: Tesla vs BYD — A Tale of Two Strategies' (1,200 words). Executive summary, market share, financials, and strategic outlook."},
+    {agent:"Orchestrator",color:"#34D399",icon:"🎯",text:"All subtasks complete. Report assembled and fact-checked against researcher data. Delivering to user."},
+  ];
+  const run=()=>{setIdx(-1);setRunning(true);msgs.forEach((_,i)=>{setTimeout(()=>setIdx(i),(i+1)*1200)});setTimeout(()=>setRunning(false),(msgs.length+1)*1200)};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Multi-Agent Collaboration</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Watch a research team of specialised agents collaborate on a task.</div>
+      <div style={{display:"flex",gap:8,marginBottom:"1.25rem",flexWrap:"wrap"}}>
+        <button onClick={run} disabled={running} style={{padding:"6px 18px",borderRadius:6,border:"1px solid #34D399",background:running?"#34D39922":"#34D39933",color:"#34D399",fontSize:"0.8rem",fontWeight:700,cursor:running?"default":"pointer"}}>{running?"⟳ Running…":"▶ Run Team"}</button>
+        {[{l:"🎯 Orchestrator",c:"#34D399"},{l:"🔍 Researcher",c:"#818CF8"},{l:"📊 Analyst",c:"#FBBF24"},{l:"✍️ Writer",c:"#A78BFA"}].map(a=>(<div key={a.l} style={{fontSize:"0.7rem",color:a.c,padding:"4px 10px",borderRadius:5,border:"1px solid "+a.c+"44",background:a.c+"11"}}>{a.l}</div>))}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8,minHeight:60}}>
+        {msgs.map((m,i)=>(
+          <div key={i} style={{opacity:i<=idx?1:0,transform:i<=idx?"none":"translateY(6px)",transition:"all 0.3s",display:"flex",gap:10,alignItems:"flex-start",padding:"8px 12px",borderRadius:8,background:"#12141C",border:"1px solid #2E3240"}}>
+            <span style={{fontSize:"1rem",flexShrink:0}}>{m.icon}</span>
+            <div><div style={{color:m.color,fontSize:"0.72rem",fontWeight:700,letterSpacing:0.5,marginBottom:2}}>{m.agent.toUpperCase()}</div>
+            <div style={{color:"#C9CDD3",fontSize:"0.8rem",lineHeight:1.55}}>{m.text}</div></div>
+          </div>
+        ))}
+      </div>
+      {idx>=msgs.length-1&&!running&&(
+        <div style={{marginTop:12,padding:"0.65rem 0.85rem",background:"#34D39915",borderRadius:8,border:"1px solid #34D39933",animation:"slideIn 0.3s ease"}}>
+          <span style={{color:"#34D399",fontSize:"0.78rem",fontWeight:600}}>The pattern: </span>
+          <span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>The orchestrator decomposes the task, assigns subtasks to specialists, waits for results, and assembles the output. In CrewAI: roles + tasks. In LangGraph: each agent is a node. In OpenAI SDK: agents hand off via the handoff primitive.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DEMO 4: Failure Mode Detector ──
+function FailureModeDemo(){
+  const [sel,setSel]=useState(null);const [diag,setDiag]=useState(false);const [res,setRes]=useState(null);
+  const scenarios=[
+    {id:"loop",label:"Agent keeps searching but never answers",icon:"🔄"},
+    {id:"tool",label:"Agent invents a tool that doesn't exist",icon:"🛠️"},
+    {id:"cost",label:"Agent bill spiked 10x overnight",icon:"💸"},
+    {id:"refuse",label:"Agent refuses valid queries",icon:"🚫"},
+  ];
+  const dx={
+    loop:{failure:"Infinite Loop",severity:"HIGH",color:"#EF4444",cause:"Stopping condition never met — tool returns ambiguous results, agent interprets as 'need more info' → unbounded loop.",fixes:[{f:"Max iteration limit",c:"recursion_limit=25  # LangGraph"},{f:"Token budget",c:"if state['tokens'] > 8000: return 'end'"},{f:"Repeated-action detector",c:"if last_3_actions == same: force_answer()"}],prevent:"Always set recursion_limit (LangGraph) or max_iter (CrewAI). Every loop needs a ceiling."},
+    tool:{failure:"Hallucinated Tool Call",severity:"MEDIUM",color:"#F59E0B",cause:"LLM generates a tool name not in its tool list — e.g., calling 'analyze_sentiment()' when only 'search()' exists.",fixes:[{f:"Strict tool schema",c:'tools=[{"name":"search","strict":True,...}]'},{f:"Name validation",c:"if name not in ALLOWED: retry()"},{f:"Structured output",c:"response_format={'type':'json_schema',...}"}],prevent:"Use structured output. List tools explicitly in system prompt. Validate every call."},
+    cost:{failure:"Runaway Cost",severity:"HIGH",color:"#EF4444",cause:"Too many LLM calls per request — retries, long chains, verbose tool outputs fed back into context. Single query triggers 15+ calls.",fixes:[{f:"Per-request cap",c:"if cost > $0.50: abort_and_alert()"},{f:"Token tracking",c:"state['budget'] -= usage.total_tokens"},{f:"Summarise outputs",c:"context = summarise(result, max=200)"}],prevent:"Log cost per request from day one. Alert at 2x expected p95. Summarise long tool outputs."},
+    refuse:{failure:"Over-Cautious Refusal",severity:"LOW",color:"#3B82F6",cause:"Guardrails too aggressive — blocking legitimate queries matching surface patterns (e.g., 'delete my account' triggers destructive-action filter).",fixes:[{f:"Whitelist intents",c:"if intent in SAFE: bypass_guardrail()"},{f:"Confidence threshold",c:"if confidence < 0.8: allow_with_log()"},{f:"Layered guardrails",c:"# Soft block (warn) vs hard block (reject)"}],prevent:"Test guardrails on 50+ legitimate queries. Track refusal rate — alert if > 5%."},
+  };
+  const run=(id)=>{setSel(id);setRes(null);setDiag(true);setTimeout(()=>{setDiag(false);setRes(dx[id])},1000)};
+  return(
+    <div style={{background:"#1A1D27",borderRadius:14,padding:"1.75rem",border:"1px solid #2E3240",margin:"1.5rem 0"}}>
+      <div style={{color:"#34D399",fontSize:"0.7rem",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Interactive Demo</div>
+      <div style={{color:"#F0F4F8",fontSize:"1.15rem",fontWeight:700,fontFamily:"'Libre Baskerville',serif",marginBottom:4}}>Agent Failure Mode Detector</div>
+      <div style={{color:"#94A3B8",fontSize:"0.82rem",marginBottom:"1.25rem"}}>Pick a symptom. Get root cause, fix, and prevention.</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:"1.25rem"}}>
+        {scenarios.map(s=>(<button key={s.id} onClick={()=>run(s.id)} style={{background:sel===s.id?"#34D39922":"#12141C",border:"1px solid "+(sel===s.id?"#34D399":"#2E3240"),borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",transition:"all 0.15s"}}><span style={{fontSize:"1.1rem",marginRight:8}}>{s.icon}</span><span style={{color:sel===s.id?"#34D399":"#C9CDD3",fontSize:"0.8rem",fontWeight:sel===s.id?700:400}}>{s.label}</span></button>))}
+      </div>
+      {diag&&<div style={{textAlign:"center",padding:"1.5rem",color:"#34D399",fontSize:"0.85rem"}}><div style={{animation:"pulse 1s infinite"}}>🔍 Diagnosing…</div></div>}
+      {res&&!diag&&(
+        <div style={{animation:"slideIn 0.3s ease"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:res.color+"18",borderRadius:8,border:"1px solid "+res.color+"44",marginBottom:10}}><div><div style={{color:res.color,fontWeight:700,fontSize:"0.92rem"}}>{res.failure}</div><div style={{color:res.color,fontSize:"0.68rem",fontWeight:700,letterSpacing:1}}>SEVERITY: {res.severity}</div></div></div>
+          <div style={{padding:"10px 14px",background:"#12141C",borderRadius:8,border:"1px solid #2E3240",marginBottom:10}}><div style={{color:"#FBBF24",fontSize:"0.7rem",fontWeight:700,letterSpacing:1,marginBottom:4}}>ROOT CAUSE</div><div style={{color:"#C9CDD3",fontSize:"0.82rem",lineHeight:1.6}}>{res.cause}</div></div>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10}}>{res.fixes.map((fx,i)=>(<div key={i} style={{padding:"8px 12px",background:"#12141C",borderRadius:8,border:"1px solid #2E3240"}}><div style={{color:"#34D399",fontSize:"0.72rem",fontWeight:700,marginBottom:3}}>FIX {i+1}: {fx.f}</div><pre style={{fontFamily:"'JetBrains Mono'",fontSize:"0.74rem",color:"#A78BFA",margin:0}}>{fx.c}</pre></div>))}</div>
+          <div style={{padding:"0.65rem 0.85rem",background:"#34D39915",borderRadius:8,border:"1px solid #34D39933"}}><span style={{color:"#34D399",fontSize:"0.78rem",fontWeight:600}}>Prevention: </span><span style={{color:"#C9CDD3",fontSize:"0.82rem"}}>{res.prevent}</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── SIDEBAR ──
+function Sidebar({active,onNav}){
+  const [s,setS]=useState({f:true,lg:true,cr:true,oa:true,pt:true,mm:true,pr:true,cp:true,px:true});
+  const tog=(k)=>setS(v=>({...v,[k]:!v[k]}));
+  const gBtn=(label,color,key)=>(
+    <button onClick={()=>tog(key)} style={{width:"100%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 9px 2px",marginTop:4,cursor:"pointer"}}>
+      <span style={{color,fontSize:"0.6rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{label}</span>
+      <span style={{color,fontSize:"0.62rem"}}>{s[key]?"▼":"▶"}</span>
+    </button>
+  );
+  const rg=(groupName,color,bg)=>CHAPTERS.filter(c=>c.group===groupName).map(c=>(
+    <a key={c.id} className={"sidebar-item"+(active===c.id?" active":"")} onClick={()=>onNav(c.id)}>
+      <span className="item-num" style={{background:bg,color}}>{c.num||"·"}</span>
+      <span><span className="item-title">{c.title}</span><span className="item-sub">{c.sub}</span></span>
+    </a>
+  ));
+  return(
+    <div className="sidebar">
+      <div className="sidebar-logo"><h2>GenAI Decoded</h2><div className="brand-by">by Nij</div></div>
+      <div className="sidebar-section">
+        <a className={"sidebar-item"+(active==="s11-intro"?" active":"")} onClick={()=>onNav("s11-intro")}><span className="item-title">Overview</span></a>
+        {gBtn("Foundation","var(--info-color)","f")}{s.f&&rg("foundation","var(--info-color)","var(--info-bg)")}
+        {gBtn("LangGraph","var(--emerald)","lg")}{s.lg&&rg("langgraph","var(--emerald)","var(--emerald-bg)")}
+        {gBtn("CrewAI","var(--build-color)","cr")}{s.cr&&rg("crewai","var(--build-color)","var(--build-bg)")}
+        {gBtn("OpenAI SDK","var(--blue)","oa")}{s.oa&&rg("openai_sdk","var(--blue)","var(--blue-bg)")}
+        {gBtn("Multi-Agent Patterns","var(--violet)","pt")}{s.pt&&rg("patterns","var(--violet)","var(--violet-bg)")}
+        {gBtn("Memory","var(--teal)","mm")}{s.mm&&rg("memory","var(--teal)","var(--teal-bg)")}
+        {gBtn("Production","var(--red)","pr")}{s.pr&&rg("production","var(--red)","var(--red-bg)")}
+        {gBtn("Capstone","var(--emerald)","cp")}{s.cp&&rg("capstone","var(--emerald)","var(--emerald-bg)")}
+        {gBtn("Practice","var(--info-color)","px")}{s.px&&rg("practice","var(--info-color)","var(--info-bg)")}
+        <a className={"sidebar-item"+(active==="s11-cheat"?" active":"")} onClick={()=>onNav("s11-cheat")}><span className="item-title">📋 Cheat Sheet</span></a>
+      </div>
+    </div>
+  );
+}
+
+// ── APP ──
+function App(){
+  const [active,setActive]=useState("s11-intro");
+  const onNav=(id)=>{setActive(id);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})};
+  useEffect(()=>{const h=window.location.hash.replace("#","");if(!h)return;const t=setTimeout(()=>{const el=document.getElementById(h);if(el){setActive(h);el.scrollIntoView({behavior:"auto",block:"start"})}},0);return()=>clearTimeout(t)},[]);
+
+  return(
+    <div>
+      <Sidebar active={active} onNav={onNav}/>
+      <div className="main"><div className="content">
+
+        {/* SECTION HEADER */}
+        <div style={{padding:"3rem 0 1.5rem",borderTop:"3px solid var(--emerald)",marginTop:"3rem"}}>
+          <div style={{color:"var(--emerald)",fontSize:"0.75rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Section 11</div>
+          <h2 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"2rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Agent Frameworks & Multi-Agent Systems</h2>
+          <div style={{color:"var(--text-muted)",fontSize:"1rem",fontStyle:"italic"}}>LangGraph, CrewAI, OpenAI SDK — frameworks, collaboration patterns, and production guardrails</div>
+        </div>
+
+        {/* ── Overview ── */}
+        <section id="s11-intro">
+          <P>In Section 10 you built agents from scratch — the loop, three architectures, MCP, and A2A. You now know how agents work at the lowest level. This section moves up the stack: <S color="var(--emerald)">production frameworks</S> that wrap those patterns with state management, persistence, and observability, and <S color="var(--emerald)">multi-agent systems</S> where specialised agents collaborate.</P>
+          <P>You'll go deep on three frameworks (LangGraph, CrewAI, OpenAI Agents SDK), learn multi-agent collaboration patterns, build memory systems, and master the production engineering that keeps agents safe — observability, evaluation, failure modes, and cost control.</P>
+          <Callout color="var(--emerald)" icon="🏗️"><S>Why frameworks now:</S> the raw agent loop from Section 10 is fine for simple tasks. But production agents need checkpointing (crash recovery), conditional routing (branching), human-in-the-loop (approval gates), and observability (tracing every decision). Frameworks give you these out of the box.</Callout>
+          <SubH>What you'll come away with</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {[
+              {icon:"⚡",title:"LangGraph mastery",desc:"State machines, conditional routing, checkpointing, HITL — the production default"},
+              {icon:"👥",title:"CrewAI proficiency",desc:"Role-based teams, tasks, crews — fastest path to multi-agent collaboration"},
+              {icon:"🔀",title:"OpenAI Agents SDK",desc:"Handoffs, guardrails, tracing — the OpenAI-native approach"},
+              {icon:"🧠",title:"Agent memory systems",desc:"Short-term, long-term, and episodic — how agents remember and learn"},
+              {icon:"🔍",title:"Production observability",desc:"LangSmith, Langfuse — tracing, evaluating, and debugging agent behaviour"},
+              {icon:"🛡️",title:"Safety and cost control",desc:"Failure modes, guardrails, budgets — keeping agents safe in production"},
+            ].map((o,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"1.3rem",marginBottom:4}}>{o.icon}</div>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{o.title}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.8rem",lineHeight:1.55}}>{o.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Foundation: Single → Multi ── */}
+        <section id="s11-multi" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="FOUNDATION" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Single Agent → Multi-Agent</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>When one agent isn't enough — and when it is</div>
+          </div>
+          <P>A single agent with good tools can handle most tasks. You only need multiple agents when: the task requires <S>different specialisations</S> that would conflict in one system prompt, the task is <S>too complex for one context window</S>, or you need <S>independent evaluation</S> of the output (one agent writes, another reviews).</P>
+          <SubH>The multi-agent spectrum</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {pattern:"Single Agent + Tools",desc:"One LLM, multiple tools. The agent decides which tools to call. Covers 70% of production use cases.",when:"Q&A, search, data lookup, customer support",complexity:"Low",color:"#059669"},
+              {pattern:"Orchestrator + Specialists",desc:"One agent decomposes the task and delegates subtasks to specialist agents. Most common multi-agent pattern.",when:"Research reports, competitive analysis, content production",complexity:"Medium",color:"#4F46E5"},
+              {pattern:"Debate / Review",desc:"Two agents argue opposing sides. A judge synthesises. Improves output quality on subjective tasks.",when:"Risk assessment, content review, code review, analysis",complexity:"Medium",color:"#B45309"},
+              {pattern:"Autonomous Team",desc:"Multiple agents with roles, goals, and shared memory. The framework handles orchestration.",when:"Complex workflows requiring diverse expertise, automated pipelines",complexity:"High",color:"#7C3AED"},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <S color={p.color}>{p.pattern}</S>
+                  <span style={{color:p.color,fontSize:"0.68rem",fontWeight:700,padding:"1px 8px",background:p.color+"14",borderRadius:4}}>COMPLEXITY: {p.complexity}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6,marginBottom:4}}>{p.desc}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.78rem"}}><S>Use when:</S> {p.when}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--emerald)" icon="🎯"><S>The honest rule:</S> start with a single agent. If it struggles because the task has genuinely different phases (research vs. analysis vs. writing), split into specialists. Don't add agents for complexity's sake — each agent adds latency, cost, and debugging surface.</Callout>
+        </section>
+
+        {/* ── Foundation: Framework Landscape ── */}
+        <section id="s11-fw" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="FOUNDATION" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Framework Landscape</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>The four that matter — and how to choose</div>
+          </div>
+          <FrameworkGuideDemo/>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {name:"LangGraph",stars:"150K+",approach:"Directed graph — nodes are functions, edges define flow. Explicit state at every step.",strength:"Fine-grained control, checkpointing, replay, LangSmith integration",tradeoff:"Steep learning curve. ~120 lines for a simple ReAct agent.",color:"#059669"},
+              {name:"CrewAI",stars:"32K+",approach:"Role-based teams — agents have job titles, goals, and task assignments. Framework orchestrates.",strength:"Fastest time-to-value (~35 lines). Intuitive team mental model. 60% Fortune 500 adoption.",tradeoff:"Less control over execution order. Harder to debug complex flows.",color:"#B45309"},
+              {name:"OpenAI Agents SDK",stars:"New (Mar 2025)",approach:"Handoff-based — agents transfer control explicitly, carrying context through transitions.",strength:"Native OpenAI integration. Built-in guardrails, tracing, MCP support.",tradeoff:"Locked to OpenAI models. Smaller ecosystem. Fewer orchestration patterns.",color:"#2563EB"},
+              {name:"Microsoft Agent Framework",stars:"45K+",approach:"Conversation-driven — agents solve problems through iterative dialogue. Merged AutoGen + Semantic Kernel.",strength:"Azure-native, multi-language (Python/.NET/Java), enterprise governance.",tradeoff:"Azure-centric. Merger docs in flux. Heavy for simple use cases.",color:"#6D28D9"},
+            ].map((f,i)=>(
+              <div key={i} style={{padding:"14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                  <span style={{color:f.color,fontWeight:700,fontSize:"0.95rem"}}>{f.name}</span>
+                  <span style={{color:"var(--text-muted)",fontSize:"0.72rem"}}>⭐ {f.stars}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6,marginBottom:8}}><S>Approach:</S> {f.approach}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div style={{padding:"6px 10px",background:f.color+"08",borderRadius:6,fontSize:"0.78rem",color:"var(--text-secondary)"}}><span style={{color:f.color,fontWeight:600}}>✓ </span>{f.strength}</div>
+                  <div style={{padding:"6px 10px",background:"#FEF2F2",borderRadius:6,fontSize:"0.78rem",color:"var(--text-secondary)"}}><span style={{color:"#B91C1C",fontWeight:600}}>⚠ </span>{f.tradeoff}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="🗺️"><S>The recommendation:</S> learn LangGraph deeply — it's the production standard and teaches you how agent state works. Use CrewAI for quick multi-agent prototypes. Use OpenAI SDK if you're locked into OpenAI. The concepts transfer across all four.</Callout>
+        </section>
+
+
+        {/* ── Ch1: LangGraph Core ── */}
+        <section id="s1" style={{paddingTop:"2.5rem"}}>
+          <ChH num="1" title="LangGraph Core — State, Nodes, Edges" sub="The building blocks of every LangGraph workflow"/>
+          <P>LangGraph models agent workflows as <S color="var(--emerald)">directed graphs</S>. Three concepts: <S>State</S> (a TypedDict carrying all data), <S>Nodes</S> (functions that receive and modify state), and <S>Edges</S> (connections defining flow). Every LangGraph app is some combination of these three.</P>
+          <CB>{`from langgraph.graph import StateGraph, END
+from typing import TypedDict
+
+# 1. Define state — everything the workflow tracks
+class SupportState(TypedDict):
+    query: str
+    classification: str
+    documents: list[str]
+    response: str
+
+# 2. Define nodes — functions that take + return state
+def classify(state: SupportState) -> SupportState:
+    result = call_llm(f"Classify this query: {state['query']}")
+    return {**state, "classification": result}
+
+def search(state: SupportState) -> SupportState:
+    docs = vector_store.similarity_search(state["query"], k=3)
+    return {**state, "documents": [d.page_content for d in docs]}
+
+def respond(state: SupportState) -> SupportState:
+    context = "\\n".join(state["documents"])
+    response = call_llm(f"Context: {context}\\nQ: {state['query']}")
+    return {**state, "response": response}
+
+# 3. Build the graph — connect nodes with edges
+graph = StateGraph(SupportState)
+graph.add_node("classify", classify)
+graph.add_node("search", search)
+graph.add_node("respond", respond)
+
+graph.set_entry_point("classify")
+graph.add_edge("classify", "search")
+graph.add_edge("search", "respond")
+graph.add_edge("respond", END)
+
+app = graph.compile()
+result = app.invoke({"query": "What's your refund policy?"})`}</CB>
+          <P>Four things to notice: state is a <Code>TypedDict</Code> (explicit, typed, inspectable), nodes are plain functions (no framework magic), edges are declared separately from nodes, and <Code>compile()</Code> freezes the graph for execution.</P>
+          <Callout color="var(--emerald)" icon="💡"><S>The mental model:</S> think of LangGraph as a flowchart you can run. Each box is a node. Each arrow is an edge. The flowchart carries a clipboard (state) that every box can read and write to. That's it.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch2: Conditional Routing ── */}
+        <section id="s2" style={{paddingTop:"2.5rem"}}>
+          <ChH num="2" title="Conditional Routing" sub="Branching the workflow based on what the agent finds"/>
+          <P>Static edges (A → B → C) handle linear workflows. <S color="var(--emerald)">Conditional edges</S> let the graph branch based on the current state — like an if/else in your flowchart. This is what makes LangGraph powerful for agent workflows where the next step depends on the previous result.</P>
+          <LangGraphDemo/>
+          <CB>{`from typing import Literal
+
+# A routing function — inspects state, returns next node name
+def route_query(state: SupportState) -> Literal["search", "respond", "escalate"]:
+    if state["classification"] == "needs_search":
+        return "search"
+    elif state["classification"] == "simple":
+        return "respond"
+    else:
+        return "escalate"
+
+# Add conditional edges instead of fixed edges
+graph.add_conditional_edges(
+    "classify",              # source node
+    route_query,             # routing function
+    {                        # mapping: return value → target node
+        "search": "search",
+        "respond": "respond",
+        "escalate": END,     # escalate exits the graph
+    }
+)
+
+# The graph now branches based on classification result:
+# classify → [search | respond | END]
+# search → respond → END`}</CB>
+          <P>The routing function is just a Python function that reads state and returns a string — the name of the next node. No special syntax. You can put any logic in there: confidence thresholds, keyword matching, even another LLM call.</P>
+          <Callout color="var(--emerald)" icon="🔀"><S>The power:</S> conditional edges let you build agent workflows with branches, fallbacks, and error handling. Low confidence? Route to human. Search returned nothing? Try a different query. Tool failed? Retry with a fallback. All expressed as routing functions.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch3: Checkpointing ── */}
+        <section id="s3" style={{paddingTop:"2.5rem"}}>
+          <ChH num="3" title="Checkpointing & Persistence" sub="Pause, persist, resume — the feature that makes LangGraph production-ready"/>
+          <P>In production, you need to pause a workflow, persist its state, and resume later — for human approval, long-running tasks, or crash recovery. LangGraph's checkpointing system does this natively.</P>
+          <CB>{`from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+
+# Development: in-memory checkpointing
+checkpointer = MemorySaver()
+
+# Production: SQLite or PostgreSQL persistence
+# checkpointer = SqliteSaver.from_conn_string("checkpoints.db")
+
+app = graph.compile(checkpointer=checkpointer)
+
+# Run with a thread ID — state is persisted after each node
+config = {"configurable": {"thread_id": "user-123"}}
+result = app.invoke({"query": "Delete my account"}, config)
+
+# The workflow pauses at a HITL interrupt (Chapter 4)...
+# Hours later, resume from exactly where it stopped:
+# app.invoke(Command(resume="approved"), config)`}</CB>
+          <SubH>Why checkpointing matters</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {scenario:"Crash recovery",desc:"Agent crashes mid-workflow (network error, timeout). Without checkpointing: restart from scratch, lose all progress. With checkpointing: resume from the last successful node.",color:"#059669"},
+              {scenario:"Human-in-the-loop",desc:"Agent needs human approval before sending an email or making a purchase. Without checkpointing: agent blocks and waits (expensive). With checkpointing: persist state, free resources, resume when human approves.",color:"#4F46E5"},
+              {scenario:"Long-running tasks",desc:"Research workflow takes 10 minutes. Without checkpointing: one timeout kills everything. With checkpointing: each node persists independently, timeout only retries the current node.",color:"#B45309"},
+              {scenario:"Multi-user",desc:"100 users running agents simultaneously. Thread IDs keep each user's state isolated. One user's crash doesn't affect others.",color:"#6D28D9"},
+            ].map((s,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <S color={s.color}>{s.scenario}</S>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6}}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--emerald)" icon="💾"><S>The production rule:</S> always enable checkpointing. Use <Code>MemorySaver</Code> for development, <Code>SqliteSaver</Code> or <Code>PostgresSaver</Code> for production. The cost is minimal — the benefit is crash recovery, HITL support, and debuggability.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch4: HITL ── */}
+        <section id="s4" style={{paddingTop:"2.5rem"}}>
+          <ChH num="4" title="Human-in-the-Loop" sub="Interrupt nodes, approval gates, and knowing when not to automate"/>
+          <P>Full autonomy sounds great until the agent sends an email to the wrong client, deletes production data, or commits to a $50K purchase. <S color="var(--emerald)">Human-in-the-loop (HITL)</S> gives agents autonomy where it's safe and requires approval where it's not.</P>
+          <CB>{`from langgraph.types import Command, interrupt
+
+def send_email(state):
+    """Node that pauses for human approval before sending."""
+    # This line pauses the entire workflow and persists state
+    approval = interrupt(
+        f"About to send email to {state['recipient']}:\\n"
+        f"Subject: {state['subject']}\\n"
+        f"Approve? (yes/no)"
+    )
+    
+    if approval == "yes":
+        # Human approved — send the email
+        actually_send_email(state["recipient"], state["subject"], state["body"])
+        return {**state, "email_sent": True}
+    else:
+        return {**state, "email_sent": False, "reason": "Human rejected"}
+
+# When the workflow hits send_email, it:
+# 1. Persists all state to the checkpointer
+# 2. Returns control to the caller with the interrupt message
+# 3. Waits for: app.invoke(Command(resume="yes"), config)
+# 4. Resumes from exactly where it stopped`}</CB>
+          <SubH>Three HITL patterns</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {pattern:"Approval Gate",when:"Irreversible actions — send email, transfer funds, delete data, make purchases",impl:"interrupt() before the action node. Human reviews and approves or rejects."},
+              {pattern:"Confidence Threshold",when:"Customer support, medical/legal info — wrong answers are costly",impl:"Route to human_review when confidence < 0.85. Agent handles high-confidence queries autonomously."},
+              {pattern:"Periodic Audit",when:"High-volume, lower-risk — content generation, classification at scale",impl:"Random 10% sample routed to review queue. Agent runs autonomously on the rest."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <S color="var(--emerald)">{p.pattern}</S>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6}}><S>When:</S> {p.when}</div>
+                <div style={{color:"var(--teal)",fontSize:"0.82rem"}}><S color="var(--teal)">Implementation:</S> {p.impl}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--red)" icon="🚨"><S>The rule:</S> any action that can't be undone needs an approval gate on day one. You can remove it later once you trust the agent. You can't un-send an email or un-delete a record.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch5: Sub-graphs & Multi-Agent ── */}
+        <section id="s5" style={{paddingTop:"2.5rem"}}>
+          <ChH num="5" title="Sub-graphs & Multi-Agent Patterns" sub="Nesting graphs, supervisor patterns, and agent-as-node"/>
+          <P>LangGraph's multi-agent pattern is simple: <S color="var(--emerald)">each agent is a node in a larger graph</S>. The supervisor is a node that routes to specialist agents. Each specialist can itself be a full sub-graph with its own nodes and edges.</P>
+          <CB>{`# Supervisor pattern: one LLM decides which specialist to call
+def supervisor(state):
+    """Route to the right specialist based on the task."""
+    decision = call_llm(
+        f"Task: {state['task']}\\n"
+        f"Available specialists: researcher, analyst, writer\\n"
+        f"Which specialist should handle this? Return only the name."
+    )
+    return {**state, "next_agent": decision.strip().lower()}
+
+def route_to_specialist(state) -> str:
+    return state["next_agent"]
+
+# Each specialist is its own node (or sub-graph)
+graph.add_node("supervisor", supervisor)
+graph.add_node("researcher", researcher_subgraph)
+graph.add_node("analyst", analyst_subgraph)
+graph.add_node("writer", writer_subgraph)
+
+graph.set_entry_point("supervisor")
+graph.add_conditional_edges("supervisor", route_to_specialist, {
+    "researcher": "researcher",
+    "analyst": "analyst",
+    "writer": "writer",
+})
+# Each specialist returns to supervisor for the next routing decision
+graph.add_edge("researcher", "supervisor")
+graph.add_edge("analyst", "supervisor")
+graph.add_edge("writer", END)  # writer produces final output`}</CB>
+          <P>The key insight: the supervisor runs in a loop. It routes to a specialist, gets the result back, and decides what to do next — route to another specialist, or end. This is the <S>orchestrator pattern</S> implemented as a LangGraph cycle.</P>
+          <Callout color="var(--emerald)" icon="🏗️"><S>Sub-graphs:</S> each specialist node can itself be a compiled LangGraph with its own state, nodes, and edges. The outer graph passes state in, the sub-graph processes it, and returns state back. This is how you build complex multi-agent systems that stay manageable — compose small, tested graphs into larger ones.</Callout>
+          <NB/>
+        </section>
+
+
+        {/* ── Ch6: CrewAI Core ── */}
+        <section id="s6" style={{paddingTop:"2.5rem"}}>
+          <ChH num="6" title="CrewAI Core — Agents, Tasks, Crews" sub="Agents with job descriptions, goals, and task assignments" color="var(--build-color)"/>
+          <P>CrewAI's mental model is a team meeting. Define agents by <S color="var(--build-color)">role</S> (who they are), <S color="var(--build-color)">goal</S> (what they're trying to achieve), and <S color="var(--build-color)">backstory</S> (context shaping their behaviour). Assign them tasks and let the framework orchestrate.</P>
+          <CB>{`from crewai import Agent, Task, Crew
+
+researcher = Agent(
+    role="Senior Research Analyst",
+    goal="Find comprehensive, accurate data about the given topic",
+    backstory="You're a veteran analyst who double-checks every source.",
+    tools=[search_tool, scrape_tool],
+    llm="gpt-4o-mini",
+    max_iter=5,      # prevent infinite loops
+    verbose=True,
+)
+
+writer = Agent(
+    role="Technical Writer",
+    goal="Transform research into clear, structured reports",
+    backstory="You write for busy executives who want insights, not filler.",
+    llm="gpt-4o-mini",
+)
+
+research_task = Task(
+    description="Research the current state of the EV market in 2025.",
+    expected_output="Structured brief with data points and sources.",
+    agent=researcher,
+)
+
+report_task = Task(
+    description="Write a 500-word executive summary based on the research.",
+    expected_output="Polished report with key metrics and strategic outlook.",
+    agent=writer,
+    context=[research_task],  # writer receives researcher's output
+)
+
+crew = Crew(agents=[researcher, writer], tasks=[research_task, report_task])
+result = crew.kickoff()`}</CB>
+          <P>That's a working multi-agent system in ~35 lines. The researcher gathers data, the writer produces a report using the researcher's output. CrewAI handles sequencing, context passing, and error handling.</P>
+          <Callout color="var(--build-color)" icon="🏗️"><S>When CrewAI over LangGraph:</S> if your problem maps naturally to "a team of people with different jobs," CrewAI is faster to build and easier to explain to stakeholders. If you need precise control over every branch and retry, LangGraph is the better choice.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch7: CrewAI Advanced ── */}
+        <section id="s7" style={{paddingTop:"2.5rem"}}>
+          <ChH num="7" title="CrewAI Advanced — Tools, Memory, Callbacks" sub="Production features that make CrewAI crews reliable" color="var(--build-color)"/>
+          <P>The basic Crew works for prototypes. Production needs tools, shared memory, execution callbacks, and manager LLMs for complex orchestration.</P>
+          <CB>{`from crewai import Crew, Process
+from crewai.tools import tool
+
+# Custom tool — decorated function becomes a CrewAI tool
+@tool("Search Product Database")
+def search_products(query: str) -> str:
+    """Search the product catalog. Returns matching products with prices."""
+    return db.search(query)
+
+# Hierarchical process — a manager LLM routes tasks to agents
+crew = Crew(
+    agents=[researcher, analyst, writer],
+    tasks=[research_task, analysis_task, report_task],
+    process=Process.hierarchical,    # manager LLM orchestrates
+    manager_llm="gpt-4o-mini",       # the orchestrator model
+    memory=True,                     # shared memory across agents
+    verbose=True,
+    max_rpm=20,                      # rate limiting
+)
+
+# Callbacks — monitor agent activity
+from crewai import CrewOutput
+result: CrewOutput = crew.kickoff()
+print(f"Token usage: {result.token_usage}")
+print(f"Tasks completed: {len(result.tasks_output)}")`}</CB>
+          <SubH>Sequential vs. Hierarchical process</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{padding:"12px 14px",background:"var(--build-bg)",borderRadius:10,border:"1px solid var(--build-border)"}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Sequential (default)</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>Tasks execute in order: task 1 → task 2 → task 3. Each task's output feeds into the next via <Code>context</Code>. Predictable, debuggable, sufficient for most workflows.</div>
+            </div>
+            <div style={{padding:"12px 14px",background:"var(--violet-bg)",borderRadius:10,border:"1px solid var(--violet)"+"33"}}>
+              <div style={{color:"var(--violet)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>Hierarchical</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>A manager LLM decides which agent handles which task and in what order. More flexible but harder to debug. Use when task order depends on intermediate results.</div>
+            </div>
+          </div>
+          <NB/>
+        </section>
+
+        {/* ── Ch8: CrewAI vs LangGraph ── */}
+        <section id="s8" style={{paddingTop:"2.5rem"}}>
+          <ChH num="8" title="CrewAI vs LangGraph" sub="Same problem, two frameworks — an honest comparison" color="var(--build-color)"/>
+          <P>The best way to understand the trade-offs is to build the <S>same thing</S> in both frameworks and compare the experience.</P>
+          <SubH>The task: research team that investigates a topic and produces a report</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["","LangGraph","CrewAI"],
+              ["Lines of code","~120","~35"],
+              ["Setup time","2–4 hours first time","30 minutes first time"],
+              ["Control over flow","Full — you define every edge","Framework decides execution order"],
+              ["Debugging","Inspect state at every node","Read agent logs (less granular)"],
+              ["Checkpointing","Built-in (MemorySaver/SqliteSaver)","Not built-in"],
+              ["HITL support","Native (interrupt nodes)","Limited (manual workarounds)"],
+              ["Observability","LangSmith integration","Callbacks + custom logging"],
+              ["Multi-model","Easy (different model per node)","Supported (per-agent LLM)"],
+              ["Learning curve","Steep (graph concepts)","Gentle (team analogy)"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr 1.5fr 1.5fr",gap:8,padding:"6px 0",borderBottom:i<9?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.82rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                {row.map((c,j)=><span key={j} style={{color:j===0&&i>0?"var(--text)":j===1&&i>0?"var(--emerald)":j===2&&i>0?"var(--build-color)":undefined,fontWeight:j===0&&i>0?600:undefined}}>{c}</span>)}
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--emerald)" icon="🧭"><S>The decision rule:</S> if you need checkpointing, HITL, or fine-grained control → LangGraph. If you need a working multi-agent prototype in an hour → CrewAI. For production systems, most teams start with CrewAI for the prototype and move to LangGraph when they need the control.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch9: OpenAI Agents SDK ── */}
+        <section id="s9" style={{paddingTop:"2.5rem"}}>
+          <ChH num="9" title="OpenAI Agents SDK" sub="Handoffs, guardrails, and tracing — the OpenAI-native approach" color="var(--blue)"/>
+          <P>OpenAI's Agents SDK (released March 2025, replacing Swarm) introduces one powerful primitive: the <S color="var(--blue)">handoff</S>. Agents transfer control to each other explicitly, carrying the full conversation context.</P>
+          <CB>{`from agents import Agent, Runner
+
+triage = Agent(
+    name="Triage",
+    instructions="Determine what the customer needs. "
+                 "Hand off to billing for payment issues, "
+                 "technical for product problems.",
+    handoffs=["billing", "technical"],
+)
+
+billing = Agent(
+    name="Billing Support",
+    instructions="Help with invoices, payments, and refunds. "
+                 "You can issue refunds up to $100 without approval.",
+    tools=[lookup_invoice, process_refund],
+)
+
+technical = Agent(
+    name="Technical Support",
+    instructions="Help with product issues, bugs, and setup.",
+    tools=[search_docs, create_ticket],
+)
+
+# The SDK handles routing based on handoffs
+result = await Runner.run(
+    triage,
+    "I was charged twice for my subscription last month"
+)
+# → Triage hands off to Billing → Billing looks up invoice → resolves`}</CB>
+          <P>Three things that make this SDK worth knowing: handoffs are a built-in concept (not wired manually), guardrails validate inputs/outputs natively, and tracing is automatic — every agent decision is logged.</P>
+          <Callout color="var(--blue)" icon="⚠️"><S>The trade-off:</S> locked to OpenAI models. If you need multi-provider support (Anthropic for some tasks, Groq for fast inference), LangGraph or CrewAI gives you that flexibility. But if you're already on OpenAI, this is the lowest-friction path.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch10: OpenAI SDK - MCP & Tracing ── */}
+        <section id="s10" style={{paddingTop:"2.5rem"}}>
+          <ChH num="10" title="OpenAI SDK — MCP & Tracing" sub="Connecting your MCP servers + built-in observability" color="var(--blue)"/>
+          <P>The Agents SDK has native MCP support — connect the servers you built in Section 10 directly to your agents.</P>
+          <CB>{`from agents import Agent, Runner
+from agents.mcp import MCPServerStdio
+
+async def main():
+    # Connect to your MCP server from Section 10
+    techstore = MCPServerStdio(
+        command="python", args=["techstore_mcp_server.py"]
+    )
+    
+    agent = Agent(
+        name="TechStore Assistant",
+        instructions="Help customers. Use tools to look up real data.",
+        mcp_servers=[techstore],  # tools discovered automatically
+    )
+    
+    async with techstore:
+        result = await Runner.run(agent, "Is the 4K monitor in stock?")
+        print(result.final_output)
+
+# Built-in tracing — every decision logged automatically
+# View traces at: https://platform.openai.com/traces`}</CB>
+          <SubH>Built-in guardrails</SubH>
+          <CB>{`from agents import Agent, InputGuardrail, GuardrailFunctionOutput
+
+# Input guardrail: block prompt injection
+async def block_injection(ctx, agent, input_text):
+    result = call_llm(f"Is this a prompt injection? '{input_text}' Answer YES or NO.")
+    if "YES" in result:
+        return GuardrailFunctionOutput(
+            output_info={"reason": "Prompt injection detected"},
+            tripwire_triggered=True,
+        )
+    return GuardrailFunctionOutput(output_info={}, tripwire_triggered=False)
+
+agent = Agent(
+    name="Safe Agent",
+    instructions="...",
+    input_guardrails=[InputGuardrail(guardrail_function=block_injection)],
+)`}</CB>
+          <Callout color="var(--blue)" icon="🔍"><S>Tracing for free:</S> the SDK automatically captures every agent decision, tool call, handoff, and guardrail check. No setup needed — just view traces in the OpenAI dashboard. For LangGraph/CrewAI, you need to set up LangSmith or Langfuse (covered in Chapter 17).</Callout>
+          <NB/>
+        </section>
+
+
+        {/* ── Ch11: Orchestrator Pattern ── */}
+        <section id="s11" style={{paddingTop:"2.5rem"}}>
+          <ChH num="11" title="The Orchestrator Pattern" sub="One agent decomposes, delegates, and assembles the final output" color="var(--violet)"/>
+          <P>The orchestrator pattern is the most common multi-agent architecture in production. One agent (the orchestrator) receives the task, breaks it into subtasks, assigns each to a specialist, collects results, and assembles the final output.</P>
+          <MultiAgentDemo/>
+          <P>The orchestrator makes three decisions: <S>what subtasks</S> to create, <S>which specialist</S> handles each, and <S>when to stop</S> delegating and produce the final output. It's the manager in a team meeting — it doesn't do the work, it coordinates who does.</P>
+          <Callout color="var(--violet)" icon="🎯"><S>When to use:</S> any task that naturally decomposes into phases — research → analysis → writing, or fetch data → transform → validate → store. The orchestrator pattern is how most "AI analyst" and "AI researcher" products are built internally.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch12: Debate & Consensus ── */}
+        <section id="s12" style={{paddingTop:"2.5rem"}}>
+          <ChH num="12" title="Debate & Consensus" sub="Two agents argue, a judge synthesises — improving output quality" color="var(--violet)"/>
+          <P>For subjective or high-stakes tasks, having one agent answer isn't enough. The <S color="var(--violet)">debate pattern</S> uses two agents with opposing perspectives and a judge that synthesises the best arguments from both.</P>
+          <CB>{`def debate(question, rounds=2):
+    """Two agents debate, a judge synthesises."""
+    bull = {"role": "system", "content": "Argue the OPTIMISTIC case. Use data and evidence."}
+    bear = {"role": "system", "content": "Argue the CAUTIOUS case. Identify risks and weaknesses."}
+    
+    bull_args, bear_args = [], []
+    for r in range(rounds):
+        # Bull makes the case
+        bull_response = call_llm(
+            f"Question: {question}\\nPrevious debate: {bear_args}\\nMake your case.",
+            system="Argue the optimistic case. Counter the bear's points."
+        ).content
+        bull_args.append(bull_response)
+        
+        # Bear counters
+        bear_response = call_llm(
+            f"Question: {question}\\nBull's argument: {bull_response}\\nCounter this.",
+            system="Argue the cautious case. Identify flaws in the bull's reasoning."
+        ).content
+        bear_args.append(bear_response)
+    
+    # Judge synthesises
+    verdict = call_llm(
+        f"Question: {question}\\n"
+        f"Optimistic arguments:\\n{'\\n'.join(bull_args)}\\n"
+        f"Cautious arguments:\\n{'\\n'.join(bear_args)}\\n"
+        f"Synthesise: which points are strongest? What's the balanced answer?",
+        system="You are an impartial judge. Give a balanced verdict."
+    ).content
+    return verdict`}</CB>
+          <P>Debate works because it surfaces arguments a single agent wouldn't consider. The bull finds opportunities; the bear finds risks. The judge gets both perspectives and produces a more nuanced answer.</P>
+          <Callout color="var(--violet)" icon="⚖️"><S>Best for:</S> investment analysis, risk assessment, code review (one agent reviews for bugs, another for performance), content quality (one writes, another critiques). Anything where disagreement improves the output.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch13: Pipeline vs Dynamic ── */}
+        <section id="s13" style={{paddingTop:"2.5rem"}}>
+          <ChH num="13" title="Pipeline vs Dynamic Routing" sub="Fixed sequence or adaptive flow — the orchestration spectrum" color="var(--violet)"/>
+          <P>Multi-agent systems have two orchestration styles. <S>Pipeline</S>: A → B → C, always. <S>Dynamic routing</S>: the orchestrator decides the next agent based on intermediate results. Most production systems are pipelines with a few dynamic decision points.</P>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{padding:"14px",background:"var(--emerald-bg)",borderRadius:10,border:"1px solid var(--emerald-border)"}}>
+              <div style={{color:"var(--emerald)",fontWeight:700,fontSize:"0.92rem",marginBottom:6}}>Pipeline (Fixed)</div>
+              <div style={{fontSize:"0.84rem",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:6}}>Research → Analyse → Write → Review. Same sequence every time. Predictable cost and latency.</div>
+              <div style={{fontSize:"0.78rem",color:"var(--text-muted)"}}><S>Use when:</S> the task always has the same phases. Most common in production.</div>
+            </div>
+            <div style={{padding:"14px",background:"var(--violet-bg)",borderRadius:10,border:"1px solid var(--violet)"+"33"}}>
+              <div style={{color:"var(--violet)",fontWeight:700,fontSize:"0.92rem",marginBottom:6}}>Dynamic Routing</div>
+              <div style={{fontSize:"0.84rem",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:6}}>Orchestrator LLM decides each step. Researcher → (if data is incomplete) → Researcher again → Analyst. Adaptive but less predictable.</div>
+              <div style={{fontSize:"0.78rem",color:"var(--text-muted)"}}><S>Use when:</S> step count varies by input. Accept higher cost for flexibility.</div>
+            </div>
+          </div>
+          <Callout color="var(--violet)" icon="💡"><S>The pragmatic approach:</S> start with a pipeline. If you find that 30%+ of inputs need a different sequence, add dynamic routing at the specific decision point — not everywhere. Hybrid is usually the right answer.</Callout>
+        </section>
+
+        {/* ── Ch14-16: Memory ── */}
+        <section id="s14" style={{paddingTop:"2.5rem"}}>
+          <ChH num="14" title="Short-term Memory" sub="Conversation history — the context window is your working desk" color="var(--teal)"/>
+          <P>Short-term memory is the messages array. Every agent turn adds to it. The challenge: context windows are finite, but conversations can be infinite. You need a <S>pruning strategy</S>.</P>
+          <CB>{`def manage_short_term_memory(messages, max_tokens=8000):
+    """Keep conversation within token budget."""
+    system = messages[0]  # Always keep system prompt
+    recent = messages[1:]
+    
+    # Strategy 1: Sliding window — keep last N messages
+    if estimate_tokens(recent) > max_tokens:
+        # Summarise older messages, keep recent ones
+        old = recent[:-10]
+        summary = call_llm(
+            f"Summarise this conversation history concisely:\\n"
+            f"{format_messages(old)}"
+        ).content
+        return [system, {"role": "system", "content": f"Previous context: {summary}"}] + recent[-10:]
+    
+    return messages`}</CB>
+          <Callout color="var(--teal)" icon="💡"><S>The practical rule:</S> most agents work fine with raw conversation history. Add summarisation only when conversations regularly exceed 6K tokens. The summarisation itself costs tokens — don't optimise prematurely.</Callout>
+          <NB/>
+        </section>
+
+        <section id="s15" style={{paddingTop:"2.5rem"}}>
+          <ChH num="15" title="Long-term Memory" sub="Vector store for persistent knowledge — what the agent remembers across sessions" color="var(--teal)"/>
+          <P>Long-term memory persists across conversations. The agent stores facts, preferences, and decisions in a vector store and retrieves them when relevant — just like the RAG systems you built in Sections 4–5, but integrated into the agent loop.</P>
+          <CB>{`import chromadb
+
+# Agent's long-term memory
+memory_store = chromadb.Client().create_collection("agent_memory")
+
+def remember(fact: str, metadata: dict = None):
+    """Store a fact in long-term memory."""
+    memory_store.add(
+        documents=[fact],
+        metadatas=[metadata or {}],
+        ids=[f"mem_{int(time.time())}"]
+    )
+
+def recall(query: str, k: int = 3) -> list[str]:
+    """Retrieve relevant memories."""
+    results = memory_store.query(query_texts=[query], n_results=k)
+    return results["documents"][0] if results["documents"] else []
+
+# In the agent loop:
+# 1. Before responding, recall relevant memories
+# 2. After learning something new, store it
+memories = recall(user_query)
+if memories:
+    system_prompt += f"\\nRelevant context from past interactions:\\n" + "\\n".join(memories)`}</CB>
+          <Callout color="var(--teal)" icon="💡"><S>Add long-term memory when:</S> users expect the agent to remember their preferences across sessions, or when the agent should improve based on accumulated knowledge. Don't add it by default — it increases retrieval latency and can surface irrelevant context.</Callout>
+          <NB/>
+        </section>
+
+        <section id="s16" style={{paddingTop:"2.5rem"}}>
+          <ChH num="16" title="Episodic Memory" sub="Learning from past attempts — the self-improving agent" color="var(--teal)"/>
+          <P>Episodic memory stores <S color="var(--teal)">what happened</S> during past tasks: what was tried, what worked, what failed. When the agent encounters a similar task, it retrieves relevant episodes and avoids repeating mistakes. This is what made Reflexion (Section 10) work — but persisted across tasks.</P>
+          <CB>{`def store_episode(task, approach, outcome, lesson):
+    """Store a task episode for future reference."""
+    episode = {
+        "task": task,
+        "approach": approach,
+        "outcome": outcome,  # "success" or "failure"
+        "lesson": lesson,
+        "timestamp": time.time(),
+    }
+    memory_store.add(
+        documents=[f"Task: {task}. Outcome: {outcome}. Lesson: {lesson}"],
+        metadatas=[episode],
+        ids=[f"episode_{int(time.time())}"]
+    )
+
+# Before starting a new task:
+similar = recall(f"Task similar to: {new_task}")
+if similar:
+    system_prompt += f"\\nLessons from similar past tasks:\\n" + "\\n".join(similar)`}</CB>
+          <Callout color="var(--teal)" icon="🧠"><S>Start with short-term only.</S> Add long-term when users expect cross-session memory. Add episodic when the agent does the same type of task repeatedly and should learn. Each layer adds complexity — earn it through observed need.</Callout>
+        </section>
+
+
+        {/* ── Ch17: Observability ── */}
+        <section id="s17" style={{paddingTop:"2.5rem"}}>
+          <ChH num="17" title="Agent Observability" sub="LangSmith and Langfuse — tracing, evaluating, and debugging in production" color="var(--red)"/>
+          <P>Agents make <S>multiple decisions per request</S>. A single user query might trigger 8 LLM calls, 5 tool invocations, and 3 routing decisions. When something goes wrong, you need a <S color="var(--red)">trace</S> — not just a log line.</P>
+          <SubH>The observability stack</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {tool:"LangSmith",desc:"Native LangGraph integration. Full execution traces, prompt versioning, evaluation datasets. The default for LangChain/LangGraph teams.",color:"var(--emerald)",setup:"LANGCHAIN_TRACING_V2=true  LANGCHAIN_API_KEY=ls-..."},
+              {tool:"Langfuse",desc:"Open-source, framework-agnostic, self-hostable. Works with CrewAI, custom agents, any framework. Good for teams that need data residency.",color:"var(--teal)",setup:"pip install langfuse  # then wrap your LLM calls"},
+              {tool:"Arize Phoenix",desc:"OpenTelemetry-based. Enterprise ML observability with drift detection. Connects to any OTEL-compatible system.",color:"#B45309",setup:"pip install arize-phoenix  # OTEL instrumentation"},
+            ].map((t,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{color:t.color,fontWeight:700,fontSize:"0.92rem"}}>{t.tool}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6,marginBottom:6}}>{t.desc}</div>
+                <pre style={{background:"#1A1D27",borderRadius:6,padding:"6px 10px",fontSize:"0.74rem",fontFamily:"'JetBrains Mono'",color:"#34D399",margin:0,border:"1px solid #2E3240"}}>{t.setup}</pre>
+              </div>
+            ))}
+          </div>
+          <CB>{`# LangSmith: one environment variable enables full tracing
+import os
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "ls-..."
+# That's it. Every LangGraph execution is now traced.
+
+# What you see in the trace:
+# TRACE: user-query-abc123
+# ├── classify_query (128 tokens, 340ms)
+# │   → classification: "needs_search"
+# ├── search_docs (0 LLM tokens, 89ms)
+# │   → 3 documents retrieved, top_score: 0.91
+# ├── generate_answer (287 tokens, 1.2s)
+# │   → response: "Our refund policy..."
+# ├── check_guardrails (0 LLM tokens, 12ms)
+# │   → pii: pass, hallucination: pass
+# └── END
+#     Total: 415 tokens, 1.64s, cost: $0.0003`}</CB>
+          <Callout color="var(--red)" icon="🔍"><S>The non-negotiable:</S> if you can't trace an agent's decision chain, you can't debug it, evaluate it, or improve it. Enable tracing before your first production deploy — not after your first incident.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch18: Agent Evaluation ── */}
+        <section id="s18" style={{paddingTop:"2.5rem"}}>
+          <ChH num="18" title="Agent Evaluation" sub="How to measure whether your agent actually works" color="var(--red)"/>
+          <P>Evaluating agents is harder than evaluating LLMs because agents make <S>sequences of decisions</S>. A correct final answer doesn't mean the agent took a good path — it might have wasted 10 tool calls and $0.50 getting there.</P>
+          <SubH>Three levels of agent evaluation</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {level:"Task completion",desc:"Did the agent produce the correct answer? Binary pass/fail on a test dataset.",metric:"Accuracy, F1, or exact match on a test set of 50+ question-answer pairs",color:"var(--emerald)"},
+              {level:"Trajectory quality",desc:"Did the agent take a good path? Right tools, right order, no wasted calls.",metric:"Tool accuracy (right tool for the task), efficiency (calls made vs. minimum needed), cost per task",color:"var(--indigo)"},
+              {level:"Safety & reliability",desc:"Did the agent stay within bounds? No hallucinated tools, no infinite loops, no excessive cost.",metric:"Refusal rate on valid queries, loop rate, p95 cost, guardrail trigger rate",color:"var(--red)"},
+            ].map((l,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <S color={l.color}>{l.level}</S>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6}}>{l.desc}</div>
+                <div style={{color:"var(--text-muted)",fontSize:"0.78rem",marginTop:4}}><S>Metric:</S> {l.metric}</div>
+              </div>
+            ))}
+          </div>
+          <CB>{`# Simple agent evaluation framework
+def evaluate_agent(agent_fn, test_cases, max_cost_per_query=0.01):
+    """Evaluate agent on a test dataset."""
+    results = {"passed": 0, "failed": 0, "errors": 0, "total_cost": 0}
+    
+    for tc in test_cases:
+        try:
+            answer = agent_fn(tc["question"])
+            
+            # Task completion: does the answer match expected?
+            if tc["expected_keyword"].lower() in answer.lower():
+                results["passed"] += 1
+            else:
+                results["failed"] += 1
+                print(f"  FAIL: {tc['question'][:50]}...")
+                
+        except Exception as e:
+            results["errors"] += 1
+    
+    total = len(test_cases)
+    print(f"Results: {results['passed']}/{total} passed, "
+          f"{results['failed']} failed, {results['errors']} errors")
+    return results`}</CB>
+          <Callout color="var(--red)" icon="📊"><S>The minimum eval:</S> before deploying any agent, run it on 50+ test queries covering happy paths, edge cases, and adversarial inputs. Track accuracy, cost, and latency. If accuracy is below 85% or cost is 2x your budget, the agent isn't ready.</Callout>
+          <NB/>
+        </section>
+
+        {/* ── Ch19: Failure Modes ── */}
+        <section id="s19" style={{paddingTop:"2.5rem"}}>
+          <ChH num="19" title="Failure Modes & Guardrails" sub="What goes wrong and how to prevent it" color="var(--red)"/>
+          <P>Agents fail in ways regular LLM apps don't — because they make <S>autonomous decisions in loops</S>. A bug in a simple API returns one bad response. A bug in an agent loop multiplies until it's burned through your budget.</P>
+          <FailureModeDemo/>
+          <SubH>The defensive checklist</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "recursion_limit on every LangGraph workflow (default: 25)",
+              "max_iter on every CrewAI task (default: 5–10)",
+              "Per-request cost cap with alerting at 2x expected p95",
+              "Per-request timeout (30s simple / 120s complex)",
+              "Tool call name validation — reject hallucinated tools before execution",
+              "Structured output for all tool arguments (not free-text parsing)",
+              "HITL interrupt before any irreversible action",
+              "Tracing enabled before first production deploy",
+              "50+ legitimate query test set for guardrail tuning",
+              "Refusal rate tracked — alert if > 5%",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<9?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--emerald)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--red)" icon="🔥"><S>The most expensive mistake:</S> not setting limits. A well-designed agent with no recursion limit, no cost cap, and no timeout is a production incident waiting to happen. Defence in depth: every loop needs a ceiling, every action needs a budget.</Callout>
+        </section>
+
+        {/* ── Ch20: Cost Control ── */}
+        <section id="s20" style={{paddingTop:"2.5rem"}}>
+          <ChH num="20" title="Cost Control" sub="Budgets, rate limits, and monitoring — keeping agent costs predictable" color="var(--red)"/>
+          <P>Agents are inherently more expensive than single LLM calls because they make <S>multiple calls per request</S>. A 5-step agent workflow on gpt-4o-mini costs 5x a single call. Without tracking, costs can spiral quietly.</P>
+          <CB>{`class CostTracker:
+    """Track and limit agent costs per request."""
+    
+    def __init__(self, budget_usd=0.50):
+        self.budget = budget_usd
+        self.spent = 0.0
+        self.calls = 0
+    
+    def track(self, usage):
+        """Call after each LLM response."""
+        # gpt-4o-mini pricing (approximate)
+        input_cost = usage.prompt_tokens * 0.15 / 1_000_000
+        output_cost = usage.completion_tokens * 0.60 / 1_000_000
+        self.spent += input_cost + output_cost
+        self.calls += 1
+        
+        if self.spent > self.budget:
+            raise BudgetExceeded(
+                f"Agent exceeded budget: spent {self.spent:.4f} "
+                f"of {self.budget:.2f} in {self.calls} calls"
+            )
+    
+    def summary(self):
+        return f"Calls: {self.calls}, Cost: {self.spent:.4f}"
+
+# Usage in agent loop:
+tracker = CostTracker(budget_usd=0.10)
+for i in range(max_iterations):
+    response = oai.chat.completions.create(...)
+    tracker.track(response.usage)  # raises if over budget`}</CB>
+          <SubH>Cost reduction strategies</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {strategy:"Model routing",desc:"Use gpt-4o for planning, gpt-4o-mini for execution. 10x cheaper per-token on execution steps.",impact:"50–70% cost reduction"},
+              {strategy:"Summarise tool outputs",desc:"Search returns 2,000 tokens. Summarise to 200 before feeding back to the agent. Less input = less cost.",impact:"30–50% cost reduction"},
+              {strategy:"Cache repeated queries",desc:"Same tool call with same arguments → return cached result. Common in search and database lookups.",impact:"20–40% cost reduction"},
+              {strategy:"Batch related tool calls",desc:"Instead of 3 sequential search calls, combine into one broader query. Fewer round-trips.",impact:"Variable, depends on use case"},
+            ].map((s,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                  <S color="var(--emerald)">{s.strategy}</S>
+                  <span style={{color:"var(--emerald)",fontSize:"0.72rem",fontWeight:700}}>{s.impact}</span>
+                </div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem"}}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--red)" icon="💰"><S>The rule:</S> log cost per request from day one. Set alerts at 2x your expected p95. Review the top 10 most expensive requests weekly. Most agent cost issues come from 5% of requests — the ones that loop or over-search.</Callout>
+          <NB/>
+        </section>
+
+
+        {/* ── Ch21: Capstone ── */}
+        <section id="s21" style={{paddingTop:"2.5rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="CAPSTONE" color="var(--emerald)" bg="var(--emerald-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Capstone — Multi-Agent Research Team</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Three agents. One goal. Real collaboration with observability.</div>
+          </div>
+          <P>Build a multi-agent system where three specialised agents collaborate to produce a research report. This combines everything from this section: framework choice, orchestration, memory, HITL, observability, and cost control.</P>
+          <SubH>What to build</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"Researcher agent",d:"Takes a topic, searches for data using web search and document retrieval. Returns structured findings with sources. Max 5 search iterations."},
+              {t:"Analyst agent",d:"Receives raw data. Identifies patterns, compares metrics, produces key insights. Should flag conflicting data points."},
+              {t:"Writer agent",d:"Takes insights and produces a polished report: executive summary, key findings, supporting data, strategic outlook."},
+              {t:"Orchestrator",d:"Coordinates the three agents. Handles sequencing, error recovery (retry failed steps), and final quality check."},
+              {t:"Observability",d:"Enable LangSmith tracing. Every agent decision traceable. Add cost tracking per agent. Capture a full trace screenshot."},
+              {t:"HITL gate",d:"Add an approval interrupt before the final report is returned. Human reviews the draft and can request revisions."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+          <SubH>Implementation paths</SubH>
+          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div style={{padding:"12px 14px",background:"var(--emerald-bg)",borderRadius:8,border:"1px solid var(--emerald-border)"}}>
+              <div style={{color:"var(--emerald)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>LangGraph path</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>Each agent is a node. Orchestrator uses conditional edges. State carries accumulated research. Checkpoint after each agent. HITL interrupt before final output.</div>
+            </div>
+            <div style={{padding:"12px 14px",background:"var(--build-bg)",borderRadius:8,border:"1px solid var(--build-border)"}}>
+              <div style={{color:"var(--build-color)",fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>CrewAI path</div>
+              <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>Three agents with roles + backstories. Three tasks with context dependencies. Sequential process. Add max_iter and verbose=True.</div>
+            </div>
+          </div>
+          <Callout color="var(--emerald)" icon="🎯"><S>Why this capstone:</S> a multi-agent research team is the most common production pattern — it appears in competitive analysis, due diligence, content production, and code review. Building one teaches you orchestration, context passing, failure handling, and cost management.</Callout>
+        </section>
+
+        {/* ── Practice 1 ── */}
+        <section id="s22" style={{paddingTop:"2.5rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="PRACTICE" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Practice — CrewAI Research Team</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Same capstone problem, different framework — compare the experience</div>
+          </div>
+          <P>Build the same research team from the capstone using CrewAI instead of LangGraph. Compare: lines of code, setup time, control granularity, debugging experience, and output quality.</P>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"Three agents with roles + goals",d:"Researcher, Analyst, Writer — each with a clear role, goal, backstory, and appropriate tools."},
+              {t:"Three tasks with context chain",d:"Research → Analysis → Writing. Use context=[previous_task] to pass output between agents."},
+              {t:"Sequential process",d:"Use Process.sequential. Add max_iter=5 on each task to prevent loops."},
+              {t:"Compare with LangGraph",d:"Write up: which was easier to build? Which gives more control? Which would you choose for production? Why?"},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Practice 2 ── */}
+        <section id="s23" style={{paddingTop:"2.5rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="PRACTICE" color="var(--info-color)" bg="var(--info-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Practice — Automated Code Reviewer</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Agent reads code, classifies issues, suggests fixes, and generates a report</div>
+          </div>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {t:"LangGraph with 4+ nodes",d:"parse_code → analyse_issues → generate_fixes → write_report. Each node modifies shared state."},
+              {t:"Conditional routing by severity",d:"Critical issues → human review (HITL interrupt). Minor issues → auto-fix and continue."},
+              {t:"HITL interrupt",d:"Before applying fixes to critical issues, pause for human approval. Use LangGraph interrupt()."},
+              {t:"Checkpointing",d:"Enable MemorySaver. Verify the workflow resumes correctly after HITL approval."},
+              {t:"LangSmith tracing",d:"Run 3 code samples through the workflow. Capture traces. Screenshot one for your submission."},
+            ].map((p,i)=>(
+              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{p.t}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--info-color)" icon="📄"><S>Why this exercise:</S> it covers the three features that separate LangGraph from simpler approaches: conditional edges, HITL interrupts, and checkpointing. If you can build this, you can build any LangGraph workflow.</Callout>
+        </section>
+
+        {/* ── Cheat Sheet ── */}
+        <section id="s11-cheat" style={{paddingTop:"2rem"}}>
+          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><Tag label="REFERENCE" color="var(--emerald)" bg="var(--emerald-bg)"/>
+            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Cheat Sheet</h3>
+            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Framework & production quick reference</div>
+          </div>
+          <SubH>Framework selection</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              ["Need","Framework"],
+              ["Fine-grained control, checkpointing, HITL","LangGraph"],
+              ["Quick multi-agent prototype (~35 lines)","CrewAI"],
+              ["OpenAI-native with handoffs and guardrails","OpenAI Agents SDK"],
+              ["Azure enterprise, .NET + Python","Microsoft Agent Framework"],
+              ["Agent tracing (LangGraph ecosystem)","LangSmith"],
+              ["Open-source tracing, self-hostable","Langfuse"],
+            ].map((row,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1.2fr",gap:8,padding:"6px 0",borderBottom:i<6?"1px solid var(--border-light)":"none",fontSize:i===0?"0.72rem":"0.82rem",fontWeight:i===0?700:400,color:i===0?"var(--text-muted)":"var(--text-secondary)"}}>
+                <span style={{color:i>0?"var(--text)":undefined,fontWeight:i>0?400:700}}>{row[0]}</span>
+                <span style={{color:i>0?"var(--emerald)":undefined,fontWeight:i>0?600:700,fontFamily:i>0?"'JetBrains Mono'":"inherit",fontSize:i>0?"0.8rem":"0.72rem"}}>{row[1]}</span>
+              </div>
+            ))}
+          </div>
+          <SubH>Multi-agent pattern decision</SubH>
+          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
+            {[
+              {q:"Task has different phases (research, analysis, writing)",a:"Orchestrator pattern → pipeline of specialists",color:"var(--emerald)"},
+              {q:"Output quality is critical and subjective",a:"Debate pattern → two agents argue, judge decides",color:"var(--violet)"},
+              {q:"Task is always the same sequence",a:"Pipeline → fixed A→B→C, cheapest and most predictable",color:"var(--teal)"},
+              {q:"Step order depends on intermediate results",a:"Dynamic routing → orchestrator LLM decides next step",color:"var(--indigo)"},
+              {q:"Single agent struggles with the context window",a:"Split into specialists — each with a focused system prompt",color:"var(--build-color)"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr auto 1.5fr",gap:12,alignItems:"flex-start",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:"0.84rem"}}>{r.q}</div>
+                <div style={{color:r.color,fontSize:"0.92rem",paddingTop:2}}>→</div>
+                <div style={{fontSize:"0.83rem",color:r.color,fontWeight:600,lineHeight:1.55}}>{r.a}</div>
+              </div>
+            ))}
+          </div>
+          <SubH>Production safety checklist</SubH>
+          <div style={{margin:"1rem 0",padding:"1rem 1.25rem",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
+            {[
+              "recursion_limit on every LangGraph graph (recommended: 25)",
+              "max_iter on every CrewAI task (recommended: 5–10)",
+              "Per-request cost cap with alerting at 2x p95",
+              "Per-request timeout (30s simple / 120s complex)",
+              "Tool call validation — reject hallucinated tool names",
+              "HITL interrupt before any irreversible action",
+              "LangSmith/Langfuse tracing before first deploy",
+              "50+ query test set for guardrail tuning",
+              "Refusal rate tracked — alert if > 5%",
+              "Weekly review of top 10 most expensive requests",
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:i<9?"1px solid var(--border-light)":"none",fontSize:"0.86rem"}}>
+                <span style={{color:"var(--emerald)"}}>✓</span>
+                <span style={{color:"var(--text-secondary)"}}>{s}</span>
+              </div>
+            ))}
+          </div>
+          <Callout color="var(--accent)" icon="🎓"><S>Section 11 complete.</S> You now have production proficiency in LangGraph, CrewAI, and OpenAI Agents SDK. You understand multi-agent collaboration patterns, agent memory systems, and the production engineering that keeps agents safe. The next section moves into <S>Evaluation & Testing</S> — building the systems that prove your agents actually work at scale.</Callout>
+        </section>
+
+      </div></div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
