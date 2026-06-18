@@ -52,26 +52,23 @@ const {useState,useEffect,useRef}=React;
 
 const CHAPTERS=[
   {id:"ag-intro",num:"",title:"Overview",sub:"",group:"overview"},
-  {id:"ag-mental",num:"",title:"The Agent Mental Model",sub:"Chatbot → Copilot → Agent",group:"foundation"},
   {id:"ag-landscape",num:"",title:"The 2025–26 Landscape",sub:"What changed in 12 months",group:"foundation"},
   {id:"ag1",num:"1",title:"The Agent Loop",sub:"The while-loop that makes LLMs autonomous",group:"agent_core"},
-  {id:"ag2",num:"2",title:"Tools — The Agent's Hands",sub:"Function calling under the hood",group:"agent_core"},
-  {id:"ag3",num:"3",title:"When to Use an Agent",sub:"Pipeline vs agent decision",group:"agent_core"},
-  {id:"ag4",num:"4",title:"ReAct — Reason + Act",sub:"Think → Act → Observe → repeat",group:"arch"},
-  {id:"ag5",num:"5",title:"Plan-and-Execute",sub:"Plan first, then execute step by step",group:"arch"},
-  {id:"ag6",num:"6",title:"Reflexion — Self-Critique",sub:"Try → Evaluate → Reflect → Retry",group:"arch"},
-  {id:"ag7",num:"7",title:"Choosing an Architecture",sub:"Decision matrix for real projects",group:"arch"},
-  {id:"ag8",num:"8",title:"Why MCP Exists",sub:"The M×N integration problem",group:"mcp"},
-  {id:"ag9",num:"9",title:"MCP Architecture",sub:"Hosts, Clients, Servers, Transports",group:"mcp"},
-  {id:"ag10",num:"10",title:"MCP Tools",sub:"Defining, discovering, calling",group:"mcp"},
-  {id:"ag11",num:"11",title:"MCP Resources & Prompts",sub:"Exposing data and templates",group:"mcp"},
-  {id:"ag12",num:"12",title:"Building an MCP Server",sub:"Full Python walkthrough",group:"mcp"},
-  {id:"ag13",num:"13",title:"Connecting MCP to Agents",sub:"Same server, multiple clients",group:"mcp"},
-  {id:"ag14",num:"14",title:"Why A2A Exists",sub:"The agent interoperability problem",group:"a2a"},
-  {id:"ag15",num:"15",title:"A2A Core Concepts",sub:"Agent Cards, Tasks, Payloads",group:"a2a"},
-  {id:"ag16",num:"16",title:"MCP + A2A Together",sub:"The three-layer protocol stack",group:"a2a"},
-  {id:"ag17",num:"17",title:"Practice — ReAct Agent from Scratch",sub:"No framework, just Python",group:"practice"},
-  {id:"ag18",num:"18",title:"Practice — MCP Server + Client",sub:"Build and connect a tool server",group:"practice"},
+  {id:"ag4",num:"2",title:"ReAct — Reason + Act",sub:"Think → Act → Observe → repeat",group:"arch"},
+  {id:"ag5",num:"3",title:"Plan-and-Execute",sub:"Plan first, then execute step by step",group:"arch"},
+  {id:"ag6",num:"4",title:"Reflexion — Self-Critique",sub:"Try → Evaluate → Reflect → Retry",group:"arch"},
+  {id:"ag7",num:"5",title:"Choosing an Architecture",sub:"Decision matrix for real projects",group:"arch"},
+  {id:"ag8",num:"6",title:"Why MCP Exists",sub:"The M×N integration problem",group:"mcp"},
+  {id:"ag9",num:"7",title:"MCP Architecture",sub:"Hosts, Clients, Servers, Transports",group:"mcp"},
+  {id:"ag10",num:"8",title:"MCP Tools",sub:"Defining, discovering, calling",group:"mcp"},
+  {id:"ag11",num:"9",title:"MCP Resources & Prompts",sub:"Exposing data and templates",group:"mcp"},
+  {id:"ag12",num:"10",title:"Building an MCP Server",sub:"Full Python walkthrough",group:"mcp"},
+  {id:"ag13",num:"11",title:"Connecting MCP to Agents",sub:"Same server, multiple clients",group:"mcp"},
+  {id:"ag14",num:"12",title:"Why A2A Exists",sub:"The agent interoperability problem",group:"a2a"},
+  {id:"ag15",num:"13",title:"A2A Core Concepts",sub:"Agent Cards, Tasks, Payloads",group:"a2a"},
+  {id:"ag16",num:"14",title:"MCP + A2A Together",sub:"The three-layer protocol stack",group:"a2a"},
+  {id:"ag17",num:"",title:"Practice — ReAct Agent from Scratch",sub:"No framework, just Python",group:"practice"},
+  {id:"ag18",num:"",title:"Practice — MCP Server + Client",sub:"Build and connect a tool server",group:"practice"},
   {id:"ag-cheat",num:"",title:"Cheat Sheet",sub:"Architecture & protocol reference",group:"reference"},
 ];
 
@@ -401,7 +398,7 @@ function Sidebar({active,onNav}){
         <a className={"sidebar-item"+(active==="ag-intro"?" active":"")} onClick={()=>onNav("ag-intro")}><span className="item-title">Overview</span></a>
         {groupBtn("Foundation","var(--info-color)","f")}
         {s.f&&renderGroup("foundation","var(--info-color)","var(--info-bg)")}
-        {groupBtn("What Is an Agent","var(--indigo)","c")}
+        {groupBtn("Agent Loop","var(--indigo)","c")}
         {s.c&&renderGroup("agent_core","var(--indigo)","var(--indigo-bg)")}
         {groupBtn("Architectures","var(--build-color)","a")}
         {s.a&&renderGroup("arch","var(--build-color)","var(--build-bg)")}
@@ -437,19 +434,18 @@ function App(){
 
         {/* ── Overview ── */}
         <section id="ag-intro">
-          <P>Everything you've built so far — RAG pipelines, function calling, FastAPI services — has one thing in common: the human decides what to do, and the model executes. The human writes the query, chooses the tool, triggers the action.</P>
-          <P>An agent flips that. You give it a <S color="var(--indigo)">goal</S>, and it figures out the steps: which tools to use, in what order, what to do when something fails, and when to stop. It's the difference between giving someone a recipe and asking them to cook dinner.</P>
-          <P>This section covers the first half of the agent engineering picture: what agents are, how they think (architectures), how they connect to tools (MCP), and how they talk to each other (A2A). Section 11 will build on this with frameworks, multi-agent patterns, and production guardrails.</P>
-          <Callout color="var(--indigo)" icon="🤖"><S>Why agents now:</S> models got good enough to plan multi-step workflows reliably. Tool-calling APIs became standardised. And protocols like MCP gave agents a universal way to connect to the outside world. The building blocks finally exist — this section teaches you how they work.</Callout>
+          <P>In <S color="var(--indigo)">Section 6</S> you learned what agents are, how tools work, and when to reach for an agent instead of a pipeline — then built one with LangChain and LangGraph. This section goes deeper on the engineering layer beneath those frameworks: how agents <S>think</S> (architectures), how they <S>connect to tools</S> (MCP), and how they <S>talk to each other</S> (A2A).</P>
+          <P>Section 11 will build on this with multi-agent patterns and production guardrails. Here, the focus is understanding the protocols and patterns that every agent framework ultimately wraps.</P>
+          <Callout color="var(--indigo)" icon="🤖"><S>Prerequisite:</S> if you skipped or need a refresher on agent basics — what an agent is, tool calling, pipeline vs. agent decisions — revisit Section 6 Chapters 7, 14, and 18 before continuing.</Callout>
           <SubH>What you'll come away with</SubH>
           <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {[
-              {icon:"🔄",title:"The agent loop",desc:"The core while-loop pattern that makes an LLM autonomous — built from scratch"},
+              {icon:"🔄",title:"The agent loop",desc:"The core while-loop pattern in raw Python — what frameworks abstract away"},
               {icon:"🧠",title:"Three architecture patterns",desc:"ReAct, Plan-and-Execute, Reflexion — deep understanding of when to use each"},
               {icon:"🔌",title:"MCP from first principles",desc:"Build an MCP server, understand the protocol, connect it to multiple agents"},
               {icon:"🤝",title:"A2A protocol literacy",desc:"How agents discover and delegate to each other across frameworks"},
-              {icon:"⚡",title:"Tool engineering",desc:"Designing tool schemas, structured output, and reliable function calling"},
               {icon:"📐",title:"Architecture decision skills",desc:"Given a problem, choose the right agent architecture with confidence"},
+              {icon:"🏗️",title:"Protocol-level tool integration",desc:"Expose your APIs once via MCP — connect any compatible agent client"},
             ].map((o,i)=>(
               <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
                 <div style={{fontSize:"1.3rem",marginBottom:4}}>{o.icon}</div>
@@ -458,35 +454,6 @@ function App(){
               </div>
             ))}
           </div>
-        </section>
-
-        {/* ── Mental Model ── */}
-        <section id="ag-mental" style={{paddingTop:"2rem"}}>
-          <div style={{marginBottom:"1.5rem",paddingTop:"0.5rem"}}><SectionTag label="FOUNDATION" color="var(--info-color)" bg="var(--info-bg)"/>
-            <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>The Agent Mental Model</h3>
-            <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Chatbot → Copilot → Agent — what changes at each step</div>
-          </div>
-          <P>Think of a restaurant kitchen. A <S>chatbot</S> is a vending machine — you push a button, you get a fixed output. A <S>copilot</S> is a sous chef — you tell it what to prep, and it helps. An <S>agent</S> is the head chef — you say "dinner for 12, Mediterranean, one guest is gluten-free" and it plans the menu, assigns tasks, manages timing, and adjusts when the fish delivery is late.</P>
-          <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:8}}>
-            {[
-              {level:"Chatbot",autonomy:"None",desc:"Fixed responses. No tools, no memory, no planning. Input → output. Think: FAQ bot.",color:"#6B7280",pct:10},
-              {level:"Copilot",autonomy:"Low",desc:"Can use tools when asked. Follows instructions step-by-step. Human drives every decision. Think: GitHub Copilot.",color:"#3B82F6",pct:30},
-              {level:"Single Agent",autonomy:"Medium",desc:"Given a goal, plans its own steps. Chooses tools, retries on failure, knows when to stop. Think: a research assistant that you give a question and it comes back with an answer.",color:"#4F46E5",pct:60},
-              {level:"Multi-Agent System",autonomy:"High",desc:"Multiple specialised agents collaborate. One orchestrates, others execute. Handles complex workflows no single agent could. Think: a team with a manager, researcher, analyst, and writer.",color:"#7C3AED",pct:85},
-            ].map((l,i)=>(
-              <div key={i} style={{padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid var(--border)"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{color:l.color,fontWeight:700,fontSize:"0.92rem"}}>{l.level}</span>
-                    <span style={{color:l.color,fontSize:"0.68rem",fontWeight:700,padding:"1px 8px",background:l.color+"14",borderRadius:4,border:"1px solid "+l.color+"33"}}>AUTONOMY: {l.autonomy}</span>
-                  </div>
-                </div>
-                <div style={{color:"var(--text-secondary)",fontSize:"0.84rem",lineHeight:1.6,marginBottom:6}}>{l.desc}</div>
-                <div style={{height:4,background:"var(--border-light)",borderRadius:2}}><div style={{height:4,width:l.pct+"%",background:l.color,borderRadius:2}}/></div>
-              </div>
-            ))}
-          </div>
-          <Callout color="var(--indigo)" icon="🔑">The defining feature of an agent is the <S>loop</S>. A copilot does one thing and returns. An agent plans, acts, observes the result, and decides what to do next — repeating until the goal is met or it hits a limit. Everything else (tools, memory, multi-agent) is built on top of this loop.</Callout>
         </section>
 
         {/* ── Landscape ── */}
@@ -516,13 +483,13 @@ function App(){
               </div>
             ))}
           </div>
-          <Callout color="var(--info-color)" icon="📌">The practical impact: agents now have a <S>standard way to connect to tools</S> (MCP), a <S>standard way to talk to each other</S> (A2A), and <S>production-grade frameworks</S> that aren't experiments anymore. This section teaches you MCP and A2A in depth. Section 11 covers the frameworks.</Callout>
+          <Callout color="var(--info-color)" icon="📌">The practical impact: agents now have a <S>standard way to connect to tools</S> (MCP), a <S>standard way to talk to each other</S> (A2A), and <S>production-grade frameworks</S> that aren't experiments anymore. You built with LangChain and LangGraph in Section 6 — this section teaches you the protocols and architecture patterns underneath.</Callout>
         </section>
 
         {/* ── Ch1: The Agent Loop ── */}
         <section id="ag1" style={{paddingTop:"2.5rem"}}>
           <ChH num="1" title="The Agent Loop" sub="The while-loop that turns an LLM from a responder into a doer"/>
-          <P>Every agent — regardless of framework, architecture, or complexity — runs the same core loop. The LLM receives the current state, decides what to do next (call a tool or give an answer), executes that action, and feeds the result back in. This repeats until the agent decides it's done.</P>
+          <P>Every agent — regardless of framework, architecture, or complexity — runs the same core loop you built in Section 6. The LLM receives the current state, decides what to do next (call a tool or give an answer), executes that action, and feeds the result back in. This repeats until the agent decides it's done. Below is that loop without LangChain — just the OpenAI API.</P>
           <AgentLoopDemo/>
           <SubH>The loop in code</SubH>
           <CB>{`import openai, json
@@ -586,106 +553,14 @@ else:
               </div>
             ))}
           </div>
-          <Callout color="var(--indigo)" icon="💡"><S>The mental shortcut:</S> if your code has a loop where the LLM decides when to stop, you have an agent. If the loop runs a fixed number of times regardless of the LLM's output, you have a pipeline. Every agent framework you'll learn in Section 11 is a more sophisticated version of this 30-line pattern.</Callout>
+          <Callout color="var(--indigo)" icon="💡"><S>The mental shortcut:</S> if your code has a loop where the LLM decides when to stop, you have an agent. If the loop runs a fixed number of times regardless of the LLM's output, you have a pipeline. You built this pattern with LangChain in Section 6 — this chapter shows the same loop in raw Python, which is what every framework ultimately wraps.</Callout>
           <NB/>
         </section>
 
-        {/* ── Ch2: Tools ── */}
-        <section id="ag2" style={{paddingTop:"2.5rem"}}>
-          <ChH num="2" title="Tools — The Agent's Hands" sub="Function calling, tool schemas, and structured output — how agents interact with the world"/>
-          <P>Without tools, an agent is just a chatbot that thinks out loud. Tools are what let it <S>do things</S> — search the web, query a database, send an email, create a file. You covered function calling in Section 7. Here's the deeper picture of how tools work in an agent context.</P>
-          <SubH>What the model actually sees</SubH>
-          <P>When you pass tools to the API, the model doesn't see Python functions. It sees <S color="var(--indigo)">JSON schemas</S> that describe what each tool does, what arguments it accepts, and what it returns. The model then generates a structured JSON object that says "call this tool with these arguments."</P>
-          <CB>{`# What you write:
-tools = [{"type": "function", "function": {
-    "name": "get_order_status",
-    "description": "Look up the current status of a customer order by order ID",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "order_id": {
-                "type": "string",
-                "description": "The order ID, e.g. ORD-12345"
-            }
-        },
-        "required": ["order_id"]
-    }
-}}]
-
-# What the model generates when it decides to use this tool:
-# {
-#   "tool_calls": [{
-#     "id": "call_abc123",
-#     "function": {
-#       "name": "get_order_status",
-#       "arguments": "{\"order_id\": \"ORD-12345\"}"
-#     }
-#   }]
-# }
-#
-# The model NEVER executes the tool. YOUR code does.
-# The model just says "I want to call X with Y arguments."`}</CB>
-          <SubH>Tool design principles for agents</SubH>
-          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
-            {[
-              {t:"Descriptive names and descriptions",d:"The model decides which tool to use based on the description. 'search' is vague. 'search_product_catalog_by_name_or_category' tells the model exactly when to use it. Spend time on descriptions — they're your agent's instruction manual."},
-              {t:"Strict schemas with required fields",d:"Use 'strict': true (OpenAI) to enforce exact schema compliance. Without it, the model might add extra fields, skip required ones, or use wrong types. Strict mode catches these at the API level."},
-              {t:"Return structured, parseable results",d:"Tool results go back into the agent's context. Return clean strings, not raw HTML or massive JSON blobs. If a search returns 10 pages, summarise to the top 3 results."},
-              {t:"Handle errors gracefully",d:"If a tool fails, return an error message the agent can understand — not a stack trace. 'Order ORD-99999 not found. The customer may have the wrong order ID.' gives the agent something to work with."},
-              {t:"Keep the tool set small",d:"More tools = more decisions = more chances for the agent to pick the wrong one. Start with 3–5 tools. Only add more when the agent frequently can't complete tasks."},
-            ].map((r,i)=>(
-              <div key={i} style={{padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
-                <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:3}}>{r.t}</div>
-                <div style={{color:"var(--text-secondary)",fontSize:"0.82rem",lineHeight:1.6}}>{r.d}</div>
-              </div>
-            ))}
-          </div>
-          <Callout color="var(--build-color)" icon="⚠️"><S>The most common agent bug:</S> the agent calls a tool that doesn't exist — a "hallucinated tool call." This happens when the tool descriptions are vague or when the task requires a capability the available tools don't cover. Always validate tool names before execution: <Code>if name not in ALLOWED_TOOLS: return error</Code></Callout>
-          <NB/>
-        </section>
-
-        {/* ── Ch3: When to Use an Agent ── */}
-        <section id="ag3" style={{paddingTop:"2.5rem"}}>
-          <ChH num="3" title="When to Use an Agent" sub="Not everything needs a loop — sometimes a pipeline is better"/>
-          <P>Agents add cost, complexity, and unpredictability. Every iteration of the loop costs tokens. Every autonomous decision is a chance for the agent to go off course. Before building an agent, ask: <S color="var(--indigo)">does this task actually need one?</S></P>
-          <SubH>Pipeline vs. agent — the decision framework</SubH>
-          <div style={{margin:"1rem 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div style={{padding:"14px",background:"var(--teal-bg)",borderRadius:10,border:"1px solid var(--teal-border)"}}>
-              <div style={{color:"var(--teal)",fontWeight:700,fontSize:"0.95rem",marginBottom:8}}>✓ Use a Pipeline when…</div>
-              {["Steps are known in advance","Same steps every time, regardless of input","No branching or conditional logic","Speed and cost are critical","You can define the exact sequence: A → B → C"].map((s,i)=>(
-                <div key={i} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"3px 0"}}>{s}</div>
-              ))}
-            </div>
-            <div style={{padding:"14px",background:"var(--indigo-bg)",borderRadius:10,border:"1px solid var(--indigo-border)"}}>
-              <div style={{color:"var(--indigo)",fontWeight:700,fontSize:"0.95rem",marginBottom:8}}>✓ Use an Agent when…</div>
-              {["Next step depends on previous result","Task might need 2 steps or 10 — you don't know","Different inputs require different tool combinations","The agent needs to retry or adapt on failure","You'd need dozens of if/else branches in a pipeline"].map((s,i)=>(
-                <div key={i} style={{color:"var(--text-secondary)",fontSize:"0.82rem",padding:"3px 0"}}>{s}</div>
-              ))}
-            </div>
-          </div>
-          <SubH>Real examples</SubH>
-          <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
-            {[
-              {task:"Summarise an uploaded document",answer:"Pipeline",why:"Fixed sequence: parse → chunk → summarise → combine. No branching needed.",color:"var(--teal)"},
-              {task:"Answer customer questions using a knowledge base",answer:"Agent",why:"Some questions need search, some need order lookup, some need escalation. The tool choice depends on the question.",color:"var(--indigo)"},
-              {task:"Translate a document to 3 languages",answer:"Pipeline",why:"translate(text, 'fr') → translate(text, 'es') → translate(text, 'ar'). Same steps every time.",color:"var(--teal)"},
-              {task:"Research a company and write an investment memo",answer:"Agent",why:"Needs multiple searches, might find conflicting data, must decide what's relevant. Step count varies wildly by company.",color:"var(--indigo)"},
-              {task:"Extract names and dates from a contract",answer:"Pipeline",why:"One LLM call with structured output. No looping, no tool calls, no decisions.",color:"var(--teal)"},
-            ].map((r,i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 80px 2fr",gap:12,alignItems:"flex-start",padding:"10px 14px",background:"white",borderRadius:8,border:"1px solid var(--border)"}}>
-                <div style={{fontSize:"0.84rem"}}>{r.task}</div>
-                <div style={{color:r.color,fontWeight:700,fontSize:"0.82rem",textAlign:"center"}}>{r.answer}</div>
-                <div style={{fontSize:"0.82rem",color:"var(--text-secondary)"}}>{r.why}</div>
-              </div>
-            ))}
-          </div>
-          <Callout color="var(--indigo)" icon="💡"><S>The litmus test:</S> if you can write out every step before seeing the input, use a pipeline. If the steps depend on what the model finds along the way, use an agent. Start with a pipeline — upgrade to an agent only when the pipeline can't handle the variability.</Callout>
-        </section>
-
-        {/* ── Ch4: ReAct ── */}
+        {/* ── Ch2: ReAct ── */}
         <section id="ag4" style={{paddingTop:"2.5rem"}}>
-          <ChH num="4" title="ReAct — Reason + Act" sub="The most common agent architecture: think, act, observe, repeat" color="var(--build-color)"/>
-          <P>ReAct (Reasoning + Acting) is the default agent architecture. Published in 2022, it introduced a simple but powerful idea: instead of having the model <S>either</S> reason <S>or</S> act, let it <S>interleave</S> both in a single loop. The model thinks out loud about what to do, takes an action, observes the result, and reasons about what to do next.</P>
+          <ChH num="2" title="ReAct — Reason + Act" sub="The most common agent architecture: think, act, observe, repeat" color="var(--build-color)"/>
+          <P>You met ReAct in Section 6 as the default agent loop behind <Code>create_react_agent</Code>. Here we go deeper: the trace format, a raw Python implementation, and the failure modes to watch for in production.</P>
           <SubH>The ReAct trace format</SubH>
           <P>A ReAct agent produces a trace that alternates between three phases:</P>
           <CB>{`# A ReAct trace looks like this:
@@ -759,9 +634,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <NB/>
         </section>
 
-        {/* ── Ch5: Plan-and-Execute ── */}
+        {/* ── Ch3: Plan-and-Execute ── */}
         <section id="ag5" style={{paddingTop:"2.5rem"}}>
-          <ChH num="5" title="Plan-and-Execute" sub="Separate the thinker from the doer — plan first, then execute step by step" color="var(--build-color)"/>
+          <ChH num="3" title="Plan-and-Execute" sub="Separate the thinker from the doer — plan first, then execute step by step" color="var(--build-color)"/>
           <P>ReAct is reactive — the agent only sees one step ahead. Plan-and-Execute is <S>deliberate</S>: a planner LLM creates the full roadmap, then an executor follows it step by step, with optional replanning when something changes.</P>
           <SubH>The two-phase design</SubH>
           <CB>{`def plan_and_execute(question: str, tools: list) -> str:
@@ -827,9 +702,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <NB/>
         </section>
 
-        {/* ── Ch6: Reflexion ── */}
+        {/* ── Ch4: Reflexion ── */}
         <section id="ag6" style={{paddingTop:"2.5rem"}}>
-          <ChH num="6" title="Reflexion — Self-Critique Loops" sub="Try, evaluate, reflect on what went wrong, try again better" color="var(--build-color)"/>
+          <ChH num="4" title="Reflexion — Self-Critique Loops" sub="Try, evaluate, reflect on what went wrong, try again better" color="var(--build-color)"/>
           <P>Reflexion adds a feedback loop that neither ReAct nor Plan-and-Execute have: after the agent produces output, it <S>evaluates its own work</S>, reflects on what went wrong, and retries with that reflection in context. It's most powerful when the output is <S color="var(--indigo)">verifiable</S> — code that can be tested, SQL that can be validated, math that can be checked.</P>
           <SubH>The three-step loop</SubH>
           <CB>{`def reflexion_agent(task: str, max_attempts: int = 3) -> str:
@@ -885,9 +760,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <NB/>
         </section>
 
-        {/* ── Ch7: Choosing an Architecture ── */}
+        {/* ── Ch5: Choosing an Architecture ── */}
         <section id="ag7" style={{paddingTop:"2.5rem"}}>
-          <ChH num="7" title="Choosing an Architecture" sub="Given a real task, which pattern fits? A decision framework." color="var(--build-color)"/>
+          <ChH num="5" title="Choosing an Architecture" sub="Given a real task, which pattern fits? A decision framework." color="var(--build-color)"/>
           <P>You now know three architectures. The skill isn't knowing how they work — it's knowing <S>which one to pick</S> when a real task lands on your desk. Here's the decision framework.</P>
           <ArchDecisionDemo/>
           <ArchitectureDemo/>
@@ -910,9 +785,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <Callout color="var(--indigo)" icon="🧭"><S>The honest recommendation:</S> start every agent project with ReAct. Build it, run it on 20 test queries, and see where it struggles. If it struggles on multi-step tasks → add planning. If it struggles on output quality → add Reflexion. Architecture selection should be driven by observed failures, not anticipated complexity.</Callout>
         </section>
 
-        {/* ── Ch8: Why MCP Exists ── */}
+        {/* ── Ch6: Why MCP Exists ── */}
         <section id="ag8" style={{paddingTop:"2.5rem"}}>
-          <ChH num="8" title="Why MCP Exists" sub="The M×N integration problem — and how one protocol solved it" color="var(--teal)"/>
+          <ChH num="6" title="Why MCP Exists" sub="The M×N integration problem — and how one protocol solved it" color="var(--teal)"/>
           <P>Before MCP, connecting an AI agent to an external tool required custom integration code for every combination. OpenAI had its own function calling format. Anthropic had a different one. LangChain had yet another. If you built a weather tool, you needed separate wrappers for each platform.</P>
           <SubH>The M×N problem</SubH>
           <P>Imagine 10 AI applications (Claude, ChatGPT, Cursor, your custom agent…) and 100 tools (GitHub, Slack, databases, APIs…). Without a standard, you need <S color="var(--red)">10 × 100 = 1,000 custom integrations</S>. Each one needs to be built, tested, and maintained separately.</P>
@@ -948,9 +823,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <Callout color="var(--teal)" icon="🔌"><S>Why you should care:</S> if you're building any tool that AI agents will use, MCP is the interface you should expose. If you're building agents, MCP is how you connect to the tools your agents need. It's no longer optional — it's the standard.</Callout>
         </section>
 
-        {/* ── Ch9: MCP Architecture ── */}
+        {/* ── Ch7: MCP Architecture ── */}
         <section id="ag9" style={{paddingTop:"2.5rem"}}>
-          <ChH num="9" title="MCP Architecture" sub="Hosts, Clients, Servers, Transports — the components and how they connect" color="var(--teal)"/>
+          <ChH num="7" title="MCP Architecture" sub="Hosts, Clients, Servers, Transports — the components and how they connect" color="var(--teal)"/>
           <P>MCP has four layers: <S color="var(--teal)">Hosts</S> (the application the user interacts with), <S color="var(--teal)">Clients</S> (the connector inside the host), <S color="var(--teal)">Servers</S> (the tool provider), and <S color="var(--teal)">Transports</S> (how messages travel between client and server).</P>
           <SubH>The component model</SubH>
           <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:6}}>
@@ -988,9 +863,9 @@ Answer: Abu Dhabi has a population of ~1.57 million and the city covers about
           <NB/>
         </section>
 
-        {/* ── Ch10: MCP Tools ── */}
+        {/* ── Ch8: MCP Tools ── */}
         <section id="ag10" style={{paddingTop:"2.5rem"}}>
-          <ChH num="10" title="MCP Tools" sub="Defining, discovering, and calling tools through the MCP protocol" color="var(--teal)"/>
+          <ChH num="8" title="MCP Tools" sub="Defining, discovering, and calling tools through the MCP protocol" color="var(--teal)"/>
           <P>Tools are the most common MCP capability. An MCP server exposes tools, the LLM discovers them, and the agent calls them during execution. Here's how each phase works in detail.</P>
           <SubH>Defining a tool</SubH>
           <CB>{`from mcp.server import Server
@@ -1090,9 +965,9 @@ async def get_order(order_id: str) -> list[TextContent]:
           <NB/>
         </section>
 
-        {/* ── Ch11: MCP Resources & Prompts ── */}
+        {/* ── Ch9: MCP Resources & Prompts ── */}
         <section id="ag11" style={{paddingTop:"2.5rem"}}>
-          <ChH num="11" title="MCP Resources & Prompts" sub="Exposing data and templates — the other two MCP capabilities" color="var(--teal)"/>
+          <ChH num="9" title="MCP Resources & Prompts" sub="Exposing data and templates — the other two MCP capabilities" color="var(--teal)"/>
           <P>MCP servers can expose three types of capabilities: <S color="var(--teal)">Tools</S> (actions the agent can take), <S color="var(--teal)">Resources</S> (data the agent can read), and <S color="var(--teal)">Prompts</S> (templates the agent can use). Tools get all the attention, but resources and prompts are equally important for building complete agent experiences.</P>
           <SubH>Resources — exposing data</SubH>
           <P>A resource is data the server makes available for the agent to read — files, database records, API responses, configuration. Unlike tools (which the LLM triggers), resources are typically <S>user-initiated</S> or pre-loaded by the host application.</P>
@@ -1157,9 +1032,9 @@ async def analyze_order(order_id: str) -> list:
           <NB/>
         </section>
 
-        {/* ── Ch12: Building an MCP Server ── */}
+        {/* ── Ch10: Building an MCP Server ── */}
         <section id="ag12" style={{paddingTop:"2.5rem"}}>
-          <ChH num="12" title="Building an MCP Server" sub="Full Python walkthrough — from setup to testing" color="var(--teal)"/>
+          <ChH num="10" title="Building an MCP Server" sub="Full Python walkthrough — from setup to testing" color="var(--teal)"/>
           <P>Let's build a complete MCP server for TechStore — the same domain we've used throughout the course. This server will expose three tools (inventory check, order status, product search) and one resource (the refund policy document).</P>
           <SubH>Project setup</SubH>
           <CB>{`# Install the MCP Python SDK
@@ -1312,10 +1187,10 @@ asyncio.run(test())`}</CB>
           <NB/>
         </section>
 
-        {/* ── Ch13: Connecting MCP to Agents ── */}
+        {/* ── Ch11: Connecting MCP to Agents ── */}
         <section id="ag13" style={{paddingTop:"2.5rem"}}>
-          <ChH num="13" title="Connecting MCP to Agents" sub="Same server, three different clients — the protocol's power" color="var(--teal)"/>
-          <P>The whole point of MCP is that your server works with <S>any compatible client</S>. Let's connect the TechStore server from Chapter 12 to three different agents — Claude Desktop, OpenAI Agents SDK, and a custom Python agent.</P>
+          <ChH num="11" title="Connecting MCP to Agents" sub="Same server, three different clients — the protocol's power" color="var(--teal)"/>
+          <P>The whole point of MCP is that your server works with <S>any compatible client</S>. Let's connect the TechStore server from Chapter 10 to three different agents — Claude Desktop, OpenAI Agents SDK, and a custom Python agent.</P>
           <SubH>Option 1: Claude Desktop</SubH>
           <CB>{`// Add to: ~/Library/Application Support/Claude/claude_desktop_config.json
 {
@@ -1379,13 +1254,13 @@ async def run_agent_with_mcp():
                 tool_executor=lambda name, args: session.call_tool(name, json.loads(args)),
             )
             print(answer)`}</CB>
-          <Callout color="var(--indigo)" icon="🔑"><S>This is the MCP promise delivered:</S> you built one server (Chapter 12), and it works with Claude, OpenAI, and a custom agent — zero changes to the server code. When you add a new tool to the server, all three clients get it immediately. This is why MCP matters.</Callout>
+          <Callout color="var(--indigo)" icon="🔑"><S>This is the MCP promise delivered:</S> you built one server (Chapter 10), and it works with Claude, OpenAI, and a custom agent — zero changes to the server code. When you add a new tool to the server, all three clients get it immediately. This is why MCP matters.</Callout>
           <NB/>
         </section>
 
-        {/* ── Ch14: Why A2A Exists ── */}
+        {/* ── Ch12: Why A2A Exists ── */}
         <section id="ag14" style={{paddingTop:"2.5rem"}}>
-          <ChH num="14" title="Why A2A Exists" sub="MCP connects agents to tools. A2A connects agents to each other." color="var(--violet)"/>
+          <ChH num="12" title="Why A2A Exists" sub="MCP connects agents to tools. A2A connects agents to each other." color="var(--violet)"/>
           <P>MCP solved the agent-to-tool problem. But what about agent-to-agent? If you have a LangGraph agent that's great at research and a CrewAI agent that's great at writing, how do they collaborate? Without a standard, you'd need custom integration code for every agent-to-agent combination — the same M×N problem all over again.</P>
           <P>Google introduced the Agent-to-Agent (A2A) protocol in April 2025 to solve exactly this. A2A standardises how agents <S color="var(--violet)">discover each other's capabilities</S>, <S color="var(--violet)">delegate tasks</S>, and <S color="var(--violet)">exchange results</S> — regardless of what framework they're built on.</P>
           <SubH>MCP vs A2A — they're complementary, not competing</SubH>
@@ -1402,9 +1277,9 @@ async def run_agent_with_mcp():
           <Callout color="var(--violet)" icon="🤝"><S>When you need A2A:</S> when your system has agents built on different frameworks that need to work together. A LangGraph orchestrator that delegates research to a CrewAI agent team. An OpenAI agent that hands off to a specialised analysis agent built with a custom framework. A2A is the glue.</Callout>
         </section>
 
-        {/* ── Ch15: A2A Core Concepts ── */}
+        {/* ── Ch13: A2A Core Concepts ── */}
         <section id="ag15" style={{paddingTop:"2.5rem"}}>
-          <ChH num="15" title="A2A Core Concepts" sub="Agent Cards, Tasks, and Payloads — the three building blocks" color="var(--violet)"/>
+          <ChH num="13" title="A2A Core Concepts" sub="Agent Cards, Tasks, and Payloads — the three building blocks" color="var(--violet)"/>
           <P>A2A is built on three concepts: <S color="var(--violet)">Agent Cards</S> for discovery, <S color="var(--violet)">Tasks</S> for delegation, and <S color="var(--violet)">Payloads</S> for data exchange. All of it runs over HTTP with JSON-RPC — familiar infrastructure, new protocol.</P>
           <div style={{margin:"1.5rem 0",display:"flex",flexDirection:"column",gap:12}}>
             {[
@@ -1471,9 +1346,9 @@ POST /tasks/send
           <NB/>
         </section>
 
-        {/* ── Ch16: MCP + A2A Together ── */}
+        {/* ── Ch14: MCP + A2A Together ── */}
         <section id="ag16" style={{paddingTop:"2.5rem"}}>
-          <ChH num="16" title="MCP + A2A Together" sub="The three-layer protocol stack for agentic AI" color="var(--violet)"/>
+          <ChH num="14" title="MCP + A2A Together" sub="The three-layer protocol stack for agentic AI" color="var(--violet)"/>
           <P>MCP and A2A form a protocol stack. Together with the Agentic AI Foundation (AAIF) governance layer, they create the infrastructure for an ecosystem where any agent can use any tool and collaborate with any other agent.</P>
           <ProtocolStackDemo/>
           <SubH>A real-world example: cross-framework research team</SubH>
@@ -1523,7 +1398,7 @@ POST /tasks/send
               </div>
             ))}
           </div>
-          <Callout color="var(--info-color)" icon="📄"><S>Why this exercise matters:</S> every agent framework you'll use in Section 11 is an abstraction over this loop. If you can build it from scratch, you'll understand what LangGraph's nodes and edges actually do, why CrewAI's max_iter matters, and where to look when an agent misbehaves in production.</Callout>
+          <Callout color="var(--info-color)" icon="📄"><S>Why this exercise matters:</S> every agent framework you used in Section 6 is an abstraction over this loop. If you can build it from scratch, you'll understand what LangGraph's nodes and edges actually do, why max_iter matters, and where to look when an agent misbehaves in production.</Callout>
         </section>
 
         {/* ── Practice 2: MCP Server ── */}
@@ -1532,7 +1407,7 @@ POST /tasks/send
             <h3 style={{fontFamily:"'Libre Baskerville',serif",fontSize:"1.65rem",color:"var(--text)",fontWeight:700,marginBottom:4}}>Practice — Build an MCP Server + Client</h3>
             <div style={{color:"var(--text-muted)",fontSize:"0.95rem"}}>Create a tool server, connect it to an agent, test end-to-end</div>
           </div>
-          <P>Build your own MCP server (extending or modifying the TechStore example from Chapter 12), then connect it to an agent and verify the full discovery → invocation → response loop.</P>
+          <P>Build your own MCP server (extending or modifying the TechStore example from Chapter 10), then connect it to an agent and verify the full discovery → invocation → response loop.</P>
           <SubH>What to build</SubH>
           <div style={{margin:"1rem 0",display:"flex",flexDirection:"column",gap:8}}>
             {[

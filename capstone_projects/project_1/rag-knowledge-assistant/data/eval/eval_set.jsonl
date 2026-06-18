@@ -1,0 +1,12 @@
+{"question": "How many days of annual leave do full-time employees get?", "relevant_sources": ["hr/leave-policy.md"], "expected_fact": "25 days"}
+{"question": "How much annual leave can I carry over to next year?", "relevant_sources": ["hr/leave-policy.md"], "expected_fact": "5 days, must be used by 31 March"}
+{"question": "What does VPN error GP-1107 mean and how do I fix it?", "relevant_sources": ["it/vpn-setup.md"], "expected_fact": "expired device certificate; renew via Self-Service"}
+{"question": "How many failed logins before my account locks?", "relevant_sources": ["it/password-reset.md"], "expected_fact": "5 failed attempts in 15 minutes"}
+{"question": "What is the per-diem meal allowance for international travel?", "relevant_sources": ["hr/expenses.md"], "expected_fact": "$110"}
+{"question": "How quickly must I report a suspected data leak?", "relevant_sources": ["security/data-classification.md"], "expected_fact": "within 1 hour"}
+{"question": "Can I paste confidential data into public AI tools?", "relevant_sources": ["security/acceptable-use.md"], "expected_fact": "no; only via sanctioned gateway"}
+{"question": "How many approvals are needed for a production deploy?", "relevant_sources": ["engineering/deployment-runbook.md"], "expected_fact": "two reviewer approvals plus manual gate"}
+{"question": "What error rate aborts a canary deploy?", "relevant_sources": ["engineering/deployment-runbook.md"], "expected_fact": "2%"}
+{"question": "How fast must primary on-call acknowledge a page?", "relevant_sources": ["engineering/oncall.md"], "expected_fact": "5 minutes"}
+{"question": "What's the password minimum length?", "relevant_sources": ["it/password-reset.md"], "expected_fact": "14 characters"}
+{"question": "When does a SEV1 require exec notification?", "relevant_sources": ["engineering/oncall.md"], "expected_fact": "within 15 minutes"}

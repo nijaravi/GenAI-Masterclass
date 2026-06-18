@@ -1,0 +1,13 @@
+[project]
+name = "meridian-rag-assistant"
+version = "1.0.0"
+description = "Hybrid-search RAG knowledge assistant (portfolio project)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
