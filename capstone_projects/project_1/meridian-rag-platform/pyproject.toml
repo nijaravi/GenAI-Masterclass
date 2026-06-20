@@ -1,0 +1,9 @@
+[project]
+name = "meridian-rag-platform"
+version = "1.0.0"
+description = "Layered RAG platform (data pipeline + backend + frontend + eval)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
