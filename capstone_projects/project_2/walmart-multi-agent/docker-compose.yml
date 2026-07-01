@@ -1,0 +1,46 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Walmart Multi-Agent AI Platform — Local Dev Stack
+#
+# Usage:
+#   docker compose up -d        # start Postgres with pgvector
+#   docker compose down         # stop
+#   docker compose down -v      # stop + wipe data volume
+#
+# After starting, set in .env:
+#   PGVECTOR_CONNECTION_STRING=postgresql://postgres:postgres@localhost:5432/walmart_ai
+#   DEMO_MODE=false
+#
+# Then run the API:
+#   python -m uvicorn backend.main:app --reload
+#
+# The first startup will:
+#   1. CREATE EXTENSION IF NOT EXISTS vector
+#   2. CREATE TABLE walmart_documents (... embedding vector(1536) ...)
+#   3. CREATE INDEX USING ivfflat (embedding vector_cosine_ops)
+#   4. Seed all 13 persona-scoped documents
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  db:
+    image: pgvector/pgvector:pg16        # official pgvector image (Postgres 16)
+    container_name: walmart-pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: walmart_ai
+    ports:
+      - "5432:5432"                      # expose to host for local dev
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d walmart_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgvector_data:
+    driver: local

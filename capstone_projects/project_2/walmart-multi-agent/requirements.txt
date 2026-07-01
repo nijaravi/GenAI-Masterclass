@@ -1,0 +1,19 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+python-dotenv==1.0.1
+openai==1.35.3
+langchain==0.2.6
+langchain-openai==0.1.14
+langchain-community==0.2.6
+pydantic==2.7.4
+httpx==0.27.0
+numpy==1.26.4
+tiktoken==0.7.0
+python-multipart==0.0.9
+
+# PGVector — primary vector store
+psycopg2-binary==2.9.9
+pgvector==0.3.2
+
+# faiss-cpu kept as fallback for DEMO_MODE (no Postgres required)
+faiss-cpu==1.8.0

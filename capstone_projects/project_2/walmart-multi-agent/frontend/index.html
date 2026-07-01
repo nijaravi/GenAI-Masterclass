@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Walmart AI Platform — Multi-Agent Orchestrator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0071CE 0%, #004F9A 100%);
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .walmart-spark { font-size: 28px; }
+    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    .demo-badge {
+      background: rgba(255,194,32,0.9); color: #003087;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Main Layout ── */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e0e4e8;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-section { padding: 16px; border-bottom: 1px solid #f0f2f5; }
+    .sidebar-section h3 { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+    .persona-btn {
+      width: 100%; padding: 10px 12px; border: 2px solid #e8ecf0;
+      border-radius: 10px; background: white; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px; transition: all 0.15s; text-align: left;
+    }
+    .persona-btn:hover { border-color: #0071CE; background: #f0f7ff; }
+    .persona-btn.active { border-color: var(--persona-color); background: var(--persona-bg); }
+    .persona-icon { font-size: 22px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f5f7fa; border-radius: 8px; }
+    .persona-info h4 { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+    .persona-info p { font-size: 11px; color: #888; margin-top: 1px; }
+
+    .example-chip {
+      display: block; width: 100%; text-align: left; padding: 7px 10px;
+      background: #f5f7fa; border: 1px solid #e8ecf0; border-radius: 6px;
+      font-size: 11.5px; color: #444; cursor: pointer; margin-bottom: 5px;
+      transition: all 0.12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .example-chip:hover { background: #e8f0fe; border-color: #0071CE; color: #0071CE; }
+
+    /* ── Chat Area ── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message { display: flex; gap: 12px; max-width: 100%; }
+    .message.user { flex-direction: row-reverse; }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .avatar.user { background: #0071CE; color: white; font-size: 12px; font-weight: 700; }
+    .avatar.bot { background: #FFC220; }
+
+    .bubble {
+      max-width: 70%; padding: 12px 16px; border-radius: 16px;
+      font-size: 14px; line-height: 1.55;
+    }
+    .bubble.user { background: #0071CE; color: white; border-bottom-right-radius: 4px; }
+    .bubble.bot { background: white; color: #1a1a2e; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    .bubble pre { background: #1e1e2e; color: #e8e8f0; padding: 12px; border-radius: 8px; font-size: 12px; overflow-x: auto; margin: 8px 0; white-space: pre-wrap; }
+    .bubble code { font-family: 'Fira Code', 'Courier New', monospace; }
+    .bubble strong { font-weight: 600; }
+
+    /* ── Agent Trace ── */
+    .agent-trace {
+      margin-top: 10px; border: 1px solid #e8ecf0; border-radius: 10px;
+      overflow: hidden; font-size: 12px;
+    }
+    .trace-header {
+      background: #f5f7fa; padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      font-weight: 600; color: #555; font-size: 11.5px;
+    }
+    .trace-header:hover { background: #eef0f3; }
+    .trace-body { padding: 10px 12px; }
+    .trace-step {
+      display: flex; gap: 8px; margin-bottom: 8px;
+      align-items: flex-start;
+    }
+    .trace-step:last-child { margin-bottom: 0; }
+    .step-badge {
+      padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+    }
+    .step-badge.planner { background: #e3f2fd; color: #1565c0; }
+    .step-badge.orchestrator { background: #f3e5f5; color: #7b1fa2; }
+    .step-badge.rag { background: #e8f5e9; color: #2e7d32; }
+    .step-badge.tool { background: #fff3e0; color: #e65100; }
+    .step-badge.coder { background: #fce4ec; color: #c62828; }
+    .step-badge.mcp { background: #e0f2f1; color: #00695c; }
+    .step-text { color: #555; line-height: 1.4; font-size: 11.5px; }
+
+    .route-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
+      margin-top: 6px;
+    }
+    .route-rag { background: #e8f5e9; color: #2e7d32; }
+    .route-tool_call { background: #fff3e0; color: #e65100; }
+    .route-coder { background: #fce4ec; color: #c62828; }
+    .route-mcp { background: #e0f2f1; color: #00695c; }
+
+    .sources { margin-top: 8px; }
+    .sources h5 { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 4px; }
+    .source-item { font-size: 11px; color: #666; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; margin-bottom: 3px; border-left: 3px solid #0071CE; }
+
+    /* ── Input ── */
+    .input-area {
+      padding: 16px 20px;
+      background: white;
+      border-top: 1px solid #e0e4e8;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .input-wrap { flex: 1; position: relative; }
+    .chat-input {
+      width: 100%; padding: 12px 16px; border: 2px solid #e0e4e8;
+      border-radius: 12px; font-size: 14px; resize: none;
+      font-family: inherit; line-height: 1.4; max-height: 120px;
+      transition: border-color 0.15s; outline: none;
+    }
+    .chat-input:focus { border-color: #0071CE; }
+    .send-btn {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: #0071CE; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 18px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .send-btn:hover { background: #005ba3; }
+    .send-btn:disabled { background: #b0c4d8; cursor: not-allowed; }
+
+    /* ── Empty State ── */
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; color: #888;
+    }
+    .empty-state .big-icon { font-size: 56px; margin-bottom: 16px; }
+    .empty-state h2 { font-size: 20px; color: #444; margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; text-align: center; max-width: 380px; line-height: 1.6; }
+
+    /* ── Loading ── */
+    .typing-indicator { display: flex; gap: 5px; align-items: center; padding: 8px 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #0071CE; animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+
+    .arch-diagram {
+      background: linear-gradient(135deg, #f8f9ff 0%, #fff8f0 100%);
+      border: 1px solid #e0e4e8; border-radius: 12px;
+      padding: 16px; margin: 8px 0;
+    }
+    .arch-title { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 11.5px; }
+    .flow-node { padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 11px; }
+    .flow-arrow { color: #999; font-size: 14px; }
+    .fn-user { background: #e3f2fd; color: #1565c0; }
+    .fn-planner { background: #e8eaf6; color: #3949ab; }
+    .fn-orch { background: #f3e5f5; color: #7b1fa2; }
+    .fn-rag { background: #e8f5e9; color: #2e7d32; }
+    .fn-tool { background: #fff3e0; color: #e65100; }
+    .fn-coder { background: #fce4ec; color: #c62828; }
+    .fn-mcp { background: #e0f2f1; color: #00695c; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+const API_BASE = "http://localhost:8000";
+
+const PERSONAS = [
+  { id: "customer", label: "Customer", icon: "🛒", color: "#0071CE", bg: "#f0f7ff",
+    desc: "Product Q&A, returns, deals",
+    examples: [
+      "What is Walmart's return policy for electronics?",
+      "What are the Black Friday 2024 TV deals?",
+      "Calculate the discount on a $1299 TV at 62% off",
+      "How much does Walmart+ membership cost?",
+    ]
+  },
+  { id: "client", label: "Client / Vendor", icon: "🏭", color: "#FFC220", bg: "#fffbee",
+    desc: "Billing, onboarding, compliance",
+    examples: [
+      "What are the NET-30 payment terms?",
+      "Show me the billing summary for November",
+      "What documents do I need for supplier onboarding?",
+      "Check MCP server for supplier contact details",
+    ]
+  },
+  { id: "developer", label: "Developer", icon: "💻", color: "#007DC6", bg: "#f0f9ff",
+    desc: "APIs, code gen, DevOps",
+    examples: [
+      "Write code to call the Walmart Item API",
+      "How does OAuth 2.0 authentication work?",
+      "Check if AIRPODS-PRO is in stock",
+      "Open a support ticket for the payment service",
+    ]
+  },
+];
+
+const ROUTE_META = {
+  rag: { label: "RAG Agent", icon: "🔍", cls: "rag" },
+  tool_call: { label: "Tool Call", icon: "🔧", cls: "tool_call" },
+  coder: { label: "Coder Agent", icon: "⚙️", cls: "coder" },
+  mcp: { label: "MCP Server", icon: "🔗", cls: "mcp" },
+};
+
+const BADGE_CLS = {
+  PlannerAgent: "planner",
+  OrchestratorAgent: "orchestrator",
+  RAGAgent: "rag",
+  ToolAgent: "tool",
+  CoderAgent: "coder",
+  MCPAgent: "mcp",
+};
+
+function formatOutput(text) {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("```")) {
+      const code = part.replace(/```\w*\n?/, "").replace(/```$/, "");
+      return <pre key={i}><code>{code}</code></pre>;
+    }
+    const lines = part.split('\n').map((line, j) => {
+      const bold = line.replace(/\*\*(.+?)\*\*/g, (_, m) => `<b>${m}</b>`);
+      return <span key={j} dangerouslySetInnerHTML={{ __html: bold + (j < part.split('\n').length-1 ? '<br/>' : '') }} />;
+    });
+    return <span key={i}>{lines}</span>;
+  });
+}
+
+function AgentTrace({ steps, route, sources }) {
+  const [open, setOpen] = useState(false);
+  const routeMeta = ROUTE_META[route] || {};
+
+  return (
+    <div className="agent-trace">
+      <div className="trace-header" onClick={() => setOpen(!open)}>
+        <span>{open ? "▼" : "▶"}</span>
+        <span>Agent Trace</span>
+        <span className={`route-pill route-${route}`}>
+          {routeMeta.icon} {routeMeta.label}
+        </span>
+        <span style={{marginLeft:'auto', fontSize:10, color:'#aaa'}}>{steps.length} steps</span>
+      </div>
+      {open && (
+        <div className="trace-body">
+          {steps.map((step, i) => (
+            <div key={i} className="trace-step">
+              <span className={`step-badge ${BADGE_CLS[step.agent] || 'planner'}`}>
+                {step.agent}
+              </span>
+              <div className="step-text">
+                <strong>→</strong> {step.output.slice(0, 220)}{step.output.length > 220 ? "…" : ""}
+              </div>
+            </div>
+          ))}
+          {sources && sources.length > 0 && (
+            <div className="sources">
+              <h5>📚 Retrieved Sources</h5>
+              {sources.map((s, i) => (
+                <div key={i} className="source-item">{s}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArchDiagram() {
+  return (
+    <div className="arch-diagram">
+      <div className="arch-title">🏗️ Multi-Agent Pipeline</div>
+      <div className="flow">
+        <span className="flow-node fn-user">User</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-node fn-planner">Planner</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-node fn-orch">Orchestrator</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-node fn-rag">RAG</span>
+        <span style={{color:'#bbb', fontSize:11}}> | </span>
+        <span className="flow-node fn-tool">Tool</span>
+        <span style={{color:'#bbb', fontSize:11}}> | </span>
+        <span className="flow-node fn-coder">Coder</span>
+        <span style={{color:'#bbb', fontSize:11}}> | </span>
+        <span className="flow-node fn-mcp">MCP</span>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [persona, setPersona] = useState(PERSONAS[0]);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [connected, setConnected] = useState(null);
+  const endRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then(r => r.json())
+      .then(() => setConnected(true))
+      .catch(() => setConnected(false));
+  }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async (text) => {
+    const msg = (text || input).trim();
+    if (!msg || loading) return;
+    setInput("");
+
+    const userMsg = { role: "user", content: msg };
+    setMessages(prev => [...prev, userMsg]);
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          user_role: persona.id,
+          session_id: "demo-session",
+          conversation_history: [],
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      setMessages(prev => [...prev, {
+        role: "bot",
+        content: data.answer,
+        route: data.route_taken,
+        steps: data.steps,
+        sources: data.sources,
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        role: "bot",
+        content: `⚠️ Could not reach the API server.\n\nMake sure the backend is running:\n\`\`\`\ncd walmart-multi-agent\npython -m uvicorn backend.main:app --reload\n\`\`\`\n\nError: ${err.message}`,
+        route: "rag",
+        steps: [],
+        sources: [],
+      }]);
+    }
+    setLoading(false);
+    inputRef.current?.focus();
+  };
+
+  const handleKey = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const switchPersona = (p) => {
+    setPersona(p);
+    setMessages([]);
+  };
+
+  return (
+    <>
+      <div className="header">
+        <div className="header-left">
+          <span className="walmart-spark">★</span>
+          <div>
+            <h1>Walmart AI Platform</h1>
+            <p>Multi-Agent Orchestrator Chatbot</p>
+          </div>
+        </div>
+        <div style={{display:'flex', gap:8, alignItems:'center'}}>
+          <span className="demo-badge">DEMO MODE</span>
+          <span style={{
+            width:8, height:8, borderRadius:'50%',
+            background: connected === null ? '#aaa' : connected ? '#4caf50' : '#f44336',
+            display:'inline-block'
+          }} title={connected ? "API connected" : "API offline"} />
+        </div>
+      </div>
+
+      <div className="app-body">
+        {/* Sidebar */}
+        <div className="sidebar">
+          <div className="sidebar-section">
+            <h3>Persona</h3>
+            {PERSONAS.map(p => (
+              <button
+                key={p.id}
+                className={`persona-btn ${persona.id === p.id ? 'active' : ''}`}
+                style={{'--persona-color': p.color, '--persona-bg': p.bg}}
+                onClick={() => switchPersona(p)}
+              >
+                <span className="persona-icon">{p.icon}</span>
+                <div className="persona-info">
+                  <h4>{p.label}</h4>
+                  <p>{p.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="sidebar-section" style={{flex:1, overflowY:'auto'}}>
+            <h3>Try asking…</h3>
+            {persona.examples.map((ex, i) => (
+              <button key={i} className="example-chip" onClick={() => sendMessage(ex)} title={ex}>
+                {ex}
+              </button>
+            ))}
+          </div>
+
+          <div className="sidebar-section" style={{fontSize:11, color:'#aaa', lineHeight:1.5}}>
+            <div>🔍 RAG → Knowledge base</div>
+            <div>🔧 Tool → Calculations</div>
+            <div>⚙️ Coder → Code gen</div>
+            <div>🔗 MCP → External systems</div>
+          </div>
+        </div>
+
+        {/* Chat */}
+        <div className="chat-area">
+          <div className="messages">
+            {messages.length === 0 ? (
+              <div className="empty-state">
+                <div className="big-icon">{persona.icon}</div>
+                <h2>Hello, {persona.label}</h2>
+                <p>Ask me anything. I'll route your question to the right specialist agent — RAG, Tool Call, Coder, or MCP Server.</p>
+                <div style={{marginTop:20}}>
+                  <ArchDiagram />
+                </div>
+              </div>
+            ) : (
+              messages.map((msg, i) => (
+                <div key={i} className={`message ${msg.role}`}>
+                  <div className={`avatar ${msg.role}`}>
+                    {msg.role === 'user' ? persona.icon : '★'}
+                  </div>
+                  <div>
+                    <div className={`bubble ${msg.role}`}>
+                      {formatOutput(msg.content)}
+                    </div>
+                    {msg.role === 'bot' && msg.steps && msg.steps.length > 0 && (
+                      <AgentTrace
+                        steps={msg.steps}
+                        route={msg.route}
+                        sources={msg.sources}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            {loading && (
+              <div className="message">
+                <div className="avatar bot">★</div>
+                <div className="bubble bot">
+                  <div className="typing-indicator">
+                    <div className="dot" />
+                    <div className="dot" />
+                    <div className="dot" />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          <div className="input-area">
+            <div className="input-wrap">
+              <textarea
+                ref={inputRef}
+                className="chat-input"
+                placeholder={`Ask as a ${persona.label}…`}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                rows={1}
+              />
+            </div>
+            <button className="send-btn" onClick={() => sendMessage()} disabled={loading || !input.trim()}>
+              ➤
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
