@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Multi-Agent Orchestrator — Demo Console</title>
+<style>
+  :root {
+    --ink: #1c2430;
+    --ink-soft: #55606e;
+    --line: #dde2e7;
+    --paper: #fafbfc;
+    --panel: #ffffff;
+    --accent: #29506d;
+    --accent-soft: #e7eef3;
+    --ok: #2e7d5b;
+    --warn: #a15c1f;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--sans); height: 100vh; display: flex; flex-direction: column;
+  }
+  header {
+    padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--panel);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: 0.2px; }
+  header .sub { color: var(--ink-soft); font-size: 12.5px; }
+  .layout { flex: 1; display: grid; grid-template-columns: 1fr 340px; overflow: hidden; }
+  .chat-col { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+  .controls {
+    display: flex; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--line);
+    background: var(--panel); align-items: center; flex-wrap: wrap;
+  }
+  .controls label { font-size: 12px; color: var(--ink-soft); margin-right: 4px; }
+  select, input[type=text] {
+    font-family: var(--sans); font-size: 13px; padding: 6px 10px; border: 1px solid var(--line);
+    border-radius: 6px; background: white; color: var(--ink);
+  }
+  .messages { flex: 1; overflow-y: auto; padding: 20px 28px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 72%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 3px; }
+  .msg.bot { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .msg.system { align-self: center; color: var(--ink-soft); font-size: 12px; font-style: italic; }
+  .composer { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--line); background: var(--panel); }
+  .composer input { flex: 1; font-size: 14px; padding: 10px 14px; }
+  .composer button {
+    background: var(--accent); color: white; border: none; border-radius: 6px; padding: 0 20px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .composer button:disabled { opacity: 0.5; cursor: default; }
+  .trace-col { padding: 18px 18px; overflow-y: auto; background: var(--panel); }
+  .trace-col h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-soft); margin: 0 0 12px; }
+  .path { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .path .node {
+    font-family: var(--mono); font-size: 12px; padding: 6px 10px; border-radius: 5px;
+    background: var(--accent-soft); color: var(--accent); position: relative;
+  }
+  .path .node::before { content: "→ "; opacity: 0.5; }
+  .path .node:first-child::before { content: ""; }
+  .toolcall {
+    font-family: var(--mono); font-size: 11.5px; background: #fbfbfb; border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word;
+  }
+  .toolcall .ok { color: var(--ok); }
+  .toolcall .fail { color: var(--warn); }
+  .empty-hint { color: var(--ink-soft); font-size: 12.5px; }
+  .hops { font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Multi-Agent Orchestrator — Demo Console</h1>
+  <div class="sub">LangGraph · CrewAI · MCP · A2A — capstone reference build</div>
+</header>
+
+<div class="layout">
+  <div class="chat-col">
+    <div class="controls">
+      <label>Persona</label>
+      <select id="role">
+        <option value="customer">Customer</option>
+        <option value="client">Client</option>
+        <option value="developer">Developer</option>
+      </select>
+      <label>Session</label>
+      <input type="text" id="session" value="demo-session-1" style="width:150px" />
+      <label>API</label>
+      <input type="text" id="apiBase" value="http://localhost:8000" style="width:190px" />
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg system">Pick a persona above, then ask a question. Try: "Does the TrailPro backpack come in a larger size?" (customer), "What's the build status on our latest deployment?" (client), or "Show me how to call the internal auth API, and check if PR #482 covers ticket JIRA-1190." (developer).</div>
+    </div>
+    <div class="composer">
+      <input type="text" id="input" placeholder="Ask something…" />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <div class="trace-col">
+    <h2>Routing trace</h2>
+    <div id="path" class="path"><span class="empty-hint">No request yet.</span></div>
+    <div id="hops" class="hops"></div>
+    <h2>Tool / agent calls</h2>
+    <div id="tools"><span class="empty-hint">—</span></div>
+  </div>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const pathEl = document.getElementById('path');
+const toolsEl = document.getElementById('tools');
+const hopsEl = document.getElementById('hops');
+const sendBtn = document.getElementById('send');
+const inputEl = document.getElementById('input');
+
+function addMessage(text, cls) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function renderTrace(data) {
+  pathEl.innerHTML = '';
+  (data.route_taken || []).forEach(node => {
+    const span = document.createElement('span');
+    span.className = 'node';
+    span.textContent = node;
+    pathEl.appendChild(span);
+  });
+  hopsEl.textContent = `hop_count: ${data.hop_count}`;
+
+  toolsEl.innerHTML = '';
+  if (!data.tool_calls || data.tool_calls.length === 0) {
+    toolsEl.innerHTML = '<span class="empty-hint">No tool/MCP/A2A/CrewAI calls on this turn.</span>';
+    return;
+  }
+  data.tool_calls.forEach(tc => {
+    const div = document.createElement('div');
+    div.className = 'toolcall';
+    div.innerHTML = `<span class="${tc.ok ? 'ok' : 'fail'}">${tc.ok ? 'OK' : 'DEGRADED'}</span> ${tc.node} → ${tc.tool}\n` +
+      `in:  ${JSON.stringify(tc.input)}\n` +
+      `out: ${JSON.stringify(tc.output).slice(0, 220)}`;
+    toolsEl.appendChild(div);
+  });
+}
+
+async function send() {
+  const message = inputEl.value.trim();
+  if (!message) return;
+  const role = document.getElementById('role').value;
+  const session_id = document.getElementById('session').value.trim() || 'demo-session';
+  const apiBase = document.getElementById('apiBase').value.trim();
+
+  addMessage(message, 'user');
+  inputEl.value = '';
+  sendBtn.disabled = true;
+
+  try {
+    const resp = await fetch(`${apiBase}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id, user_role: role, message }),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      addMessage(`Request failed (${resp.status}): ${errText}`, 'system');
+      return;
+    }
+    const data = await resp.json();
+    addMessage(data.final_answer, 'bot');
+    renderTrace(data);
+  } catch (err) {
+    addMessage(`Could not reach the API at ${apiBase}. Is the server running? (${err})`, 'system');
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+sendBtn.addEventListener('click', send);
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+</script>
+
+</body>
+</html>

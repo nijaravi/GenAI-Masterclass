@@ -1,0 +1,14 @@
+{
+  "name": "logistics-partner-agent",
+  "description": "Independently operated logistics/returns status agent for a third-party shipping vendor. Not owned or controlled by this platform.",
+  "url": "http://localhost:9001",
+  "version": "1.0.0",
+  "capabilities": [
+    {
+      "name": "check_return_status",
+      "description": "Look up the status of a return shipment by order_id.",
+      "input_schema": {"order_id": "string"},
+      "output_schema": {"status": "string", "carrier_eta": "string"}
+    }
+  ]
+}
