@@ -1,10 +1,15 @@
 """
-Section 6 of the design doc, translated 1:1 into a LangGraph state schema.
+Section 6 of the design doc, translated into a LangGraph state schema —
+simplified for readability. Keeping it flat and typed makes every node's
+contract explicit: a node only reads the keys it needs and writes the
+keys it owns. This IS the graph's "shared state" that flows between nodes
+natively - no hand-wired message passing.
 
-Keeping it flat and typed makes every node's contract explicit: a node only
-reads the keys it needs and writes the keys it owns. This IS the graph's
-"shared state" that the design doc says flows between nodes natively -
-no hand-wired message passing.
+Simplification note: the reference doc's Orchestrator can in principle
+queue any number of follow-up sub-intents. This build only ever needs one
+(the developer's "docs + code task" example, Section 7.3), so instead of
+a generic queue we use a single optional `next_category` field. If you
+outgrow one follow-up, that's the field to turn back into a list.
 """
 from __future__ import annotations
 
@@ -31,20 +36,19 @@ class OrchestratorState(TypedDict, total=False):
     session_id: str
     user_role: Literal["developer", "client", "customer"]
     user_query: str
-    conversation_history: list[dict]
 
     # ── planning / routing ───────────────────────────────────────────
     plan: Optional[str]                 # set by Planner Agent
     route: Optional[
-        Literal["coder", "rag", "mcp", "tool", "external_agent", "final"]
+        Literal["coder", "rag", "mcp", "external_agent", "final"]
     ]
-    pending_subtasks: list[str]         # multi-hop queue (Section 7.3)
+    next_category: Optional[str]        # one queued follow-up (Section 7.3)
 
     # ── execution trail ───────────────────────────────────────────────
     tool_calls: list[ToolCallRecord]        # audit trail, Section 10
     retrieved_context: Optional[list[RetrievedChunk]]  # RAG output
     agent_output: Optional[str]             # latest node's raw output
-    collected_outputs: list[str]            # every hop's output, for multi-hop merge (Section 7.3)
+    collected_outputs: list[str]            # every hop's output, merged in finalize
     node_path: list[str]                    # observability trace (Section 12)
 
     # ── termination ───────────────────────────────────────────────────
@@ -52,17 +56,16 @@ class OrchestratorState(TypedDict, total=False):
     hop_count: int                          # guards runaway multi-hop loops
 
 
-def new_state(session_id: str, user_role: str, user_query: str) -> OrchestratorState:
-    """Factory for a fresh turn. conversation_history is passed in by the
-    caller (main.py) since it's persisted across turns by the checkpointer."""
+def fresh_turn(session_id: str, user_role: str, user_query: str) -> OrchestratorState:
+    """Every field a new turn needs, reset to a clean slate. Pass this
+    straight into graph.ainvoke() - see main.py."""
     return OrchestratorState(
         session_id=session_id,
         user_role=user_role,  # type: ignore[typeddict-item]
         user_query=user_query,
-        conversation_history=[],
         plan=None,
         route=None,
-        pending_subtasks=[],
+        next_category=None,
         tool_calls=[],
         retrieved_context=None,
         agent_output=None,

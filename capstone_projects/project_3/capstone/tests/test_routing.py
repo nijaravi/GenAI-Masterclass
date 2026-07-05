@@ -1,12 +1,9 @@
 """
 Section 12: 'An evaluation harness scores a labeled set of representative
 requests per audience for routing accuracy.' This is that harness, using
-the four worked examples from Section 7 as the labeled set. Run with:
+the four worked examples from Section 7 as the labeled set.
 
-    pytest tests/test_routing.py -v
-
-or directly:
-    python tests/test_routing.py
+Run with:  python tests/test_routing.py
 """
 from __future__ import annotations
 
@@ -18,8 +15,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.graph import get_graph
 from app.rag.vector_store import seed_if_empty
+from app.state import fresh_turn
 
-# (user_role, message, expected first specialist node hit after orchestrator)
+# (user_role, message, expected specialist node hit)
 LABELED_SET = [
     ("customer", "Does the TrailPro backpack come in a larger size?", "rag_agent"),
     ("client", "What's the build status on our latest deployment?", "mcp_tool"),
@@ -30,13 +28,8 @@ LABELED_SET = [
 
 async def _run_case(role: str, message: str, session_id: str):
     graph = get_graph()
-    result = await graph.ainvoke(
-        {"session_id": session_id, "user_role": role, "user_query": message,
-         "plan": None, "route": None, "pending_subtasks": [], "retrieved_context": None,
-         "agent_output": None, "collected_outputs": [], "final_answer": None, "node_path": [], "hop_count": 0},
-        config={"configurable": {"thread_id": session_id}},
-    )
-    return result
+    turn_input = fresh_turn(session_id, role, message)
+    return await graph.ainvoke(turn_input, config={"configurable": {"thread_id": session_id}})
 
 
 def test_routing_accuracy():
@@ -48,8 +41,7 @@ def test_routing_accuracy():
         hit = expected_node in node_path
         correct += int(hit)
         assert result["final_answer"], f"no final answer for: {message}"
-        print(f"[{'PASS' if hit else 'FAIL'}] role={role!r} expected={expected_node!r} "
-              f"path={node_path}")
+        print(f"[{'PASS' if hit else 'FAIL'}] role={role!r} expected={expected_node!r} path={node_path}")
     accuracy = correct / len(LABELED_SET)
     print(f"\nRouting accuracy: {accuracy:.0%} ({correct}/{len(LABELED_SET)})")
     assert accuracy >= 0.75
