@@ -1,6 +1,7 @@
 langgraph==1.0.1
 langchain-core==0.3.86
 langchain-openai==0.3.35
+langsmith>=0.3.45
 crewai==1.15.1
 mcp==1.26.0
 chromadb==1.1.1

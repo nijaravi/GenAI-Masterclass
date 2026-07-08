@@ -13,14 +13,19 @@ of that itself.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app import config  # noqa: F401 — LangSmith env vars before graph/LLM imports
 from app.graph import get_graph
+from app.graph_logger import log_turn_end, log_turn_error, log_turn_start
 from app.rag.vector_store import seed_if_empty
 from app.state import fresh_turn
+from app.tracing import build_graph_run_config, is_tracing_enabled
 
 
 @asynccontextmanager
@@ -68,25 +73,55 @@ async def chat(req: ChatRequest):
         raise HTTPException(400, "user_role must be developer, client, or customer")
 
     graph = get_graph()
-    thread_config = {"configurable": {"thread_id": req.session_id}}
     turn_input = fresh_turn(req.session_id, req.user_role, req.message)
+    turn_id = f"{req.session_id}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}-{uuid4().hex[:8]}"
+
+    log_turn_start(
+        session_id=req.session_id,
+        user_role=req.user_role,
+        message=req.message,
+        turn_id=turn_id,
+    )
 
     try:
-        result = await graph.ainvoke(turn_input, config=thread_config)
+        result = await graph.ainvoke(
+            turn_input,
+            config=build_graph_run_config(
+                session_id=req.session_id,
+                user_role=req.user_role,
+                turn_id=turn_id,
+                message=req.message,
+            ),
+        )
     except Exception as exc:
+        log_turn_error(turn_id=turn_id, session_id=req.session_id, error=str(exc))
         raise HTTPException(500, f"graph execution failed: {exc}") from exc
 
-    return ChatResponse(
+    response = ChatResponse(
         final_answer=result.get("final_answer", ""),
         route_taken=result.get("node_path", []),
         tool_calls=result.get("tool_calls", []),
         hop_count=result.get("hop_count", 0),
     )
+    log_turn_end(
+        turn_id=turn_id,
+        session_id=req.session_id,
+        response=response.model_dump(),
+        node_path=result.get("node_path", []),
+        hop_count=result.get("hop_count", 0),
+    )
+    return response
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    from app import config
+
+    return {
+        "status": "ok",
+        "langsmith_tracing": is_tracing_enabled(),
+        "langsmith_project": config.LANGSMITH_PROJECT if is_tracing_enabled() else None,
+    }
 
 
 @app.get("/personas")

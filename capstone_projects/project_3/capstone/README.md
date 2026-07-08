@@ -70,6 +70,34 @@ Note: the developer example makes several real LLM calls in one turn
 (classification, RAG synthesis, then three CrewAI agents) — expect it to
 take noticeably longer than the others, and to use real API credits.
 
+## LangSmith tracing (optional)
+
+Every `/chat` request can be traced in [LangSmith](https://smith.langchain.com)
+when you add these to `.env`:
+
+```bash
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_...
+# optional — defaults to capstone-orchestrator
+LANGSMITH_PROJECT=capstone-orchestrator
+```
+
+What shows up in the UI:
+
+- **LangGraph trace** — full node-by-node execution (`intake` → `planner` →
+  `orchestrator` → specialists → `finalize`)
+- **LLM calls** — Planner classification and RAG synthesis (via LangChain)
+- **CrewAI crew** — nested under the `coder` node (`@traceable`)
+- **A2A vendor call** — nested under `external_agent` (`@traceable`)
+
+Each trace is tagged with `user_role` and includes `session_id` / `turn_id`
+metadata for filtering. Verify tracing is on:
+
+```bash
+curl http://localhost:8000/health
+# {"status":"ok","langsmith_tracing":true,"langsmith_project":"capstone-orchestrator"}
+```
+
 ## Running the eval harness
 
 ```bash
@@ -99,6 +127,7 @@ swap-in path is one or two files, never a rewrite:
 ```
 app/
   config.py            env/config - requires OPENAI_API_KEY, loads .env
+  tracing.py           LangSmith run config (tags/metadata for graph.ainvoke)
   state.py             OrchestratorState — the LangGraph shared state
   llm.py               get_model() — the one place every node gets an LLM from
   graph.py             the StateGraph wiring — start here

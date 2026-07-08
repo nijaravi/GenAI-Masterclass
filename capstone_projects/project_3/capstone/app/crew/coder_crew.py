@@ -16,6 +16,7 @@ the one and only place CrewAI appears.
 from __future__ import annotations
 
 from crewai import LLM, Agent, Crew, Process, Task
+from langsmith import traceable
 
 from app import config
 
@@ -83,6 +84,7 @@ def build_crew() -> Crew:
     )
 
 
+@traceable(name="coder_crew", run_type="chain", tags=["crewai", "coder"])
 def run_crew() -> str:
     """Builds and runs the crew for real, against config.OPENAI_MODEL.
     Sync/blocking - callers should run this in a thread (see

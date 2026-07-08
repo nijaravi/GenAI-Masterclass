@@ -7,9 +7,9 @@ config.OPENAI_MODEL, since CrewAI wants its own LLM object per agent).
 """
 from __future__ import annotations
 
-from langchain_openai import ChatOpenAI
+from app import config  # noqa: F401 — LangSmith env vars before LangChain import
 
-from app import config
+from langchain_openai import ChatOpenAI
 
 
 class OpenAIChatModel:

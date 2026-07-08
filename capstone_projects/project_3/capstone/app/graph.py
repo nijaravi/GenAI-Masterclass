@@ -19,9 +19,12 @@ hop_count guard (Section 6) both live in one place.
 """
 from __future__ import annotations
 
+from app import config  # noqa: F401 — LangSmith env vars before LangGraph import
+
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
+from app.graph_logger import log_stage, snapshot_state
 from app.nodes.orchestrator import orchestrator_node
 from app.nodes.planner import planner_node
 from app.nodes.specialists import (
@@ -35,6 +38,23 @@ from app.nodes.specialists import (
 from app.state import OrchestratorState
 
 
+def _wrap_node(node_name: str, fn):
+    """Log each node's IN/OUT and handover target after it runs."""
+    async def logged_node(state: OrchestratorState) -> dict:
+        session_id = state.get("session_id", "unknown")
+        state_in = snapshot_state(state, node_name)
+        result = await fn(state)
+        log_stage(
+            node_name=node_name,
+            session_id=session_id,
+            state_in=state_in,
+            state_out=result,
+        )
+        return result
+
+    return logged_node
+
+
 def _route_from_state(state: OrchestratorState) -> str:
     """The conditional-edge function: reads state['route'] (set by the
     Orchestrator node) and returns the LangGraph edge key to follow next."""
@@ -44,14 +64,14 @@ def _route_from_state(state: OrchestratorState) -> str:
 def build_graph():
     graph = StateGraph(OrchestratorState)
 
-    graph.add_node("intake", intake_node)
-    graph.add_node("planner", planner_node)
-    graph.add_node("orchestrator", orchestrator_node)
-    graph.add_node("rag", rag_agent_node)
-    graph.add_node("coder", coder_agent_node)
-    graph.add_node("mcp", mcp_tool_node)
-    graph.add_node("external_agent", external_agent_node)
-    graph.add_node("finalize", finalize_node)
+    graph.add_node("intake", _wrap_node("intake", intake_node))
+    graph.add_node("planner", _wrap_node("planner", planner_node))
+    graph.add_node("orchestrator", _wrap_node("orchestrator", orchestrator_node))
+    graph.add_node("rag", _wrap_node("rag", rag_agent_node))
+    graph.add_node("coder", _wrap_node("coder", coder_agent_node))
+    graph.add_node("mcp", _wrap_node("mcp", mcp_tool_node))
+    graph.add_node("external_agent", _wrap_node("external_agent", external_agent_node))
+    graph.add_node("finalize", _wrap_node("finalize", finalize_node))
 
     graph.set_entry_point("intake")
     graph.add_edge("intake", "planner")

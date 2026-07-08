@@ -20,6 +20,39 @@ os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+# LangSmith — optional observability for LangGraph + LangChain LLM calls.
+# Docs: https://docs.langchain.com/langsmith/observability
+LANGSMITH_API_KEY = (
+    os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY", "")
+).strip()
+LANGSMITH_PROJECT = (
+    os.getenv("LANGSMITH_PROJECT")
+    or os.getenv("LANGCHAIN_PROJECT")
+    or "capstone-orchestrator"
+).strip()
+_tracing_flag = (
+    os.getenv("LANGSMITH_TRACING", os.getenv("LANGCHAIN_TRACING_V2", ""))
+    .strip()
+    .lower()
+)
+LANGSMITH_TRACING_ENABLED = bool(LANGSMITH_API_KEY) and _tracing_flag in (
+    "true",
+    "1",
+    "yes",
+)
+
+if LANGSMITH_TRACING_ENABLED:
+    os.environ["LANGSMITH_TRACING"] = "true"
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGSMITH_API_KEY"] = LANGSMITH_API_KEY
+    os.environ["LANGCHAIN_API_KEY"] = LANGSMITH_API_KEY
+    os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
+    os.environ["LANGCHAIN_PROJECT"] = LANGSMITH_PROJECT
+    os.environ.setdefault(
+        "LANGCHAIN_ENDPOINT",
+        os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"),
+    )
+
 if not OPENAI_API_KEY:
     raise RuntimeError(
         "OPENAI_API_KEY is not set.\n"

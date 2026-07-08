@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import asyncio
 
+from langsmith import traceable
+
 AGENT_CARD = {
     "name": "logistics-partner-agent",
     "description": "Independently operated logistics/returns status agent "
@@ -48,6 +50,7 @@ async def _vendor_task(order_id: str) -> dict:
     return record
 
 
+@traceable(name="a2a_external_agent", run_type="tool", tags=["a2a", "external_agent"])
 async def call_external_agent(capability: str, order_id: str) -> tuple[bool, dict | str]:
     """Returns (ok, data_or_degraded_reason). Mirrors Section 11.1's
     guardrail: a circuit breaker for repeated failures, plus a timeout so
